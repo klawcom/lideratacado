@@ -22,9 +22,11 @@ import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as SobreRouteImport } from './routes/sobre'
 import { Route as TrocasEDevolucoesRouteImport } from './routes/trocas-e-devolucoes'
+import { Route as AuthenticatedAdminRouteRouteImport } from './routes/_authenticated/admin/route'
 import { Route as AuthenticatedMeusPedidosRouteImport } from './routes/_authenticated/meus-pedidos'
 import { Route as CategoriaSlugRouteImport } from './routes/categoria/$slug'
 import { Route as ProdutoSlugRouteImport } from './routes/produto/$slug'
+import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
 import { Route as ApiPublicMidiaSplatRouteImport } from './routes/api/public/midia.$'
 
 const IndexRoute = IndexRouteImport.update({
@@ -91,6 +93,11 @@ const TrocasEDevolucoesRoute = TrocasEDevolucoesRouteImport.update({
   path: '/trocas-e-devolucoes',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedAdminRouteRoute = AuthenticatedAdminRouteRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedMeusPedidosRoute =
   AuthenticatedMeusPedidosRouteImport.update({
     id: '/meus-pedidos',
@@ -106,6 +113,11 @@ const ProdutoSlugRoute = ProdutoSlugRouteImport.update({
   id: '/produto/$slug',
   path: '/produto/$slug',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthenticatedAdminRouteRoute,
 } as any)
 const ApiPublicMidiaSplatRoute = ApiPublicMidiaSplatRouteImport.update({
   id: '/api/public/midia/$',
@@ -126,9 +138,11 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/sobre': typeof SobreRoute
   '/trocas-e-devolucoes': typeof TrocasEDevolucoesRoute
+  '/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/meus-pedidos': typeof AuthenticatedMeusPedidosRoute
   '/categoria/$slug': typeof CategoriaSlugRoute
   '/produto/$slug': typeof ProdutoSlugRoute
+  '/admin/': typeof AuthenticatedAdminIndexRoute
   '/api/public/midia/$': typeof ApiPublicMidiaSplatRoute
 }
 export interface FileRoutesByTo {
@@ -147,6 +161,7 @@ export interface FileRoutesByTo {
   '/meus-pedidos': typeof AuthenticatedMeusPedidosRoute
   '/categoria/$slug': typeof CategoriaSlugRoute
   '/produto/$slug': typeof ProdutoSlugRoute
+  '/admin': typeof AuthenticatedAdminIndexRoute
   '/api/public/midia/$': typeof ApiPublicMidiaSplatRoute
 }
 export interface FileRoutesById {
@@ -164,9 +179,11 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/sobre': typeof SobreRoute
   '/trocas-e-devolucoes': typeof TrocasEDevolucoesRoute
+  '/_authenticated/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/_authenticated/meus-pedidos': typeof AuthenticatedMeusPedidosRoute
   '/categoria/$slug': typeof CategoriaSlugRoute
   '/produto/$slug': typeof ProdutoSlugRoute
+  '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/api/public/midia/$': typeof ApiPublicMidiaSplatRoute
 }
 export interface FileRouteTypes {
@@ -184,9 +201,11 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/sobre'
     | '/trocas-e-devolucoes'
+    | '/admin'
     | '/meus-pedidos'
     | '/categoria/$slug'
     | '/produto/$slug'
+    | '/admin/'
     | '/api/public/midia/$'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -205,6 +224,7 @@ export interface FileRouteTypes {
     | '/meus-pedidos'
     | '/categoria/$slug'
     | '/produto/$slug'
+    | '/admin'
     | '/api/public/midia/$'
   id:
     | '__root__'
@@ -221,9 +241,11 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/sobre'
     | '/trocas-e-devolucoes'
+    | '/_authenticated/admin'
     | '/_authenticated/meus-pedidos'
     | '/categoria/$slug'
     | '/produto/$slug'
+    | '/_authenticated/admin/'
     | '/api/public/midia/$'
   fileRoutesById: FileRoutesById
 }
@@ -339,6 +361,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TrocasEDevolucoesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/admin': {
+      id: '/_authenticated/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AuthenticatedAdminRouteRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/meus-pedidos': {
       id: '/_authenticated/meus-pedidos'
       path: '/meus-pedidos'
@@ -360,6 +389,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProdutoSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/admin/': {
+      id: '/_authenticated/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
     '/api/public/midia/$': {
       id: '/api/public/midia/$'
       path: '/api/public/midia/$'
@@ -370,11 +406,27 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthenticatedAdminRouteRouteChildren {
+  AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
+}
+
+const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren =
+  {
+    AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
+  }
+
+const AuthenticatedAdminRouteRouteWithChildren =
+  AuthenticatedAdminRouteRoute._addFileChildren(
+    AuthenticatedAdminRouteRouteChildren,
+  )
+
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAdminRouteRoute: typeof AuthenticatedAdminRouteRouteWithChildren
   AuthenticatedMeusPedidosRoute: typeof AuthenticatedMeusPedidosRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAdminRouteRoute: AuthenticatedAdminRouteRouteWithChildren,
   AuthenticatedMeusPedidosRoute: AuthenticatedMeusPedidosRoute,
 }
 
