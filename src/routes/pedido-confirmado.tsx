@@ -54,7 +54,19 @@ function Confirmado() {
       </div>
       <section className="mt-10 rounded-2xl border bg-card p-5">
         <h2 className="font-sans text-lg font-bold tracking-normal">Resumo enviado</h2>
-        <pre className="mt-3 whitespace-pre-wrap break-words font-sans text-[15px] leading-relaxed">{p.mensagem}</pre>
+        <div className="mt-3 space-y-0.5 break-words text-[15px] leading-relaxed">
+          {p.mensagem.split("\n").map((line, i) =>
+            line.trim() === "" ? (
+              <div key={i} className="h-3" />
+            ) : (
+              <p key={i}>
+                {line.split(/(\*[^*]+\*)/g).map((part, j) =>
+                  part.startsWith("*") && part.endsWith("*") && part.length > 2 ? <strong key={j}>{part.slice(1, -1)}</strong> : part,
+                )}
+              </p>
+            ),
+          )}
+        </div>
       </section>
     </div>
   );

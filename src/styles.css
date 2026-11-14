@@ -197,3 +197,31 @@
   text-transform: uppercase;
   color: var(--gold-ink);
 }
+
+/* Third-party sign-in buttons follow the providers' own branding colors. */
+@layer components {
+  .btn-provider {
+    display: inline-flex;
+    width: 100%;
+    min-height: 3rem;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    border-radius: 0.75rem;
+    padding: 0 12px;
+    font-family: "Google Sans", var(--font-sans);
+    font-weight: 600;
+    font-size: 15px;
+    border: 1px solid #747775;
+    background: #ffffff;
+    color: #1f1f1f;
+    transition: filter 0.15s;
+  }
+  .btn-provider:hover { filter: brightness(0.97); }
+  .btn-provider:disabled { opacity: 0.6; }
+  .dark .btn-provider {
+    background: #131314;
+    border-color: #8e918f;
+    color: #e3e3e3;
+  }
+}
