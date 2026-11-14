@@ -10,6 +10,8 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AuthRouteImport } from './routes/auth'
 import { Route as CarrinhoRouteImport } from './routes/carrinho'
 import { Route as ComoComprarRouteImport } from './routes/como-comprar'
 import { Route as FaqRouteImport } from './routes/faq'
@@ -20,6 +22,7 @@ import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as SobreRouteImport } from './routes/sobre'
 import { Route as TrocasEDevolucoesRouteImport } from './routes/trocas-e-devolucoes'
+import { Route as AuthenticatedMeusPedidosRouteImport } from './routes/_authenticated/meus-pedidos'
 import { Route as CategoriaSlugRouteImport } from './routes/categoria/$slug'
 import { Route as ProdutoSlugRouteImport } from './routes/produto/$slug'
 import { Route as ApiPublicMidiaSplatRouteImport } from './routes/api/public/midia.$'
@@ -27,6 +30,15 @@ import { Route as ApiPublicMidiaSplatRouteImport } from './routes/api/public/mid
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CarrinhoRoute = CarrinhoRouteImport.update({
@@ -79,6 +91,12 @@ const TrocasEDevolucoesRoute = TrocasEDevolucoesRouteImport.update({
   path: '/trocas-e-devolucoes',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedMeusPedidosRoute =
+  AuthenticatedMeusPedidosRouteImport.update({
+    id: '/meus-pedidos',
+    path: '/meus-pedidos',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const CategoriaSlugRoute = CategoriaSlugRouteImport.update({
   id: '/categoria/$slug',
   path: '/categoria/$slug',
@@ -97,6 +115,7 @@ const ApiPublicMidiaSplatRoute = ApiPublicMidiaSplatRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
   '/carrinho': typeof CarrinhoRoute
   '/como-comprar': typeof ComoComprarRoute
   '/faq': typeof FaqRoute
@@ -107,12 +126,14 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/sobre': typeof SobreRoute
   '/trocas-e-devolucoes': typeof TrocasEDevolucoesRoute
+  '/meus-pedidos': typeof AuthenticatedMeusPedidosRoute
   '/categoria/$slug': typeof CategoriaSlugRoute
   '/produto/$slug': typeof ProdutoSlugRoute
   '/api/public/midia/$': typeof ApiPublicMidiaSplatRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
   '/carrinho': typeof CarrinhoRoute
   '/como-comprar': typeof ComoComprarRoute
   '/faq': typeof FaqRoute
@@ -123,6 +144,7 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/sobre': typeof SobreRoute
   '/trocas-e-devolucoes': typeof TrocasEDevolucoesRoute
+  '/meus-pedidos': typeof AuthenticatedMeusPedidosRoute
   '/categoria/$slug': typeof CategoriaSlugRoute
   '/produto/$slug': typeof ProdutoSlugRoute
   '/api/public/midia/$': typeof ApiPublicMidiaSplatRoute
@@ -130,6 +152,8 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/auth': typeof AuthRoute
   '/carrinho': typeof CarrinhoRoute
   '/como-comprar': typeof ComoComprarRoute
   '/faq': typeof FaqRoute
@@ -140,6 +164,7 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/sobre': typeof SobreRoute
   '/trocas-e-devolucoes': typeof TrocasEDevolucoesRoute
+  '/_authenticated/meus-pedidos': typeof AuthenticatedMeusPedidosRoute
   '/categoria/$slug': typeof CategoriaSlugRoute
   '/produto/$slug': typeof ProdutoSlugRoute
   '/api/public/midia/$': typeof ApiPublicMidiaSplatRoute
@@ -148,6 +173,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/auth'
     | '/carrinho'
     | '/como-comprar'
     | '/faq'
@@ -158,12 +184,14 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/sobre'
     | '/trocas-e-devolucoes'
+    | '/meus-pedidos'
     | '/categoria/$slug'
     | '/produto/$slug'
     | '/api/public/midia/$'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/auth'
     | '/carrinho'
     | '/como-comprar'
     | '/faq'
@@ -174,12 +202,15 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/sobre'
     | '/trocas-e-devolucoes'
+    | '/meus-pedidos'
     | '/categoria/$slug'
     | '/produto/$slug'
     | '/api/public/midia/$'
   id:
     | '__root__'
     | '/'
+    | '/_authenticated'
+    | '/auth'
     | '/carrinho'
     | '/como-comprar'
     | '/faq'
@@ -190,6 +221,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/sobre'
     | '/trocas-e-devolucoes'
+    | '/_authenticated/meus-pedidos'
     | '/categoria/$slug'
     | '/produto/$slug'
     | '/api/public/midia/$'
@@ -197,6 +229,8 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AuthRoute: typeof AuthRoute
   CarrinhoRoute: typeof CarrinhoRoute
   ComoComprarRoute: typeof ComoComprarRoute
   FaqRoute: typeof FaqRoute
@@ -219,6 +253,20 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/carrinho': {
@@ -291,6 +339,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TrocasEDevolucoesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/meus-pedidos': {
+      id: '/_authenticated/meus-pedidos'
+      path: '/meus-pedidos'
+      fullPath: '/meus-pedidos'
+      preLoaderRoute: typeof AuthenticatedMeusPedidosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/categoria/$slug': {
       id: '/categoria/$slug'
       path: '/categoria/$slug'
@@ -315,8 +370,21 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedMeusPedidosRoute: typeof AuthenticatedMeusPedidosRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedMeusPedidosRoute: AuthenticatedMeusPedidosRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AuthRoute: AuthRoute,
   CarrinhoRoute: CarrinhoRoute,
   ComoComprarRoute: ComoComprarRoute,
   FaqRoute: FaqRoute,
