@@ -27,6 +27,7 @@ import { Route as AuthenticatedMeusPedidosRouteImport } from './routes/_authenti
 import { Route as CategoriaSlugRouteImport } from './routes/categoria/$slug'
 import { Route as ProdutoSlugRouteImport } from './routes/produto/$slug'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
+import { Route as AuthenticatedAdminCategoriasRouteImport } from './routes/_authenticated/admin/categorias'
 import { Route as ApiPublicMidiaSplatRouteImport } from './routes/api/public/midia.$'
 
 const IndexRoute = IndexRouteImport.update({
@@ -119,6 +120,12 @@ const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedAdminRouteRoute,
 } as any)
+const AuthenticatedAdminCategoriasRoute =
+  AuthenticatedAdminCategoriasRouteImport.update({
+    id: '/categorias',
+    path: '/categorias',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
 const ApiPublicMidiaSplatRoute = ApiPublicMidiaSplatRouteImport.update({
   id: '/api/public/midia/$',
   path: '/api/public/midia/$',
@@ -142,6 +149,7 @@ export interface FileRoutesByFullPath {
   '/meus-pedidos': typeof AuthenticatedMeusPedidosRoute
   '/categoria/$slug': typeof CategoriaSlugRoute
   '/produto/$slug': typeof ProdutoSlugRoute
+  '/admin/categorias': typeof AuthenticatedAdminCategoriasRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/api/public/midia/$': typeof ApiPublicMidiaSplatRoute
 }
@@ -161,6 +169,7 @@ export interface FileRoutesByTo {
   '/meus-pedidos': typeof AuthenticatedMeusPedidosRoute
   '/categoria/$slug': typeof CategoriaSlugRoute
   '/produto/$slug': typeof ProdutoSlugRoute
+  '/admin/categorias': typeof AuthenticatedAdminCategoriasRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/api/public/midia/$': typeof ApiPublicMidiaSplatRoute
 }
@@ -183,6 +192,7 @@ export interface FileRoutesById {
   '/_authenticated/meus-pedidos': typeof AuthenticatedMeusPedidosRoute
   '/categoria/$slug': typeof CategoriaSlugRoute
   '/produto/$slug': typeof ProdutoSlugRoute
+  '/_authenticated/admin/categorias': typeof AuthenticatedAdminCategoriasRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/api/public/midia/$': typeof ApiPublicMidiaSplatRoute
 }
@@ -205,6 +215,7 @@ export interface FileRouteTypes {
     | '/meus-pedidos'
     | '/categoria/$slug'
     | '/produto/$slug'
+    | '/admin/categorias'
     | '/admin/'
     | '/api/public/midia/$'
   fileRoutesByTo: FileRoutesByTo
@@ -224,6 +235,7 @@ export interface FileRouteTypes {
     | '/meus-pedidos'
     | '/categoria/$slug'
     | '/produto/$slug'
+    | '/admin/categorias'
     | '/admin'
     | '/api/public/midia/$'
   id:
@@ -245,6 +257,7 @@ export interface FileRouteTypes {
     | '/_authenticated/meus-pedidos'
     | '/categoria/$slug'
     | '/produto/$slug'
+    | '/_authenticated/admin/categorias'
     | '/_authenticated/admin/'
     | '/api/public/midia/$'
   fileRoutesById: FileRoutesById
@@ -396,6 +409,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
       parentRoute: typeof AuthenticatedAdminRouteRoute
     }
+    '/_authenticated/admin/categorias': {
+      id: '/_authenticated/admin/categorias'
+      path: '/categorias'
+      fullPath: '/admin/categorias'
+      preLoaderRoute: typeof AuthenticatedAdminCategoriasRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
     '/api/public/midia/$': {
       id: '/api/public/midia/$'
       path: '/api/public/midia/$'
@@ -407,11 +427,13 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedAdminRouteRouteChildren {
+  AuthenticatedAdminCategoriasRoute: typeof AuthenticatedAdminCategoriasRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
 }
 
 const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren =
   {
+    AuthenticatedAdminCategoriasRoute: AuthenticatedAdminCategoriasRoute,
     AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
   }
 
