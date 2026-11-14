@@ -54,8 +54,8 @@ function Field({
 }: {
   id: string;
   label: string;
-  error?: string;
-  className?: string;
+  error?: string | undefined;
+  className?: string | undefined;
   children: React.ReactNode;
 }) {
   return (
@@ -103,7 +103,7 @@ function FinalizarPage() {
       setF((cur) => ({
         ...cur,
         email: data?.email || cur.email || user.email || "",
-        nome: data?.nome || cur.nome || (user.user_metadata?.full_name as string) || "",
+        nome: data?.nome || cur.nome || (user.user_metadata?.["full_name"] as string) || "",
         ...(data
           ? {
               whatsapp: maskPhone(data.whatsapp),

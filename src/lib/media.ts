@@ -10,7 +10,7 @@ export function youtubeId(url: string | null | undefined): string | null {
   const m =
     url.match(/(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/) ??
     url.match(/^([A-Za-z0-9_-]{11})$/);
-  return m ? m[1] : null;
+  return m?.[1] ?? null;
 }
 
 export function youtubeThumb(id: string) {

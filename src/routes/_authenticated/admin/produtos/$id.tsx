@@ -28,7 +28,7 @@ function Editar() {
     const { data: files } = await supabase.storage.from("produtos").list(id);
     if (files?.length) await supabase.storage.from("produtos").remove(files.map((f) => `${id}/${f.name}`));
     const { error } = await supabase.from("produtos").delete().eq("id", id);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     toast.success("Produto excluído");
     qc.invalidateQueries({ queryKey: ["admin"] });
     invalidateStore(qc);

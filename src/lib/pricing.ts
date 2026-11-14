@@ -36,7 +36,7 @@ export function precoNaFaixa(faixas: FaixaPreco[], faixa: number): number {
     .filter((f) => Number.isFinite(Number(f.preco_peca)))
     .sort((a, b) => a.quantidade_minima - b.quantidade_minima);
   if (sorted.length === 0) return 0;
-  let chosen = sorted[0];
+  let chosen = sorted[0]!;
   for (const f of sorted) if (f.quantidade_minima <= faixa) chosen = f;
   return Number(chosen.preco_peca);
 }

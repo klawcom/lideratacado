@@ -63,14 +63,14 @@ export function ProductForm({ produto }: { produto?: ProdutoEdit }) {
     const nome = f.nome.trim();
     const codigo = f.codigo_modelo.trim();
     const slug = slugify(f.slug || `${nome}`);
-    if (!nome || !codigo || !slug) return toast.error("Preencha nome, código do modelo e slug.");
+    if (!nome || !codigo || !slug) { toast.error("Preencha nome, código do modelo e slug."); return; }
     const faixas: { quantidade_minima: number; preco_peca: number }[] = [];
     for (const q of FAIXAS) {
       const v = parsePreco(precos[q] ?? "");
-      if (precos[q]?.trim() && v === null) return toast.error(`Preço inválido na faixa de ${q} peças.`);
+      if (precos[q]?.trim() && v === null) { toast.error(`Preço inválido na faixa de ${q} peças.`); return; }
       if (v !== null) faixas.push({ quantidade_minima: q, preco_peca: v });
     }
-    if (!faixas.length) return toast.error("Informe ao menos um preço por peça.");
+    if (!faixas.length) { toast.error("Informe ao menos um preço por peça."); return; }
     setSaving(true);
     const payload = {
       nome,
@@ -89,7 +89,7 @@ export function ProductForm({ produto }: { produto?: ProdutoEdit }) {
       : await supabase.from("produtos").insert(payload).select("id").single();
     if (res.error) {
       setSaving(false);
-      return toast.error(res.error.code === "23505" ? "Código do modelo ou slug já usado por outro produto." : res.error.message);
+      { toast.error(res.error.code === "23505" ? "Código do modelo ou slug já usado por outro produto." : res.error.message); return; }
     }
     const id = res.data.id;
     const definidas = faixas.map((x) => x.quantidade_minima);
@@ -97,7 +97,7 @@ export function ProductForm({ produto }: { produto?: ProdutoEdit }) {
     const apagar = FAIXAS.filter((q) => !definidas.includes(q));
     if (apagar.length) await supabase.from("faixas_preco").delete().eq("produto_id", id).in("quantidade_minima", apagar);
     setSaving(false);
-    if (e1) return toast.error(e1.message);
+    if (e1) { toast.error(e1.message); return; }
     toast.success("Produto salvo");
     qc.invalidateQueries({ queryKey: ["admin"] });
     invalidateStore(qc);

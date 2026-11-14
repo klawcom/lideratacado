@@ -87,10 +87,10 @@ export function MediaManager({ produtoId }: { produtoId: string }) {
 
   async function addYoutube() {
     const id = youtubeId(yt);
-    if (!id) return toast.error("Link do YouTube inválido.");
+    if (!id) { toast.error("Link do YouTube inválido."); return; }
     const ordem = midias.reduce((m, x) => Math.max(m, x.ordem), -1) + 1;
     const { error } = await supabase.from("produto_midias").insert({ produto_id: produtoId, tipo: "video", video_externo: `https://www.youtube.com/watch?v=${id}`, ordem, principal: false });
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     setYt("");
     refresh();
   }
@@ -99,7 +99,7 @@ export function MediaManager({ produtoId }: { produtoId: string }) {
     const list = [...midias];
     const j = i + dir;
     if (j < 0 || j >= list.length) return;
-    [list[i], list[j]] = [list[j], list[i]];
+    [list[i], list[j]] = [list[j]!, list[i]!];
     await Promise.all(list.map((m, n) => supabase.from("produto_midias").update({ ordem: n }).eq("id", m.id)));
     refresh();
   }
@@ -115,7 +115,7 @@ export function MediaManager({ produtoId }: { produtoId: string }) {
     const paths = [m.url, m.capa_url].filter(isStoragePath) as string[];
     if (paths.length) await supabase.storage.from("produtos").remove(paths);
     const { error } = await supabase.from("produto_midias").delete().eq("id", m.id);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     refresh();
   }
 

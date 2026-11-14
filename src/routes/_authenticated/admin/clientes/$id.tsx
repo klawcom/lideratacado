@@ -59,7 +59,7 @@ function Cliente() {
         estado: f.estado ?? "",
       })
       .eq("id", id);
-    if (error) return toast.error(error.code === "23505" ? "Já existe outro cliente com esse e-mail." : error.message);
+    if (error) { toast.error(error.code === "23505" ? "Já existe outro cliente com esse e-mail." : error.message); return; }
     toast.success("Cliente salvo");
     qc.invalidateQueries({ queryKey: ["admin"] });
   }

@@ -65,8 +65,8 @@ function Config() {
     e.preventDefault();
     if (!f) return;
     const wa = onlyDigits(f.whatsapp);
-    if (wa.length < 10) return toast.error("WhatsApp da loja inválido.");
-    if (!/^#[0-9a-fA-F]{6}$/.test(f.cor_destaque)) return toast.error("Cor inválida.");
+    if (wa.length < 10) { toast.error("WhatsApp da loja inválido."); return; }
+    if (!/^#[0-9a-fA-F]{6}$/.test(f.cor_destaque)) { toast.error("Cor inválida."); return; }
     setSaving(true);
     const { id: _id, updated_at: _u, ...rest } = f;
     const { error } = await supabase
@@ -74,7 +74,7 @@ function Config() {
       .update({ ...rest, whatsapp: wa.startsWith("55") && wa.length >= 12 ? wa : `55${wa}`, pedido_minimo: Math.max(1, Number(f.pedido_minimo) || 10) })
       .eq("id", 1);
     setSaving(false);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     toast.success("Configurações salvas");
     qc.invalidateQueries({ queryKey: ["admin", "config"] });
     invalidateStore(qc);

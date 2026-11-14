@@ -1,4 +1,4 @@
-export function seo(o: { title: string; description: string; origin?: string; path?: string; image?: string; type?: string }) {
+export function seo(o: { title: string; description: string; origin?: string | undefined; path?: string | undefined; image?: string | undefined; type?: string | undefined }) {
   const img = o.image ? (o.image.startsWith("http") ? o.image : o.origin ? `${o.origin}${o.image}` : "") : o.origin ? `${o.origin}/og-image.jpg` : "";
   const meta: Record<string, string>[] = [
     { title: o.title },

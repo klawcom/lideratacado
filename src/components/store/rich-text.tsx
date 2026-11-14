@@ -5,10 +5,11 @@ export function RichText({ text }: { text: string }) {
     <div className="space-y-4 text-[17px] leading-relaxed">
       {blocks.map((b, i) => {
         const lines = b.split("\n");
-        if (lines[0].startsWith("## ")) {
+        const first = lines[0] ?? "";
+        if (first.startsWith("## ")) {
           return (
             <div key={i} className="space-y-1.5 pt-2">
-              <h2 className="text-xl font-bold">{lines[0].slice(3)}</h2>
+              <h2 className="text-xl font-bold">{first.slice(3)}</h2>
               {lines.slice(1).length > 0 && <p className="whitespace-pre-line text-muted-foreground">{lines.slice(1).join("\n")}</p>}
             </div>
           );

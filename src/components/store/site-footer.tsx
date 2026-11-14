@@ -53,6 +53,8 @@ export function SiteFooter() {
               ["/trocas-e-devolucoes", "Trocas e devoluções"],
               ["/privacidade", "Política de privacidade"],
             ].map(([to, label]) => (
+              // eslint-disable-next-line
+
               <li key={to}>
                 <Link to={to} className="inline-flex min-h-11 items-center text-muted-foreground hover:text-foreground">
                   {label}
