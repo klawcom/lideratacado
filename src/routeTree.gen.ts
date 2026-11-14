@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as CategoriaSlugRouteImport } from './routes/categoria/$slug'
 import { Route as ApiPublicMidiaSplatRouteImport } from './routes/api/public/midia.$'
 
 const IndexRoute = IndexRouteImport.update({
@@ -29,6 +30,11 @@ const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CategoriaSlugRoute = CategoriaSlugRouteImport.update({
+  id: '/categoria/$slug',
+  path: '/categoria/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicMidiaSplatRoute = ApiPublicMidiaSplatRouteImport.update({
   id: '/api/public/midia/$',
   path: '/api/public/midia/$',
@@ -39,12 +45,14 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/categoria/$slug': typeof CategoriaSlugRoute
   '/api/public/midia/$': typeof ApiPublicMidiaSplatRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/categoria/$slug': typeof CategoriaSlugRoute
   '/api/public/midia/$': typeof ApiPublicMidiaSplatRoute
 }
 export interface FileRoutesById {
@@ -52,20 +60,38 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/categoria/$slug': typeof CategoriaSlugRoute
   '/api/public/midia/$': typeof ApiPublicMidiaSplatRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/robots.txt' | '/sitemap.xml' | '/api/public/midia/$'
+  fullPaths:
+    | '/'
+    | '/robots.txt'
+    | '/sitemap.xml'
+    | '/categoria/$slug'
+    | '/api/public/midia/$'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/robots.txt' | '/sitemap.xml' | '/api/public/midia/$'
-  id: '__root__' | '/' | '/robots.txt' | '/sitemap.xml' | '/api/public/midia/$'
+  to:
+    | '/'
+    | '/robots.txt'
+    | '/sitemap.xml'
+    | '/categoria/$slug'
+    | '/api/public/midia/$'
+  id:
+    | '__root__'
+    | '/'
+    | '/robots.txt'
+    | '/sitemap.xml'
+    | '/categoria/$slug'
+    | '/api/public/midia/$'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   RobotsDottxtRoute: typeof RobotsDottxtRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  CategoriaSlugRoute: typeof CategoriaSlugRoute
   ApiPublicMidiaSplatRoute: typeof ApiPublicMidiaSplatRoute
 }
 
@@ -92,6 +118,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/categoria/$slug': {
+      id: '/categoria/$slug'
+      path: '/categoria/$slug'
+      fullPath: '/categoria/$slug'
+      preLoaderRoute: typeof CategoriaSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/midia/$': {
       id: '/api/public/midia/$'
       path: '/api/public/midia/$'
@@ -106,6 +139,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   RobotsDottxtRoute: RobotsDottxtRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  CategoriaSlugRoute: CategoriaSlugRoute,
   ApiPublicMidiaSplatRoute: ApiPublicMidiaSplatRoute,
 }
 export const routeTree = rootRouteImport
