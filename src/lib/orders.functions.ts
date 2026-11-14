@@ -3,7 +3,7 @@ import { getRequest } from "@tanstack/react-start/server";
 import { z } from "zod";
 import { calcularPedido } from "./pricing";
 import { linkWhatsapp, montarMensagemPedido } from "./whatsapp-message";
-import { onlyDigits } from "./format";
+import { faltamPecas, onlyDigits } from "./format";
 
 const qtd = z.number().int().min(0).max(100000);
 
@@ -59,7 +59,7 @@ export type PedidoCriado = {
 };
 
 export const criarPedido = createServerFn({ method: "POST" })
-  .inputValidator((d: PedidoInput) => pedidoSchema.parse(d))
+  .validator((d: PedidoInput) => pedidoSchema.parse(d))
   .handler(async ({ data }): Promise<PedidoCriado> => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const db = supabaseAdmin;
@@ -113,7 +113,7 @@ export const criarPedido = createServerFn({ method: "POST" })
       pedidoMinimo,
     );
     if (!resumo.podeFinalizar) {
-      throw new Error(`O pedido mínimo é de ${pedidoMinimo} peças. Faltam ${resumo.faltamMinimo} peças.`);
+      throw new Error(`O pedido mínimo é de ${pedidoMinimo} peças. ${faltamPecas(resumo.faltamMinimo)}.`);
     }
 
     const c = data.cliente;

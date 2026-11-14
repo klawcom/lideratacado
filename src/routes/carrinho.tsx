@@ -9,7 +9,7 @@ import { QtyStepper } from "@/components/store/qty-stepper";
 import { StickyBar } from "@/components/store/sticky-bar";
 import { cart, useCart, type CartItem } from "@/lib/cart";
 import { calcularPedido, TAMANHOS } from "@/lib/pricing";
-import { brl, money } from "@/lib/format";
+import { brl, faltamPecas, money } from "@/lib/format";
 import { siteQuery } from "@/lib/catalog.functions";
 import { tamanhosLinha } from "@/lib/whatsapp-message";
 import { seo } from "@/lib/seo";
@@ -59,13 +59,13 @@ function CarrinhoPage() {
       <div className="mt-4 space-y-2">
         {resumo.faltamMinimo > 0 && (
           <p className="rounded-2xl bg-destructive/10 p-4 font-medium text-destructive">
-            Faltam {resumo.faltamMinimo} peças para o pedido mínimo de {minimo} peças.
+            {faltamPecas(resumo.faltamMinimo)} para o pedido mínimo de {minimo} peças.
           </p>
         )}
         {resumo.proxima && resumo.faltamMinimo === 0 && (
           <p className="flex gap-2 rounded-2xl bg-accent p-4 font-medium text-accent-foreground">
             <TrendingDown className="mt-0.5 size-5 shrink-0" />
-            Faltam {resumo.proxima.faltam} peças para a faixa de {resumo.proxima.faixa} peças, com preço menor em todos os itens.
+            {faltamPecas(resumo.proxima.faltam)} para a faixa de {resumo.proxima.faixa} peças, com preço menor em todos os itens.
           </p>
         )}
         {indisponiveis.length > 0 && (
@@ -96,7 +96,7 @@ function CarrinhoPage() {
               {it.observacao && <p className="mt-2 rounded-xl bg-muted px-3 py-2 text-sm">📝 {it.observacao}</p>}
               {it.precoProxima !== null && it.precoProxima < it.preco && resumo.proxima && (
                 <p className="mt-2 text-sm font-medium text-gold-ink">
-                  Faltam {resumo.proxima.faltam} peças para o preço de R$ {money(it.precoProxima)} por peça
+                  {faltamPecas(resumo.proxima.faltam)} para o preço de R$ {money(it.precoProxima)} por peça
                 </p>
               )}
 
@@ -143,7 +143,7 @@ function CarrinhoPage() {
         <div className="min-w-0 flex-1 leading-tight">
           <p className="text-lg font-bold tabular-nums">{brl(resumo.total)}</p>
           <p className="truncate text-sm text-muted-foreground">
-            {resumo.faltamMinimo > 0 ? `Faltam ${resumo.faltamMinimo} peças` : `${resumo.totalPecas} peças`}
+            {resumo.faltamMinimo > 0 ? faltamPecas(resumo.faltamMinimo) : `${resumo.totalPecas} peças`}
           </p>
         </div>
         <Button

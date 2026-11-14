@@ -84,3 +84,8 @@ export function formatDateTime(iso: string | Date, timeZone = "America/Cuiaba") 
   }).format(d);
   return { data, hora };
 }
+
+/** "Falta 1 peça" / "Faltam 5 peças" */
+export function faltamPecas(n: number): string {
+  return n === 1 ? "Falta 1 peça" : `Faltam ${n} peças`;
+}
