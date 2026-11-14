@@ -30,3 +30,15 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Project specific ignores
+COTTON PIMA
+COTTON PIMA/
+_otimizado
+_otimizado/
+_importacao
+_importacao/
+.env
+.env.*
+!.env.example
+
