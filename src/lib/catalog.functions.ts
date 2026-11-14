@@ -76,7 +76,7 @@ export const getHome = createServerFn({ method: "GET" }).handler(async () => {
 export const homeQuery = () => queryOptions({ queryKey: ["home"], queryFn: () => getHome() });
 
 export const getCategoria = createServerFn({ method: "GET" })
-  .inputValidator((d: { slug: string }) => z.object({ slug: z.string().min(1).max(200) }).parse(d))
+  .validator((d: { slug: string }) => z.object({ slug: z.string().min(1).max(200) }).parse(d))
   .handler(async ({ data }) => {
     const { publicDb } = await import("./public-db.server");
     const db = publicDb();
@@ -94,7 +94,7 @@ export const categoriaQuery = (slug: string) =>
   queryOptions({ queryKey: ["categoria", slug], queryFn: () => getCategoria({ data: { slug } }) });
 
 export const getProduto = createServerFn({ method: "GET" })
-  .inputValidator((d: { slug: string }) => z.object({ slug: z.string().min(1).max(200) }).parse(d))
+  .validator((d: { slug: string }) => z.object({ slug: z.string().min(1).max(200) }).parse(d))
   .handler(async ({ data }) => {
     const { publicDb } = await import("./public-db.server");
     const db = publicDb();
@@ -113,7 +113,7 @@ export const produtoQuery = (slug: string) =>
 
 /** Fresh names/prices for products already in the cart. */
 export const getProdutosPorIds = createServerFn({ method: "POST" })
-  .inputValidator((d: { ids: string[] }) => z.object({ ids: z.array(z.string().uuid()).max(100) }).parse(d))
+  .validator((d: { ids: string[] }) => z.object({ ids: z.array(z.string().uuid()).max(100) }).parse(d))
   .handler(async ({ data }) => {
     if (data.ids.length === 0) return [];
     const { publicDb } = await import("./public-db.server");

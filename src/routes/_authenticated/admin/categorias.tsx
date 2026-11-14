@@ -38,14 +38,14 @@ function Categorias() {
     const list = [...data];
     const j = i + dir;
     if (j < 0 || j >= list.length) return;
-    [list[i], list[j]] = [list[j], list[i]];
+    [list[i], list[j]] = [list[j]!, list[i]!];
     await Promise.all(list.map((c, n) => supabase.from("categorias").update({ ordem: n + 1 }).eq("id", c.id)));
     refresh();
   }
 
   async function toggle(c: Cat, ativa: boolean) {
     const { error } = await supabase.from("categorias").update({ ativa }).eq("id", c.id);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     refresh();
   }
 
@@ -120,14 +120,14 @@ function CategoriaDialog({ value, total, onClose, onSaved }: { value: Partial<Ca
     e.preventDefault();
     const nome = (form.nome ?? "").trim();
     const slug = slugify(form.slug || nome);
-    if (!nome || !slug) return toast.error("Informe o nome.");
+    if (!nome || !slug) { toast.error("Informe o nome."); return; }
     setSaving(true);
     const payload = { nome, slug, descricao: form.descricao ?? "", ativa: form.ativa ?? true };
     const { error } = form.id
       ? await supabase.from("categorias").update(payload).eq("id", form.id)
       : await supabase.from("categorias").insert({ ...payload, ordem: total + 1 });
     setSaving(false);
-    if (error) return toast.error(error.code === "23505" ? "Já existe uma categoria com esse endereço (slug)." : error.message);
+    if (error) { toast.error(error.code === "23505" ? "Já existe uma categoria com esse endereço (slug)." : error.message); return; }
     toast.success("Categoria salva");
     onSaved();
   }

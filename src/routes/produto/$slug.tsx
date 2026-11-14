@@ -205,7 +205,7 @@ function ProdutoPage() {
 
       <StickyBar>
         <div className="min-w-0 flex-1 leading-tight">
-          <p className="font-semibold tabular-nums">{n > 0 ? `${n} ${n === 1 ? "peça" : "peças"}` : "Escolha os tamanhos"}</p>
+          <p className="font-semibold tabular-nums">{n > 0 ? `${n} ${n === 1 ? "peça" : "peças"}` : "0 peças"}</p>
           <p className="truncate text-sm text-muted-foreground tabular-nums">
             {n > 0 ? `${brl(precoAtual * n)} · R$ ${money(precoAtual)}/peça` : `${noCarrinho} no pedido`}
           </p>

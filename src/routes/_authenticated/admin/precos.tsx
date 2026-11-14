@@ -58,7 +58,7 @@ function Precos() {
     for (const r of changed) {
       for (const q of FAIXAS) {
         const v = parsePreco(r.precos[q] ?? "");
-        if (r.precos[q]?.trim() && v === null) return toast.error(`${r.nome}: preço inválido na faixa de ${q}.`);
+        if (r.precos[q]?.trim() && v === null) { toast.error(`${r.nome}: preço inválido na faixa de ${q}.`); return; }
         if (v !== null) faixas.push({ produto_id: r.id, quantidade_minima: q, preco_peca: v });
       }
     }
@@ -69,7 +69,7 @@ function Precos() {
     ]);
     setSaving(false);
     const err = results.find((x) => x.error)?.error;
-    if (err) return toast.error(err.message);
+    if (err) { toast.error(err.message); return; }
     toast.success(`${changed.length} ${changed.length === 1 ? "produto atualizado" : "produtos atualizados"}`);
     qc.invalidateQueries({ queryKey: ["admin"] });
     invalidateStore(qc);

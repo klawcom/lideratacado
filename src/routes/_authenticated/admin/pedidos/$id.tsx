@@ -32,13 +32,13 @@ function Pedido() {
 
   async function mudarStatus(status: PedidoStatus) {
     const { error } = await supabase.from("pedidos").update({ status }).eq("id", id);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     toast.success(`Status: ${statusLabel(status)}`);
     qc.invalidateQueries({ queryKey: ["admin"] });
   }
   async function salvarNotas() {
     const { error } = await supabase.from("pedido_notas").upsert({ pedido_id: id, notas, updated_at: new Date().toISOString() });
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     toast.success("Notas salvas");
     qc.invalidateQueries({ queryKey: ["admin", "pedido", id] });
   }

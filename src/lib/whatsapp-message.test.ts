@@ -1,0 +1,47 @@
+import { describe, expect, it } from "vitest";
+import { linkWhatsapp, montarMensagemPedido } from "./whatsapp-message";
+
+const base = {
+  numero: 7,
+  criadoEm: "2026-11-14T20:30:00Z",
+  itens: [
+    { nome: "Camiseta Pima Modelo 01", pecas: 10, preco: 29.9, valor: 299, qtd: { p: 5, m: 5, g: 0, gg: 0 }, observacao: "tons claros" },
+    { nome: "Polo Piquet Modelo 01", pecas: 2, preco: 49.9, valor: 99.8, qtd: { p: 0, m: 0, g: 2, gg: 0 } },
+  ],
+  totalPecas: 12,
+  faixa: 10,
+  total: 398.8,
+  cliente: { nome: "Ana Souza", email: "ana@exemplo.com", whatsapp: "66996444461" },
+  entrega: { rua: "Rua A", numero: "10", complemento: "", bairro: "Centro", cidade: "Sinop", estado: "mt", cep: "78550000" },
+  observacao: "",
+};
+
+describe("mensagem do pedido no WhatsApp", () => {
+  const msg = montarMensagemPedido(base);
+  it("número com 4 dígitos e data/hora", () => {
+    expect(msg).toContain("🛍️ *NOVO PEDIDO #0007*");
+    expect(msg).toContain("📅 14/11/2026 às 16:30");
+  });
+  it("omite tamanhos zerados, observação vazia e complemento vazio", () => {
+    expect(msg).toContain("Tamanhos: P 5 | M 5");
+    expect(msg).toContain("Tamanhos: G 2");
+    expect(msg.match(/📝 Obs\./g)?.length).toBe(1);
+    expect(msg).toContain("📍 Rua A, 10\n");
+    expect(msg).not.toContain("Observação do pedido");
+  });
+  it("formata valores, telefone, UF e CEP", () => {
+    expect(msg).toContain("10 peças (R$ 29,90 por peça)");
+    expect(msg).toContain("*Total dos produtos: R$ 398,80*");
+    expect(msg).toContain("📱 +55 (66) 99644-4461");
+    expect(msg).toContain("Sinop/MT");
+    expect(msg).toContain("CEP 78550-000");
+  });
+  it("inclui observação geral quando preenchida", () => {
+    expect(montarMensagemPedido({ ...base, observacao: "Entregar à tarde" })).toContain("📝 *Observação do pedido:*\nEntregar à tarde");
+  });
+  it("link wa.me mantém emojis e quebras de linha codificados", () => {
+    const url = linkWhatsapp("5566996444461", msg);
+    expect(url.startsWith("https://wa.me/5566996444461?text=")).toBe(true);
+    expect(decodeURIComponent(url.split("text=")[1]!)).toBe(msg);
+  });
+});

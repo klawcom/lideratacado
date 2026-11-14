@@ -13,7 +13,7 @@ export const Route = createFileRoute("/api/public/midia/$")({
         const { data, error } = await supabaseAdmin.storage.from("produtos").createSignedUrl(path, 60 * 60 * 6);
         if (error || !data?.signedUrl) return new Response("Not found", { status: 404 });
         let target = data.signedUrl;
-        const publicBase = (import.meta.env.VITE_SUPABASE_URL as string | undefined)?.replace(/\/+$/, "");
+        const publicBase = (import.meta.env["VITE_SUPABASE_URL"] as string | undefined)?.replace(/\/+$/, "");
         if (publicBase) {
           const u = new URL(target);
           target = publicBase + u.pathname + u.search;

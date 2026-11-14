@@ -28,3 +28,13 @@ use the editor.
   own key and store it in Secrets.
 - **Secrets.** Lovable manages them. Do not put secret values in the repo.
 <!-- LOVABLE:END -->
+
+## Project rules (Líder Atacado)
+
+- Store UI is Portuguese (pt-BR) and mobile-first (360–430 px): touch targets ≥ 44 px, body text ≥ 16 px, fixed bottom action bar on product/cart/checkout.
+- Price tier is decided by the TOTAL pieces of the whole order (`src/lib/pricing.ts`); the same module runs in the browser and in `criarPedido`, which recomputes prices server-side. Keep tests in `src/lib/pricing.test.ts`.
+- WhatsApp order text lives only in `src/lib/whatsapp-message.ts` (tested); orders are saved by the `criarPedido` server function with the admin client, never by direct anonymous inserts.
+- Product media bucket `produtos` is private (workspace blocks public buckets); browsers load files via `/api/public/midia/<path>` which redirects to a signed URL. Store paths in `produto_midias.url`, resolve with `mediaUrl()`.
+- Public catalog reads go through server functions using an anonymous client (`src/lib/public-db.server.ts`) so SSR has data; query cache is shipped to the browser with `setupRouterSsrQueryIntegration`.
+- Admin access = `user_roles` row checked by `is_admin()`/RLS in the database; the admin role is granted by the `handle_auth_user` trigger. Internal order notes live in `pedido_notas` (admin-only) so customers can never read them.
+- Panel edits call `invalidateStore()` so store queries refetch immediately.

@@ -46,13 +46,15 @@ export function SiteFooter() {
         <div>
           <h2 className="mb-3 text-base font-semibold">Institucional</h2>
           <ul className="grid grid-cols-1 gap-x-4">
-            {[
-              ["/sobre", "Sobre"],
-              ["/como-comprar", "Como comprar"],
-              ["/faq", "Dúvidas frequentes"],
-              ["/trocas-e-devolucoes", "Trocas e devoluções"],
-              ["/privacidade", "Política de privacidade"],
-            ].map(([to, label]) => (
+            {(
+              [
+                { to: "/sobre", label: "Sobre" },
+                { to: "/como-comprar", label: "Como comprar" },
+                { to: "/faq", label: "Dúvidas frequentes" },
+                { to: "/trocas-e-devolucoes", label: "Trocas e devoluções" },
+                { to: "/privacidade", label: "Política de privacidade" },
+              ] as const
+            ).map(({ to, label }) => (
               <li key={to}>
                 <Link to={to} className="inline-flex min-h-11 items-center text-muted-foreground hover:text-foreground">
                   {label}

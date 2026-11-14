@@ -65,7 +65,7 @@ export const cart = {
     const list = cart.get();
     const idx = list.findIndex((i) => i.produtoId === item.produtoId);
     if (idx === -1) return save([...list, item]);
-    const cur = list[idx];
+    const cur = list[idx]!;
     const obs = [cur.observacao.trim(), item.observacao.trim()]
       .filter(Boolean)
       .filter((v, i, a) => a.indexOf(v) === i)

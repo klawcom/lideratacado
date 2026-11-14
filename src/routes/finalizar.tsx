@@ -11,7 +11,7 @@ import { StickyBar } from "@/components/store/sticky-bar";
 import { cart, useCart } from "@/lib/cart";
 import { useSyncCart } from "@/lib/use-sync-cart";
 import { calcularPedido } from "@/lib/pricing";
-import { UFS, brl, maskCep, maskPhone, onlyDigits } from "@/lib/format";
+import { UFS, brl, faltamPecas, maskCep, maskPhone, onlyDigits } from "@/lib/format";
 import { siteQuery } from "@/lib/catalog.functions";
 import { criarPedido, pedidoSchema } from "@/lib/orders.functions";
 import { lerDadosEntrega, salvarDadosEntrega, salvarUltimoPedido } from "@/lib/checkout-storage";
@@ -54,8 +54,8 @@ function Field({
 }: {
   id: string;
   label: string;
-  error?: string;
-  className?: string;
+  error?: string | undefined;
+  className?: string | undefined;
   children: React.ReactNode;
 }) {
   return (
@@ -103,7 +103,7 @@ function FinalizarPage() {
       setF((cur) => ({
         ...cur,
         email: data?.email || cur.email || user.email || "",
-        nome: data?.nome || cur.nome || (user.user_metadata?.full_name as string) || "",
+        nome: data?.nome || cur.nome || (user.user_metadata?.["full_name"] as string) || "",
         ...(data
           ? {
               whatsapp: maskPhone(data.whatsapp),
@@ -192,7 +192,7 @@ function FinalizarPage() {
   if (items.length === 0 || !resumo.podeFinalizar) {
     return (
       <div className="container-page py-16 text-center">
-        <h1 className="text-2xl font-bold">{items.length === 0 ? "Seu pedido está vazio" : `Faltam ${resumo.faltamMinimo} peças`}</h1>
+        <h1 className="text-2xl font-bold">{items.length === 0 ? "Seu pedido está vazio" : faltamPecas(resumo.faltamMinimo)}</h1>
         <p className="mt-2 text-muted-foreground">O pedido mínimo é de {minimo} peças no total.</p>
         <Button asChild className="mt-6">
           <Link to={items.length ? "/carrinho" : "/"}>{items.length ? "Voltar ao pedido" : "Ver produtos"}</Link>
