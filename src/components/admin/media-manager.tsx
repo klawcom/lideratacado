@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRef, useState } from "react";
-import { ArrowDown, ArrowUp, Camera, ImagePlus, Loader2, Play, Star, Trash2, Youtube } from "lucide-react";
+import { ArrowDown, ArrowUp, Camera, GripVertical, ImagePlus, Loader2, Play, Star, Trash2, Youtube } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,6 +26,8 @@ export function MediaManager({ produtoId }: { produtoId: string }) {
   });
   const [progress, setProgress] = useState<string | null>(null);
   const [drag, setDrag] = useState(false);
+  const [draggingIdx, setDraggingIdx] = useState<number | null>(null);
+  const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
   const [yt, setYt] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
   const camRef = useRef<HTMLInputElement>(null);
@@ -92,6 +94,16 @@ export function MediaManager({ produtoId }: { produtoId: string }) {
     const { error } = await supabase.from("produto_midias").insert({ produto_id: produtoId, tipo: "video", video_externo: `https://www.youtube.com/watch?v=${id}`, ordem, principal: false });
     if (error) { toast.error(error.message); return; }
     setYt("");
+    refresh();
+  }
+
+  async function reordenar(fromIdx: number, toIdx: number) {
+    if (fromIdx === toIdx) return;
+    const list = [...midias];
+    const [moved] = list.splice(fromIdx, 1);
+    if (!moved) return;
+    list.splice(toIdx, 0, moved);
+    await Promise.all(list.map((m, n) => supabase.from("produto_midias").update({ ordem: n }).eq("id", m.id)));
     refresh();
   }
 
@@ -166,39 +178,85 @@ export function MediaManager({ produtoId }: { produtoId: string }) {
       </div>
 
       {midias.length > 0 && (
-        <ul className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-          {midias.map((m, i) => {
-            const ytId = youtubeId(m.video_externo);
-            const thumb = m.tipo === "foto" ? mediaUrl(m.url) : m.capa_url ? mediaUrl(m.capa_url) : ytId ? youtubeThumb(ytId) : "";
-            return (
-              <li key={m.id} className={cn("overflow-hidden rounded-2xl border bg-background", m.principal && "ring-2 ring-primary")}>
-                <div className="relative aspect-square bg-muted">
-                  {thumb ? <img src={thumb} alt="" loading="lazy" className="h-full w-full object-cover" /> : <video src={mediaUrl(m.url)} preload="metadata" muted className="h-full w-full object-cover" />}
-                  {m.tipo === "video" && (
-                    <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-background/90 px-2 py-0.5 text-xs font-semibold">
-                      <Play className="size-3" /> {ytId ? "YouTube" : "Vídeo"}
-                    </span>
+        <div className="mt-4 space-y-2">
+          <p className="text-xs text-muted-foreground">
+            💡 Dica: Arraste os cards para reorganizar a ordem das fotos e vídeos, ou use as setas.
+          </p>
+          <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+            {midias.map((m, i) => {
+              const ytId = youtubeId(m.video_externo);
+              const thumb = m.tipo === "foto" ? mediaUrl(m.url) : m.capa_url ? mediaUrl(m.capa_url) : ytId ? youtubeThumb(ytId) : "";
+              return (
+                <li
+                  key={m.id}
+                  draggable
+                  onDragStart={(e) => {
+                    setDraggingIdx(i);
+                    e.dataTransfer.effectAllowed = "move";
+                    e.dataTransfer.setData("text/plain", String(i));
+                  }}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = "move";
+                    if (dragOverIdx !== i) setDragOverIdx(i);
+                  }}
+                  onDragLeave={() => {
+                    if (dragOverIdx === i) setDragOverIdx(null);
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    if (draggingIdx !== null && draggingIdx !== i) {
+                      reordenar(draggingIdx, i);
+                    }
+                    setDraggingIdx(null);
+                    setDragOverIdx(null);
+                  }}
+                  onDragEnd={() => {
+                    setDraggingIdx(null);
+                    setDragOverIdx(null);
+                  }}
+                  className={cn(
+                    "overflow-hidden rounded-2xl border bg-background transition-all select-none cursor-grab active:cursor-grabbing",
+                    m.principal && "ring-2 ring-primary",
+                    draggingIdx === i && "opacity-40 scale-95 border-dashed border-primary",
+                    dragOverIdx === i && draggingIdx !== i && "ring-2 ring-primary ring-offset-2 scale-[1.02]"
                   )}
-                  {m.principal && <span className="absolute right-2 top-2 rounded-full bg-primary px-2 py-0.5 text-xs font-bold text-primary-foreground">Principal</span>}
-                </div>
-                <div className="grid grid-cols-4">
-                  <Button type="button" variant="ghost" size="icon" className="w-full rounded-none" aria-label="Mover para trás" disabled={i === 0} onClick={() => mover(i, -1)}>
-                    <ArrowUp className="-rotate-90" />
-                  </Button>
-                  <Button type="button" variant="ghost" size="icon" className="w-full rounded-none" aria-label="Mover para frente" disabled={i === midias.length - 1} onClick={() => mover(i, 1)}>
-                    <ArrowDown className="-rotate-90" />
-                  </Button>
-                  <Button type="button" variant="ghost" size="icon" className="w-full rounded-none" aria-label="Definir como principal" onClick={() => principal(m.id)}>
-                    <Star className={cn(m.principal && "fill-primary text-primary")} />
-                  </Button>
-                  <Button type="button" variant="ghost" size="icon" className="w-full rounded-none text-destructive hover:text-destructive" aria-label="Excluir" onClick={() => excluir(m)}>
-                    <Trash2 />
-                  </Button>
-                </div>
-              </li>
-            );
-          })}
-        </ul>
+                >
+                  <div className="relative aspect-square bg-muted">
+                    {thumb ? (
+                      <img src={thumb} alt="" loading="lazy" className="h-full w-full object-cover pointer-events-none" />
+                    ) : (
+                      <video src={mediaUrl(m.url)} preload="metadata" muted className="h-full w-full object-cover pointer-events-none" />
+                    )}
+                    <span className="absolute left-2 bottom-2 z-10 flex items-center justify-center rounded-md bg-background/80 p-1 text-muted-foreground shadow-xs backdrop-blur-xs">
+                      <GripVertical className="size-4" />
+                    </span>
+                    {m.tipo === "video" && (
+                      <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-background/90 px-2 py-0.5 text-xs font-semibold">
+                        <Play className="size-3" /> {ytId ? "YouTube" : "Vídeo"}
+                      </span>
+                    )}
+                    {m.principal && <span className="absolute right-2 top-2 rounded-full bg-primary px-2 py-0.5 text-xs font-bold text-primary-foreground">Principal</span>}
+                  </div>
+                  <div className="grid grid-cols-4">
+                    <Button type="button" variant="ghost" size="icon" className="w-full rounded-none" aria-label="Mover para trás" disabled={i === 0} onClick={() => mover(i, -1)}>
+                      <ArrowUp className="-rotate-90" />
+                    </Button>
+                    <Button type="button" variant="ghost" size="icon" className="w-full rounded-none" aria-label="Mover para frente" disabled={i === midias.length - 1} onClick={() => mover(i, 1)}>
+                      <ArrowDown className="-rotate-90" />
+                    </Button>
+                    <Button type="button" variant="ghost" size="icon" className="w-full rounded-none" aria-label="Definir como principal" onClick={() => principal(m.id)}>
+                      <Star className={cn(m.principal && "fill-primary text-primary")} />
+                    </Button>
+                    <Button type="button" variant="ghost" size="icon" className="w-full rounded-none text-destructive hover:text-destructive" aria-label="Excluir" onClick={() => excluir(m)}>
+                      <Trash2 />
+                    </Button>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
       )}
     </Panel>
   );

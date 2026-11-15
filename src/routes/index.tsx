@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ProductGrid } from "@/components/store/product-card";
 import { homeQuery, siteQuery } from "@/lib/catalog.functions";
 import { seo, canonical } from "@/lib/seo";
+import { mediaUrl } from "@/lib/media";
 import heroWide from "@/assets/hero-wide.webp";
 import heroMobile from "@/assets/hero-mobile.webp";
 
@@ -41,14 +42,17 @@ function Home() {
   const sub = site.config?.home_subtitulo;
   const primeira = categorias[0];
 
+  const bannerWideSrc = site.banners?.wide ? mediaUrl(site.banners.wide) : heroWide;
+  const bannerMobileSrc = site.banners?.mobile ? mediaUrl(site.banners.mobile) : heroMobile;
+
   return (
     <>
       <section className="container-page pt-4 md:pt-8">
-        <div className="relative overflow-hidden rounded-3xl bg-muted">
+        <div className="relative overflow-hidden rounded-3xl border border-border/50 bg-muted">
           <picture>
-            <source media="(min-width: 768px)" srcSet={heroWide} />
+            <source media="(min-width: 768px)" srcSet={bannerWideSrc} />
             <img
-              src={heroMobile}
+              src={bannerMobileSrc}
               alt="Pilhas de camisetas básicas e camisas polo lisas em cores neutras"
               width={900}
               height={691}
@@ -56,11 +60,11 @@ function Home() {
               className="aspect-[4/3] w-full object-cover md:aspect-[16/7]"
             />
           </picture>
-          <div className="md:absolute md:inset-y-0 md:left-0 md:flex md:w-1/2 md:items-center">
-            <div className="space-y-4 p-6 md:p-12">
-              <p className="eyebrow">Atacado · Pedido pelo WhatsApp</p>
-              <h1 className="text-[1.9rem] font-extrabold leading-[1.1] text-balance md:text-5xl md:text-foreground">{titulo}</h1>
-              {sub && <p className="max-w-md text-muted-foreground">{sub}</p>}
+          <div className="md:absolute md:inset-y-0 md:left-0 md:flex md:w-3/5 lg:w-1/2 md:items-center md:bg-gradient-to-r md:from-background/95 md:via-background/85 md:to-transparent">
+            <div className="space-y-4 p-6 bg-card md:bg-transparent md:p-12">
+              <p className="eyebrow drop-shadow-xs">Atacado · Pedido pelo WhatsApp</p>
+              <h1 className="text-[1.9rem] font-extrabold leading-[1.1] text-balance text-foreground md:text-5xl">{titulo}</h1>
+              {sub && <p className="max-w-md text-[15px] sm:text-base font-medium text-foreground/80 dark:text-foreground/90">{sub}</p>}
               {primeira && (
                 <Button asChild size="lg" className="w-full sm:w-auto">
                   <Link to="/categoria/$slug" params={{ slug: primeira.slug }}>

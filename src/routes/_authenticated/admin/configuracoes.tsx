@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
-import { ArrowDown, ArrowUp, ImagePlus, Loader2, Save } from "lucide-react";
+import { ArrowDown, ArrowUp, ImagePlus, Loader2, RotateCcw, Save } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { normalizeMenuLinks, type MenuLink } from "@/lib/menu-links";
 import { toast } from "sonner";
@@ -14,6 +14,8 @@ import { AdminPage, FieldLabel, Loading, Panel, invalidateStore } from "@/compon
 import { mediaUrl } from "@/lib/media";
 import { resizeToWebp } from "@/lib/image-resize";
 import { maskPhone, onlyDigits } from "@/lib/format";
+import heroWide from "@/assets/hero-wide.webp";
+import heroMobile from "@/assets/hero-mobile.webp";
 
 export const Route = createFileRoute("/_authenticated/admin/configuracoes")({ component: Config });
 
@@ -39,8 +41,61 @@ function Config() {
   const [f, setF] = useState<Cfg | null>(null);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [uploadingBanner, setUploadingBanner] = useState<"wide" | "mobile" | null>(null);
+  const [bannerVersion, setBannerVersion] = useState<number>(Date.now());
   const [menu, setMenu] = useState<MenuLink[]>([]);
   const logoRef = useRef<HTMLInputElement>(null);
+  const wideBannerRef = useRef<HTMLInputElement>(null);
+  const mobileBannerRef = useRef<HTMLInputElement>(null);
+
+  const { data: banners, refetch: refetchBanners } = useQuery({
+    queryKey: ["admin", "banners"],
+    queryFn: async () => {
+      const { data, error } = await supabase.storage.from("produtos").list("banners");
+      if (error) return { wide: false, mobile: false };
+      return {
+        wide: data?.some((b) => b.name === "hero-wide.webp") ?? false,
+        mobile: data?.some((b) => b.name === "hero-mobile.webp") ?? false,
+      };
+    },
+  });
+
+  async function enviarBanner(tipo: "wide" | "mobile", file: File) {
+    setUploadingBanner(tipo);
+    try {
+      const maxDim = tipo === "wide" ? 1920 : 1080;
+      const blob = await resizeToWebp(file, maxDim, 0.85);
+      const filename = tipo === "wide" ? "hero-wide.webp" : "hero-mobile.webp";
+      const path = `banners/${filename}`;
+      const { error } = await supabase.storage.from("produtos").upload(path, blob, {
+        contentType: "image/webp",
+        upsert: true,
+      });
+      if (error) throw error;
+      toast.success(`Banner ${tipo === "wide" ? "desktop" : "celular"} atualizado com sucesso!`);
+      setBannerVersion(Date.now());
+      await refetchBanners();
+      invalidateStore(qc);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Falha no envio do banner");
+    } finally {
+      setUploadingBanner(null);
+    }
+  }
+
+  async function restaurarBanner(tipo: "wide" | "mobile") {
+    const filename = tipo === "wide" ? "hero-wide.webp" : "hero-mobile.webp";
+    const path = `banners/${filename}`;
+    const { error } = await supabase.storage.from("produtos").remove([path]);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success(`Banner ${tipo === "wide" ? "desktop" : "celular"} restaurado para o padrão.`);
+    setBannerVersion(Date.now());
+    await refetchBanners();
+    invalidateStore(qc);
+  }
   useEffect(() => {
     if (data) {
       setF({ ...data, whatsapp: maskPhone(data.whatsapp.replace(/^55/, "")) });
@@ -152,15 +207,123 @@ function Config() {
           </div>
         </Panel>
 
-        <Panel className="space-y-4">
-          <h2 className="font-sans text-lg font-bold tracking-normal">Página inicial</h2>
+        <Panel className="space-y-6">
           <div>
-            <FieldLabel htmlFor="cfg-ht">Título do banner</FieldLabel>
-            <Input id="cfg-ht" value={f.home_titulo} onChange={(e) => set("home_titulo", e.target.value)} />
+            <h2 className="font-sans text-lg font-bold tracking-normal">Página inicial — Textos e Banners</h2>
+            <p className="text-sm text-muted-foreground">Personalize o título, subtítulo e as imagens do banner principal da loja.</p>
           </div>
-          <div>
-            <FieldLabel htmlFor="cfg-hs">Subtítulo</FieldLabel>
-            <Textarea id="cfg-hs" rows={2} value={f.home_subtitulo} onChange={(e) => set("home_subtitulo", e.target.value)} />
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <FieldLabel htmlFor="cfg-ht">Título do banner</FieldLabel>
+              <Input id="cfg-ht" value={f.home_titulo} onChange={(e) => set("home_titulo", e.target.value)} />
+            </div>
+            <div>
+              <FieldLabel htmlFor="cfg-hs">Subtítulo</FieldLabel>
+              <Textarea id="cfg-hs" rows={2} value={f.home_subtitulo} onChange={(e) => set("home_subtitulo", e.target.value)} />
+            </div>
+          </div>
+
+          <div className="grid gap-6 pt-2 md:grid-cols-2">
+            {/* Banner Desktop */}
+            <div className="space-y-2.5 rounded-2xl border p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-semibold text-base">Banner Desktop / Tablet</h3>
+                  <p className="text-xs text-muted-foreground">Formato horizontal (recomendado 16:7 ou 1920×840)</p>
+                </div>
+                {banners?.wide && (
+                  <span className="rounded-full bg-primary/20 px-2 py-0.5 text-xs font-semibold text-primary">Personalizado</span>
+                )}
+              </div>
+              <div className="relative aspect-[16/7] overflow-hidden rounded-xl bg-muted border">
+                <img
+                  src={banners?.wide ? `${mediaUrl("banners/hero-wide.webp")}?v=${bannerVersion}` : heroWide}
+                  alt="Banner Desktop"
+                  className="h-full w-full object-cover"
+                />
+              </div>
+              <div className="flex flex-wrap gap-2 pt-1">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => wideBannerRef.current?.click()}
+                  disabled={uploadingBanner !== null}
+                >
+                  {uploadingBanner === "wide" ? <Loader2 className="animate-spin" /> : <ImagePlus className="size-4" />}
+                  {banners?.wide ? "Substituir foto" : "Trocar foto"}
+                </Button>
+                {banners?.wide && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => restaurarBanner("wide")}
+                    disabled={uploadingBanner !== null}
+                  >
+                    <RotateCcw className="size-4" /> Restaurar padrão
+                  </Button>
+                )}
+                <input
+                  ref={wideBannerRef}
+                  type="file"
+                  accept="image/*"
+                  hidden
+                  onChange={(e) => e.target.files?.[0] && enviarBanner("wide", e.target.files[0])}
+                />
+              </div>
+            </div>
+
+            {/* Banner Mobile */}
+            <div className="space-y-2.5 rounded-2xl border p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-semibold text-base">Banner Celular / Mobile</h3>
+                  <p className="text-xs text-muted-foreground">Formato compacto (recomendado 4:3 ou 900×675)</p>
+                </div>
+                {banners?.mobile && (
+                  <span className="rounded-full bg-primary/20 px-2 py-0.5 text-xs font-semibold text-primary">Personalizado</span>
+                )}
+              </div>
+              <div className="relative aspect-[4/3] max-h-52 overflow-hidden rounded-xl bg-muted border">
+                <img
+                  src={banners?.mobile ? `${mediaUrl("banners/hero-mobile.webp")}?v=${bannerVersion}` : heroMobile}
+                  alt="Banner Mobile"
+                  className="h-full w-full object-cover"
+                />
+              </div>
+              <div className="flex flex-wrap gap-2 pt-1">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => mobileBannerRef.current?.click()}
+                  disabled={uploadingBanner !== null}
+                >
+                  {uploadingBanner === "mobile" ? <Loader2 className="animate-spin" /> : <ImagePlus className="size-4" />}
+                  {banners?.mobile ? "Substituir foto" : "Trocar foto"}
+                </Button>
+                {banners?.mobile && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => restaurarBanner("mobile")}
+                    disabled={uploadingBanner !== null}
+                  >
+                    <RotateCcw className="size-4" /> Restaurar padrão
+                  </Button>
+                )}
+                <input
+                  ref={mobileBannerRef}
+                  type="file"
+                  accept="image/*"
+                  hidden
+                  onChange={(e) => e.target.files?.[0] && enviarBanner("mobile", e.target.files[0])}
+                />
+              </div>
+            </div>
           </div>
         </Panel>
 

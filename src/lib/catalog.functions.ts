@@ -48,9 +48,22 @@ export const getSiteData = createServerFn({ method: "GET" }).handler(async () =>
     db.from("categorias").select("id, nome, slug").order("ordem").order("nome"),
   ]);
   if (error) throw new Error(error.message);
+
+  let bannerWide: string | null = null;
+  let bannerMobile: string | null = null;
+  try {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: bannerFiles } = await supabaseAdmin.storage.from("produtos").list("banners");
+    if (bannerFiles?.some((b) => b.name === "hero-wide.webp")) bannerWide = "banners/hero-wide.webp";
+    if (bannerFiles?.some((b) => b.name === "hero-mobile.webp")) bannerMobile = "banners/hero-mobile.webp";
+  } catch {
+    // Falls back gracefully to bundled hero banners
+  }
+
   return {
     config: config as Config,
     categorias: categorias ?? [],
+    banners: { wide: bannerWide, mobile: bannerMobile },
     origin: requestOrigin(getRequest()),
   };
 });
@@ -69,7 +82,7 @@ export const getHome = createServerFn({ method: "GET" }).handler(async () => {
   if (error) throw new Error(error.message);
   return (data ?? []).map((c) => ({
     ...c,
-    produtos: sortCards(c.produtos as unknown as ProdutoCard[]).slice(0, 4).map(normFaixas),
+    produtos: sortCards(c.produtos as unknown as ProdutoCard[]).slice(0, 8).map(normFaixas),
   }));
 });
 

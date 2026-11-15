@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { Loader2, Save } from "lucide-react";
+import { CheckCheck, Loader2, Save, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,7 +12,15 @@ import { money } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/admin/precos")({ component: Precos });
 
-type Row = { id: string; nome: string; codigo: string; estoque: string; precos: Record<number, string> };
+type Row = {
+  id: string;
+  nome: string;
+  codigo: string;
+  estoque: string;
+  categoriaId: string | null;
+  categoriaNome: string;
+  precos: Record<number, string>;
+};
 
 const cellBase = "h-11 w-full min-w-0 rounded-lg border border-input bg-background px-2 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
 const cell = `${cellBase} text-right tabular-nums`;
@@ -23,14 +31,32 @@ function Precos() {
   const { data, isLoading } = useQuery({
     queryKey: ["admin", "precos"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("produtos").select("id, nome, codigo_modelo, estoque, ordem, categorias(ordem), faixas_preco(quantidade_minima, preco_peca)").order("ordem");
+      const { data, error } = await supabase
+        .from("produtos")
+        .select("id, nome, codigo_modelo, estoque, categoria_id, ordem, categorias(id, nome, ordem), faixas_preco(quantidade_minima, preco_peca)")
+        .order("ordem");
       if (error) throw error;
       return [...data].sort((a, b) => (a.categorias?.ordem ?? 99) - (b.categorias?.ordem ?? 99) || a.ordem - b.ordem);
     },
   });
+
+  const { data: categorias = [] } = useQuery({
+    queryKey: ["admin", "categorias-lista"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("categorias").select("id, nome, ordem").order("ordem");
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const [rows, setRows] = useState<Row[]>([]);
   const [orig, setOrig] = useState<string>("");
   const [saving, setSaving] = useState(false);
+
+  // Preço por categoria em lote
+  const [selectedCatId, setSelectedCatId] = useState<string>("");
+  const [catPrecos, setCatPrecos] = useState<Record<number, string>>({ 10: "", 20: "", 30: "", 50: "" });
+  const [aplicandoLote, setAplicandoLote] = useState(false);
 
   useEffect(() => {
     if (!data) return;
@@ -39,20 +65,91 @@ function Precos() {
       nome: p.nome,
       codigo: p.codigo_modelo,
       estoque: String(p.estoque),
-      precos: Object.fromEntries(FAIXAS.map((q) => {
-        const f = p.faixas_preco.find((x) => x.quantidade_minima === q);
-        return [q, f ? money(Number(f.preco_peca)) : ""];
-      })),
+      categoriaId: p.categoria_id,
+      categoriaNome: p.categorias?.nome ?? "Sem categoria",
+      precos: Object.fromEntries(
+        FAIXAS.map((q) => {
+          const f = p.faixas_preco.find((x) => x.quantidade_minima === q);
+          return [q, f ? money(Number(f.preco_peca)) : ""];
+        })
+      ),
     }));
     setRows(r);
     setOrig(JSON.stringify(r));
-  }, [data]);
+    if (!selectedCatId && categorias.length > 0 && categorias[0]?.id) {
+      setSelectedCatId(categorias[0].id);
+    }
+  }, [data, categorias]);
 
   const origRows: Row[] = orig ? JSON.parse(orig) : [];
   const changed = rows.filter((r, i) => JSON.stringify(r) !== JSON.stringify(origRows[i]));
 
   function upd(i: number, patch: Partial<Row> | ((r: Row) => Row)) {
     setRows((rs) => rs.map((r, n) => (n === i ? (typeof patch === "function" ? patch(r) : { ...r, ...patch }) : r)));
+  }
+
+  async function aplicarPrecosCategoria(salvarDireto = false) {
+    if (!selectedCatId) {
+      toast.error("Selecione uma categoria primeiro.");
+      return;
+    }
+    const parsed: Record<number, number> = {};
+    for (const q of FAIXAS) {
+      const txt = catPrecos[q]?.trim();
+      if (!txt) {
+        toast.error(`Informe o preço para a faixa de ${q}+ peças.`);
+        return;
+      }
+      const val = parsePreco(txt);
+      if (val === null) {
+        toast.error(`Preço inválido para a faixa de ${q}+ peças.`);
+        return;
+      }
+      parsed[q] = val;
+    }
+
+    const targetRows = rows.filter((r) => r.categoriaId === selectedCatId);
+    if (!targetRows.length) {
+      toast.error("Nenhum produto encontrado nesta categoria.");
+      return;
+    }
+
+    const catObj = categorias.find((c) => c.id === selectedCatId);
+    const catNome = catObj?.nome ?? "Categoria";
+    const formattedPrecos = Object.fromEntries(FAIXAS.map((q) => [q, money(parsed[q])]));
+
+    setRows((rs) =>
+      rs.map((r) => (r.categoriaId === selectedCatId ? { ...r, precos: { ...r.precos, ...formattedPrecos } } : r))
+    );
+
+    if (!salvarDireto) {
+      toast.success(
+        `Preços preenchidos para ${targetRows.length} ${targetRows.length === 1 ? "produto" : "produtos"} de "${catNome}". Clique em Salvar para gravar no banco.`
+      );
+      return;
+    }
+
+    setAplicandoLote(true);
+    try {
+      const faixasToUpsert = targetRows.flatMap((r) =>
+        FAIXAS.map((q) => ({
+          produto_id: r.id,
+          quantidade_minima: q,
+          preco_peca: parsed[q],
+        }))
+      );
+      const { error } = await supabase
+        .from("faixas_preco")
+        .upsert(faixasToUpsert, { onConflict: "produto_id,quantidade_minima" });
+      if (error) throw error;
+      toast.success(`Preços salvos no banco para todos os ${targetRows.length} produtos de "${catNome}"!`);
+      qc.invalidateQueries({ queryKey: ["admin", "precos"] });
+      invalidateStore(qc);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erro ao salvar preços da categoria.");
+    } finally {
+      setAplicandoLote(false);
+    }
   }
 
   async function salvar() {
@@ -92,6 +189,73 @@ function Precos() {
         <Loading />
       ) : (
         <>
+          {/* Card: Preço em lote por categoria */}
+          <div className="mb-6 rounded-2xl border bg-card p-4 sm:p-5 shadow-xs">
+            <div>
+              <h2 className="flex items-center gap-2 font-semibold text-base sm:text-lg">
+                <Sparkles className="size-5 text-primary" /> Preço da Categoria Inteira de Uma Vez
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                Selecione uma categoria, informe os 4 preços e aplique a todos os produtos dela em um clique.
+              </p>
+            </div>
+
+            <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_auto]">
+              <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-5">
+                <div className="sm:col-span-2 md:col-span-1">
+                  <label className="text-xs font-semibold text-muted-foreground block mb-1">Categoria</label>
+                  <select
+                    className="h-11 w-full rounded-lg border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    value={selectedCatId}
+                    onChange={(e) => setSelectedCatId(e.target.value)}
+                  >
+                    {categorias.map((c) => {
+                      const count = rows.filter((r) => r.categoriaId === c.id).length;
+                      return (
+                        <option key={c.id} value={c.id}>
+                          {c.nome} ({count})
+                        </option>
+                      );
+                    })}
+                  </select>
+                </div>
+
+                {FAIXAS.map((q) => (
+                  <div key={q}>
+                    <label className="text-xs font-semibold text-muted-foreground block mb-1">{q}+ peças (R$)</label>
+                    <input
+                      className={cell}
+                      inputMode="decimal"
+                      placeholder="0,00"
+                      value={catPrecos[q]}
+                      onChange={(e) => setCatPrecos((prev) => ({ ...prev, [q]: e.target.value }))}
+                    />
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex flex-wrap items-end gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => aplicarPrecosCategoria(false)}
+                  disabled={aplicandoLote}
+                  className="w-full sm:w-auto"
+                >
+                  Preencher na tabela
+                </Button>
+                <Button
+                  type="button"
+                  onClick={() => aplicarPrecosCategoria(true)}
+                  disabled={aplicandoLote}
+                  className="w-full sm:w-auto"
+                >
+                  {aplicandoLote ? <Loader2 className="animate-spin" /> : <CheckCheck className="size-4" />}
+                  Aplicar e Salvar no banco
+                </Button>
+              </div>
+            </div>
+          </div>
           {/* Phone: one card per product */}
           <ul className="space-y-3 md:hidden">
             {rows.map((r, i) => (
