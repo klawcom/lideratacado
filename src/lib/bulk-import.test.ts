@@ -1,5 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { agruparArquivos, caminhoFoto, codigoModelo, temMarca, tituloDaPasta } from "./bulk-import";
+import {
+  agruparArquivos,
+  caminhoFoto,
+  codigoModelo,
+  encontrarCategoriaCorrespondente,
+  extrairPastaRaiz,
+  nomeDaCategoria,
+  temMarca,
+  tituloDaPasta,
+} from "./bulk-import";
 
 const f = (path: string) => ({ path, file: path });
 
@@ -17,6 +26,33 @@ describe("importação de pasta", () => {
     expect(g.map((x) => x.pasta)).toEqual(["Básica Preta", "Verde Óleo"]);
     expect(g[1]!.fotos.map((x) => x.path.split("/").pop())).toEqual(["1.jpg", "2.jpg", "10.jpg"]);
     expect(g[1]!.videos).toHaveLength(1);
+  });
+
+  it("extrai a pasta raiz quando há subpastas de produtos", () => {
+    const arquivos = [
+      f("COTTON PIMA/Verde Óleo/1.jpg"),
+      f("COTTON PIMA/Básica Preta/1.jpg"),
+    ];
+    expect(extrairPastaRaiz(arquivos)).toBe("COTTON PIMA");
+    expect(nomeDaCategoria("COTTON PIMA")).toBe("Cotton Pima");
+    expect(nomeDaCategoria("CAMISAS_POLO_PIQUET")).toBe("Camisas Polo Piquet");
+  });
+
+  it("retorna null para pasta raiz quando os arquivos já estão no primeiro nível", () => {
+    const arquivos = [f("Modelo 01/foto1.jpg"), f("Modelo 01/foto2.jpg")];
+    expect(extrairPastaRaiz(arquivos)).toBe(null);
+  });
+
+  it("encontra categoria correspondente por nome ou slug", () => {
+    const categorias = [
+      { id: "1", nome: "Camisetas Básicas Cotton Pima", slug: "camisetas-basicas-cotton-pima" },
+      { id: "2", nome: "Camisas Polo Piquet", slug: "camisas-polo-piquet" },
+    ];
+    // Por slug parcial
+    expect(encontrarCategoriaCorrespondente("COTTON PIMA", categorias)?.id).toBe("1");
+    expect(encontrarCategoriaCorrespondente("Polos Piquet", categorias)?.id).toBe("2");
+    // Não encontra se não houver relação
+    expect(encontrarCategoriaCorrespondente("Bermudas Jeans", categorias)).toBe(null);
   });
 
   it("arquivos soltos na pasta escolhida formam um único produto", () => {

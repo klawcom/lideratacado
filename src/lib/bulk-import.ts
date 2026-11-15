@@ -1,3 +1,5 @@
+import { slugify } from "./format";
+
 /**
  * Pure helpers for the panel's folder import: one subfolder = one product.
  * No browser or database code here so it can be unit-tested.
@@ -47,6 +49,87 @@ export function agruparArquivos<F>(arquivos: Arquivo<F>[]): Grupo<F>[] {
     g.videos.sort((a, b) => comparar(a.path, b.path));
   }
   return lista;
+}
+
+/**
+ * Extrai o nome da pasta raiz caso a pasta importada contenha subpastas (partes.length >= 3).
+ * Ex: "COTTON PIMA/Verde Óleo/1.jpg" -> "COTTON PIMA"
+ */
+export function extrairPastaRaiz<F>(arquivos: Arquivo<F>[]): string | null {
+  const contagem = new Map<string, number>();
+  for (const a of arquivos) {
+    const partes = a.path.replace(/\\/g, "/").split("/").filter(Boolean);
+    const nome = partes[partes.length - 1] ?? "";
+    if (!nome || nome.startsWith(".") || partes.some((p) => p.startsWith("__MACOSX"))) continue;
+    if (!tipoArquivo(nome)) continue;
+    if (partes.length >= 3) {
+      const raiz = partes[0]!.trim();
+      if (raiz) contagem.set(raiz, (contagem.get(raiz) ?? 0) + 1);
+    }
+  }
+  if (!contagem.size) return null;
+  let maisFrequente = "";
+  let max = 0;
+  for (const [p, c] of contagem.entries()) {
+    if (c > max) {
+      max = c;
+      maisFrequente = p;
+    }
+  }
+  return maisFrequente || null;
+}
+
+/**
+ * Converte o nome de uma pasta em nome limpo de categoria.
+ * Ex: "CAMISETAS_COTTON_PIMA" -> "Camisetas Cotton Pima"
+ */
+export function nomeDaCategoria(pasta: string): string {
+  const limpo = pasta.replace(/[_]+/g, " ").replace(/\s+/g, " ").trim();
+  return capitalizar(limpo);
+}
+
+/**
+ * Procura categoria correspondente pelo slug ou nome (case/acento-insensível e token-based).
+ */
+export function encontrarCategoriaCorrespondente<C extends { id: string; nome: string; slug: string }>(
+  pastaOuNome: string,
+  categorias: C[],
+): C | null {
+  if (!pastaOuNome || !categorias.length) return null;
+  const limpo = pastaOuNome.trim().toLowerCase();
+  const slugAlvo = slugify(limpo);
+
+  // 1. Correspondência exata por slug ou nome
+  const exato = categorias.find((c) => c.slug === slugAlvo || c.nome.toLowerCase() === limpo);
+  if (exato) return exato;
+
+  // 2. Correspondência direta por inclusão completa de slug
+  const contem = categorias.find((c) => c.slug && slugAlvo && (c.slug.includes(slugAlvo) || slugAlvo.includes(c.slug)));
+  if (contem) return contem;
+
+  // 3. Correspondência por palavras-chave (tokens)
+  const palavrasAlvo = slugAlvo.split("-").filter((w) => w.length >= 3);
+  let melhorMatch: C | null = null;
+  let maxCoincidencias = 0;
+
+  for (const c of categorias) {
+    const palavrasCat = (c.slug || slugify(c.nome)).split("-").filter((w) => w.length >= 3);
+    let score = 0;
+    for (const w1 of palavrasAlvo) {
+      for (const w2 of palavrasCat) {
+        if (w1 === w2 || (w1.length >= 4 && w2.length >= 4 && (w1.startsWith(w2.slice(0, 4)) || w2.startsWith(w1.slice(0, 4))))) {
+          score++;
+          break;
+        }
+      }
+    }
+    if (score > maxCoincidencias && score >= 1) {
+      maxCoincidencias = score;
+      melhorMatch = c;
+    }
+  }
+
+  return melhorMatch;
 }
 
 /** Brand names (and the abbreviations used to disguise them) that must never appear on the site. */

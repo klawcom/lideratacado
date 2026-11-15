@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { AlertTriangle, ArrowLeft, CheckCircle2, FolderUp, Loader2, XCircle } from "lucide-react";
+import { AlertTriangle, ArrowLeft, CheckCircle2, FolderCheck, FolderPlus, FolderUp, Loader2, Sparkles, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +19,9 @@ import {
   caminhoFoto,
   caminhoVideo,
   codigoModelo,
+  encontrarCategoriaCorrespondente,
+  extrairPastaRaiz,
+  nomeDaCategoria,
   tituloDaPasta,
   type Arquivo,
   type Grupo,
@@ -74,6 +77,13 @@ function Importar() {
   const [grupos, setGrupos] = useState<Grupo[]>([]);
   const [titulos, setTitulos] = useState<Record<string, string>>({});
   const [existentes, setExistentes] = useState<Map<string, Existente>>(new Map());
+
+  type ModoCategoria = "auto" | "existente" | "nova";
+  const [modoCategoria, setModoCategoria] = useState<ModoCategoria>("auto");
+  const [pastaRaiz, setPastaRaiz] = useState<string | null>(null);
+  const [nomeNovaCategoria, setNomeNovaCategoria] = useState("");
+  const [slugNovaCategoria, setSlugNovaCategoria] = useState("");
+
   const [categoria, setCategoria] = useState("");
   const [prefixo, setPrefixo] = useState("PIMA");
   const [inicio, setInicio] = useState(1);
@@ -90,24 +100,36 @@ function Importar() {
 
   // Pick sensible defaults when the category changes.
   useEffect(() => {
-    const c = cats?.find((x) => x.id === categoria);
-    if (!c) return;
-    if (/polo/i.test(c.nome)) {
+    let catNome = "";
+    if (modoCategoria === "nova" || categoria === "nova") {
+      catNome = nomeNovaCategoria || (pastaRaiz ? nomeDaCategoria(pastaRaiz) : "");
+    } else {
+      const c = cats?.find((x) => x.id === categoria);
+      catNome = c?.nome ?? "";
+    }
+    if (!catNome) return;
+    if (/polo/i.test(catNome)) {
       setPrefixo("POLO");
       setNomeModelo("Camisa Polo");
       setComposicao("");
       setDescricao("Camisa polo. Cores sortidas, conforme disponibilidade do estoque.");
-    } else if (/pima/i.test(c.nome)) {
+    } else if (/pima/i.test(catNome)) {
       setPrefixo("PIMA");
       setNomeModelo("Camiseta Pima");
-      setComposicao("100% algodão Pima");
-      setDescricao("Camiseta básica cotton pima. Cores sortidas, conforme disponibilidade do estoque.");
+      setComposicao(COMPOSICAO_COTTON_PIMA);
+      setDescricao(DESCRICAO_COMPLETA_COTTON_PIMA);
+    } else {
+      const p = slugify(catNome).replace(/[^a-z0-9]/gi, "").slice(0, 4).toUpperCase();
+      setPrefixo(p || "MOD");
+      setNomeModelo(nomeDaCategoria(catNome));
     }
-  }, [categoria, cats]);
+  }, [categoria, cats, modoCategoria, nomeNovaCategoria, pastaRaiz]);
 
   useEffect(() => {
-    if (!categoria && cats?.length) setCategoria(cats[0]!.id);
-  }, [cats, categoria]);
+    if (!categoria && cats?.length && modoCategoria === "existente") {
+      setCategoria(cats[0]!.id);
+    }
+  }, [cats, categoria, modoCategoria]);
 
   useEffect(() => {
     if (!rodando) return;
@@ -131,6 +153,27 @@ function Importar() {
       toast.error("Nenhuma foto ou vídeo encontrado nessa pasta.");
       return;
     }
+    const raiz = extrairPastaRaiz(arquivos);
+    setPastaRaiz(raiz);
+
+    if (raiz) {
+      const nomeSugestao = nomeDaCategoria(raiz);
+      const match = encontrarCategoriaCorrespondente(raiz, cats ?? []);
+      if (match) {
+        if (modoCategoria === "auto") {
+          setCategoria(match.id);
+          toast.info(`Pasta vinculada à categoria: "${match.nome}"`);
+        }
+      } else {
+        setNomeNovaCategoria(nomeSugestao);
+        setSlugNovaCategoria(slugify(nomeSugestao));
+        if (modoCategoria === "auto") {
+          setCategoria("nova");
+          toast.info(`Pasta criará a nova categoria: "${nomeSugestao}"`);
+        }
+      }
+    }
+
     setGrupos(g);
     setTitulos({});
     setStatus({});
@@ -176,10 +219,52 @@ function Importar() {
   const temPrecos = valoresPreco.every((v) => v > 0);
 
   async function importar() {
-    if (!categoria) {
-      toast.error("Escolha a categoria.");
+    let catIdFinal = categoria;
+    const precisaCriar = modoCategoria === "nova" || categoria === "nova" || (modoCategoria === "auto" && (!catIdFinal || catIdFinal === "nova"));
+
+    if (precisaCriar) {
+      const nomeCat = (nomeNovaCategoria || (pastaRaiz ? nomeDaCategoria(pastaRaiz) : "")).trim();
+      if (!nomeCat) {
+        toast.error("Informe o nome da categoria para onde os produtos serão importados.");
+        return;
+      }
+      const slugCat = slugify(slugNovaCategoria || nomeCat);
+
+      // Procura primeiro se já existe com esse slug ou nome
+      const { data: catExiste } = await supabase
+        .from("categorias")
+        .select("id, nome")
+        .or(`slug.eq.${slugCat},nome.ilike.${nomeCat}`)
+        .maybeSingle();
+
+      if (catExiste) {
+        catIdFinal = catExiste.id;
+      } else {
+        const totalCats = cats?.length ?? 0;
+        const { data: novaCat, error: catErr } = await supabase
+          .from("categorias")
+          .insert({
+            nome: nomeCat,
+            slug: slugCat,
+            descricao: `Produtos da categoria ${nomeCat}`,
+            ativa: true,
+            ordem: totalCats + 1,
+          })
+          .select("id, nome")
+          .single();
+
+        if (catErr) {
+          toast.error(`Não foi possível criar a categoria "${nomeCat}": ${catErr.message}`);
+          return;
+        }
+        catIdFinal = novaCat.id;
+        toast.success(`Categoria "${novaCat.nome}" criada com sucesso!`);
+      }
+    } else if (!catIdFinal) {
+      toast.error("Escolha a categoria para os produtos.");
       return;
     }
+
     setRodando(true);
     setErros([]);
     const log = (m: string) => setErros((e) => [...e, m]);
@@ -199,7 +284,7 @@ function Importar() {
             if (slugs.has(slug)) slug = `${slug}-${slugify(p.codigo)}`;
             const { data, error } = await supabase
               .from("produtos")
-              .insert({ nome: p.titulo, codigo_modelo: p.codigo, slug, descricao: `${p.titulo}. ${descricao}`.trim(), composicao, categoria_id: categoria, ativo: false, destaque: false, ordem: p.n, estoque: 0 })
+              .insert({ nome: p.titulo, codigo_modelo: p.codigo, slug, descricao: `${p.titulo}. ${descricao}`.trim(), composicao, categoria_id: catIdFinal, ativo: false, destaque: false, ordem: p.n, estoque: 0 })
               .select("id")
               .single();
             if (error) throw error;
@@ -279,6 +364,7 @@ function Importar() {
       toast.error(err instanceof Error ? err.message : "Falha na importação");
     } finally {
       setRodando(false);
+      qc.invalidateQueries({ queryKey: ["admin", "categorias"] });
       qc.invalidateQueries({ queryKey: ["admin"] });
       invalidateStore(qc);
     }
@@ -299,6 +385,203 @@ function Importar() {
       }
     >
       <div className="grid gap-4">
+        {/* Painel de escolha e configuração do destino (Categoria) */}
+        <Panel>
+          <div className="space-y-4">
+            <div>
+              <h2 className="font-sans text-base sm:text-lg font-bold tracking-normal">
+                Destino da importação (Categoria)
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                Importe direto para uma categoria existente ou deixe a pasta virar uma categoria automaticamente.
+              </p>
+            </div>
+
+            <div className="grid gap-2 sm:grid-cols-3">
+              <button
+                type="button"
+                onClick={() => setModoCategoria("auto")}
+                className={cn(
+                  "flex flex-col gap-1 rounded-xl border p-3.5 text-left transition",
+                  modoCategoria === "auto"
+                    ? "border-primary bg-primary/10 ring-2 ring-primary"
+                    : "hover:bg-muted/50 border-input"
+                )}
+              >
+                <span className="font-semibold text-sm flex items-center gap-1.5 text-foreground">
+                  📁 Automático pela pasta
+                </span>
+                <span className="text-xs text-muted-foreground leading-relaxed">
+                  A pasta principal vira a categoria (cria automaticamente se não existir ou vincula à existente).
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setModoCategoria("existente");
+                  if ((!categoria || categoria === "nova") && cats?.length) {
+                    setCategoria(cats[0]!.id);
+                  }
+                }}
+                className={cn(
+                  "flex flex-col gap-1 rounded-xl border p-3.5 text-left transition",
+                  modoCategoria === "existente"
+                    ? "border-primary bg-primary/10 ring-2 ring-primary"
+                    : "hover:bg-muted/50 border-input"
+                )}
+              >
+                <span className="font-semibold text-sm flex items-center gap-1.5 text-foreground">
+                  🏷️ Categoria existente
+                </span>
+                <span className="text-xs text-muted-foreground leading-relaxed">
+                  Importar todos os produtos diretamente para uma categoria já existente no site.
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setModoCategoria("nova");
+                  setCategoria("nova");
+                }}
+                className={cn(
+                  "flex flex-col gap-1 rounded-xl border p-3.5 text-left transition",
+                  modoCategoria === "nova"
+                    ? "border-primary bg-primary/10 ring-2 ring-primary"
+                    : "hover:bg-muted/50 border-input"
+                )}
+              >
+                <span className="font-semibold text-sm flex items-center gap-1.5 text-foreground">
+                  ✨ Criar nova categoria
+                </span>
+                <span className="text-xs text-muted-foreground leading-relaxed">
+                  Defina agora o nome da nova categoria para receber os produtos importados.
+                </span>
+              </button>
+            </div>
+
+            {/* Detalhes do modo selecionado */}
+            {modoCategoria === "auto" && (
+              <div className="rounded-xl border bg-muted/40 p-3.5 text-sm space-y-2.5">
+                {pastaRaiz ? (
+                  <div className="space-y-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div>
+                        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                          Pasta principal identificada
+                        </span>
+                        <p className="text-base font-bold text-foreground flex items-center gap-2">
+                          📁 {pastaRaiz}
+                        </p>
+                      </div>
+
+                      {categoria && categoria !== "nova" ? (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 font-semibold text-xs px-3 py-1">
+                          <CheckCircle2 className="size-3.5" /> Vinculada à categoria existente: {cats?.find((c) => c.id === categoria)?.nome}
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-blue-500/15 text-blue-700 dark:text-blue-400 font-semibold text-xs px-3 py-1">
+                          <Sparkles className="size-3.5" /> Criará a nova categoria no site
+                        </span>
+                      )}
+                    </div>
+
+                    {(categoria === "nova" || !categoria) && (
+                      <div className="grid gap-3 sm:grid-cols-2 pt-2 border-t border-border/60">
+                        <div>
+                          <FieldLabel htmlFor="auto-cat-nome">Nome da nova categoria</FieldLabel>
+                          <Input
+                            id="auto-cat-nome"
+                            value={nomeNovaCategoria}
+                            disabled={rodando}
+                            onChange={(e) => {
+                              setNomeNovaCategoria(e.target.value);
+                              setSlugNovaCategoria(slugify(e.target.value));
+                            }}
+                          />
+                        </div>
+                        <div>
+                          <FieldLabel htmlFor="auto-cat-slug" hint="(endereço na loja)">
+                            Slug
+                          </FieldLabel>
+                          <Input
+                            id="auto-cat-slug"
+                            value={slugNovaCategoria}
+                            disabled={rodando}
+                            onChange={(e) => setSlugNovaCategoria(slugify(e.target.value))}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground text-xs sm:text-sm">
+                    💡 <strong>Como funciona:</strong> Ao arrastar ou escolher uma pasta (ex.: <code>COTTON PIMA</code>), o nome dela será usado como categoria. Se a categoria já existir no site, os produtos serão adicionados a ela; se não existir, o sistema criará a categoria automaticamente!
+                  </p>
+                )}
+              </div>
+            )}
+
+            {modoCategoria === "existente" && (
+              <div className="rounded-xl border bg-muted/40 p-3.5 space-y-2 max-w-md">
+                <FieldLabel htmlFor="cat-direta">Selecione a categoria de destino:</FieldLabel>
+                <select
+                  id="cat-direta"
+                  className={selectClass}
+                  value={categoria}
+                  disabled={rodando}
+                  onChange={(e) => setCategoria(e.target.value)}
+                >
+                  <option value="">Selecione uma categoria...</option>
+                  {cats?.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.nome}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-muted-foreground">
+                  Todos os produtos importados irão diretamente para a categoria selecionada acima.
+                </p>
+              </div>
+            )}
+
+            {modoCategoria === "nova" && (
+              <div className="rounded-xl border bg-muted/40 p-3.5 space-y-3 max-w-xl">
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Dados da nova categoria
+                </p>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <FieldLabel htmlFor="cat-nova-nome">Nome da nova categoria</FieldLabel>
+                    <Input
+                      id="cat-nova-nome"
+                      placeholder="Ex.: Camisas Polo Piquet, Bermudas"
+                      value={nomeNovaCategoria}
+                      disabled={rodando}
+                      onChange={(e) => {
+                        setNomeNovaCategoria(e.target.value);
+                        setSlugNovaCategoria(slugify(e.target.value));
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <FieldLabel htmlFor="cat-nova-slug" hint="(endereço na loja)">
+                      Slug
+                    </FieldLabel>
+                    <Input
+                      id="cat-nova-slug"
+                      value={slugNovaCategoria}
+                      disabled={rodando}
+                      onChange={(e) => setSlugNovaCategoria(slugify(e.target.value))}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </Panel>
+
         <Panel>
           <div
             onDragOver={(e) => {
@@ -316,7 +599,13 @@ function Importar() {
             ) : (
               <>
                 <FolderUp className="mx-auto size-10 text-primary" />
-                <p className="mt-2 font-medium">Arraste aqui a pasta principal (ex.: COTTON PIMA)</p>
+                <p className="mt-2 font-medium">
+                  {modoCategoria === "auto"
+                    ? "Arraste aqui a pasta principal (ex.: COTTON PIMA)"
+                    : modoCategoria === "existente"
+                      ? `Arraste a pasta de produtos para importar em "${cats?.find((c) => c.id === categoria)?.nome || "Categoria"}"`
+                      : `Arraste a pasta de produtos para a categoria "${nomeNovaCategoria || "Nova categoria"}"`}
+                </p>
                 <p className="text-sm text-muted-foreground">Fotos são reduzidas para 1600 px em WebP. Vídeos até 50 MB são enviados como estão.</p>
                 <Button className="mt-4" variant="outline" disabled={rodando} onClick={() => dirRef.current?.click()}>
                   Escolher pasta
@@ -345,8 +634,24 @@ function Importar() {
               <h2 className="font-sans text-lg font-bold tracking-normal">Configuração</h2>
               <div className="mt-3 grid gap-4 sm:grid-cols-2">
                 <div>
-                  <FieldLabel htmlFor="imp-cat">Categoria</FieldLabel>
-                  <select id="imp-cat" className={selectClass} value={categoria} disabled={rodando} onChange={(e) => setCategoria(e.target.value)}>
+                  <FieldLabel htmlFor="imp-cat">Categoria de destino</FieldLabel>
+                  <select
+                    id="imp-cat"
+                    className={selectClass}
+                    value={categoria}
+                    disabled={rodando}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      setCategoria(v);
+                      if (v === "nova") setModoCategoria("nova");
+                      else setModoCategoria("existente");
+                    }}
+                  >
+                    {(modoCategoria === "nova" || categoria === "nova" || pastaRaiz) && (
+                      <option value="nova">
+                        ✨ Nova categoria: "{nomeNovaCategoria || (pastaRaiz ? nomeDaCategoria(pastaRaiz) : "Nova")}"
+                      </option>
+                    )}
                     {cats?.map((c) => (
                       <option key={c.id} value={c.id}>
                         {c.nome}
