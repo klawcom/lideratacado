@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Play } from "lucide-react";
 import type { MidiaRow } from "@/lib/catalog.functions";
 import { mediaUrl, ordenarMidias, youtubeId, youtubeThumb } from "@/lib/media";
@@ -62,10 +62,9 @@ export function MediaGallery({ midias, nome }: { midias: MidiaRow[]; nome: strin
   const list = ordenarMidias(midias);
   const [idx, setIdx] = useState(0);
   const track = useRef<HTMLDivElement>(null);
+  const thumbs = useRef<HTMLDivElement>(null);
   const firstPhoto = list.find((m) => m.tipo === "foto" && m.url);
   const fallbackPoster = firstPhoto ? mediaUrl(firstPhoto.url) : "";
-
-  if (list.length === 0) return <div className="aspect-square rounded-3xl bg-muted" />;
 
   function go(i: number) {
     const el = track.current;
@@ -73,8 +72,19 @@ export function MediaGallery({ midias, nome }: { midias: MidiaRow[]; nome: strin
     el.scrollTo({ left: i * el.clientWidth, behavior: "smooth" });
   }
 
+  useEffect(() => {
+    const strip = thumbs.current;
+    const btn = strip?.children[idx] as HTMLElement | undefined;
+    if (!strip || !btn) return;
+    const offset = btn.getBoundingClientRect().left - strip.getBoundingClientRect().left + strip.scrollLeft;
+    strip.scrollTo({ left: Math.max(0, offset - (strip.clientWidth - btn.clientWidth) / 2), behavior: "smooth" });
+  }, [idx]);
+
+  if (list.length === 0) return <div className="aspect-square rounded-3xl bg-muted" />;
+
   return (
     <div className="min-w-0">
+      <div className="relative">
       <div
         ref={track}
         onScroll={(e) => {
@@ -90,7 +100,13 @@ export function MediaGallery({ midias, nome }: { midias: MidiaRow[]; nome: strin
         ))}
       </div>
       {list.length > 1 && (
-        <div className="mt-3 grid grid-cols-5 gap-2 sm:grid-cols-6">
+        <span className="pointer-events-none absolute bottom-3 right-3 rounded-full bg-background/90 px-3 py-1 text-sm font-semibold tabular-nums shadow-soft" aria-live="polite">
+          {idx + 1} de {list.length}
+        </span>
+      )}
+      </div>
+      {list.length > 1 && (
+        <div ref={thumbs} className="no-scrollbar mt-3 flex gap-2 overflow-x-auto overscroll-x-contain pb-1">
           {list.map((m, i) => {
             const yt = youtubeId(m.video_externo);
             const thumb =
@@ -103,7 +119,7 @@ export function MediaGallery({ midias, nome }: { midias: MidiaRow[]; nome: strin
                 aria-label={`Ver mídia ${i + 1}`}
                 aria-current={i === idx}
                 className={cn(
-                  "relative aspect-square overflow-hidden rounded-xl border-2 bg-muted transition",
+                  "relative aspect-square w-16 shrink-0 overflow-hidden sm:w-20 rounded-xl border-2 bg-muted transition",
                   i === idx ? "border-primary" : "border-transparent opacity-70",
                 )}
               >
