@@ -10,18 +10,14 @@ import { useCartCount } from "@/lib/cart";
 import { siteQuery } from "@/lib/catalog.functions";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
+import { visibleMenuLinks } from "@/lib/menu-links";
 
-const INSTITUCIONAL = [
-  { to: "/como-comprar", label: "Como comprar" },
-  { to: "/sobre", label: "Sobre" },
-  { to: "/faq", label: "Dúvidas frequentes" },
-  { to: "/trocas-e-devolucoes", label: "Trocas e devoluções" },
-] as const;
 
 export function SiteHeader() {
   const count = useCartCount();
   const { data } = useQuery(siteQuery());
   const { user, isAdmin } = useAuth();
+  const links = visibleMenuLinks(data?.config?.menu_links);
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const qc = useQueryClient();
@@ -97,8 +93,8 @@ export function SiteHeader() {
                     {c.nome}
                   </Link>
                 ))}
-                <p className="eyebrow px-3 pb-1 pt-5">Atendimento</p>
-                {INSTITUCIONAL.map((l) => (
+                {links.length > 0 && <p className="eyebrow px-3 pb-1 pt-5">Atendimento</p>}
+                {links.map((l) => (
                   <Link key={l.to} to={l.to} className="flex min-h-12 items-center rounded-xl px-3 font-medium hover:bg-accent">
                     {l.label}
                   </Link>

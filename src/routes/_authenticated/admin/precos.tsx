@@ -14,7 +14,9 @@ export const Route = createFileRoute("/_authenticated/admin/precos")({ component
 
 type Row = { id: string; nome: string; codigo: string; estoque: string; precos: Record<number, string> };
 
-const cell = "h-11 w-full min-w-0 rounded-lg border border-input bg-background px-2 text-right text-base tabular-nums focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
+const cellBase = "h-11 w-full min-w-0 rounded-lg border border-input bg-background px-2 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
+const cell = `${cellBase} text-right tabular-nums`;
+const nameCell = `${cellBase} font-semibold`;
 
 function Precos() {
   const qc = useQueryClient();
@@ -56,6 +58,7 @@ function Precos() {
   async function salvar() {
     const faixas: { produto_id: string; quantidade_minima: number; preco_peca: number }[] = [];
     for (const r of changed) {
+      if (!r.nome.trim()) { toast.error("O nome do produto não pode ficar vazio."); return; }
       for (const q of FAIXAS) {
         const v = parsePreco(r.precos[q] ?? "");
         if (r.precos[q]?.trim() && v === null) { toast.error(`${r.nome}: preço inválido na faixa de ${q}.`); return; }
@@ -65,7 +68,7 @@ function Precos() {
     setSaving(true);
     const results = await Promise.all([
       faixas.length ? supabase.from("faixas_preco").upsert(faixas, { onConflict: "produto_id,quantidade_minima" }) : Promise.resolve({ error: null }),
-      ...changed.map((r) => supabase.from("produtos").update({ estoque: Math.max(0, parseInt(r.estoque, 10) || 0) }).eq("id", r.id)),
+      ...changed.map((r) => supabase.from("produtos").update({ nome: r.nome.trim(), estoque: Math.max(0, parseInt(r.estoque, 10) || 0) }).eq("id", r.id)),
     ]);
     setSaving(false);
     const err = results.find((x) => x.error)?.error;
@@ -77,8 +80,8 @@ function Precos() {
 
   return (
     <AdminPage
-      title="Preços e estoque"
-      description="Edite várias linhas e salve de uma vez."
+      title="Edição rápida"
+      description="Nomes, preços e estoque: edite várias linhas e salve de uma vez."
       actions={
         <Button onClick={salvar} disabled={!changed.length || saving}>
           {saving ? <Loader2 className="animate-spin" /> : <Save />} Salvar{changed.length ? ` (${changed.length})` : ""}
@@ -93,8 +96,10 @@ function Precos() {
           <ul className="space-y-3 md:hidden">
             {rows.map((r, i) => (
               <li key={r.id} className="rounded-2xl border bg-card p-3">
-                <p className="font-semibold">{r.nome}</p>
-                <p className="text-sm text-muted-foreground">{r.codigo}</p>
+                <label className="text-sm">
+                  <span className="text-muted-foreground">Nome · {r.codigo}</span>
+                  <input className={nameCell} value={r.nome} onChange={(e) => upd(i, { nome: e.target.value })} />
+                </label>
                 <div className="mt-2 grid grid-cols-2 gap-2">
                   {FAIXAS.map((q) => (
                     <label key={q} className="text-sm">
@@ -127,9 +132,9 @@ function Precos() {
               <tbody className="divide-y">
                 {rows.map((r, i) => (
                   <tr key={r.id}>
-                    <td className="p-3">
-                      <p className="font-semibold">{r.nome}</p>
-                      <p className="text-sm text-muted-foreground">{r.codigo}</p>
+                    <td className="min-w-56 p-1.5">
+                      <input aria-label={`Nome ${r.codigo}`} className={nameCell} value={r.nome} onChange={(e) => upd(i, { nome: e.target.value })} />
+                      <p className="px-2 pt-0.5 text-sm text-muted-foreground">{r.codigo}</p>
                     </td>
                     {FAIXAS.map((q) => (
                       <td key={q} className="p-1.5">

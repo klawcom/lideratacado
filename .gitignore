@@ -38,7 +38,8 @@ _otimizado
 _otimizado/
 _importacao
 _importacao/
-.env
-.env.*
-!.env.example
+# .env holds only public (publishable) backend settings and must stay in the repo,
+# otherwise the published site is built without them and shows an error page.
+.env.local
+.env.*.local
 

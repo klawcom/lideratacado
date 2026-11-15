@@ -1,7 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
-import { ImagePlus, Loader2, Save } from "lucide-react";
+import { ArrowDown, ArrowUp, ImagePlus, Loader2, Save } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { normalizeMenuLinks, type MenuLink } from "@/lib/menu-links";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,13 +39,26 @@ function Config() {
   const [f, setF] = useState<Cfg | null>(null);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [menu, setMenu] = useState<MenuLink[]>([]);
   const logoRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
-    if (data) setF({ ...data, whatsapp: maskPhone(data.whatsapp.replace(/^55/, "")) });
+    if (data) {
+      setF({ ...data, whatsapp: maskPhone(data.whatsapp.replace(/^55/, "")) });
+      setMenu(normalizeMenuLinks(data.menu_links));
+    }
   }, [data]);
 
   if (isLoading || !f) return <AdminPage title="Configurações"><Loading /></AdminPage>;
   const set = (k: keyof Cfg, v: string | number | null) => setF((x) => (x ? { ...x, [k]: v } : x));
+  const setLink = (i: number, patch: Partial<MenuLink>) => setMenu((m) => m.map((l, n) => (n === i ? { ...l, ...patch } : l)));
+  const moveLink = (i: number, dir: -1 | 1) =>
+    setMenu((m) => {
+      const j = i + dir;
+      if (j < 0 || j >= m.length) return m;
+      const c = [...m];
+      [c[i], c[j]] = [c[j]!, c[i]!];
+      return c;
+    });
 
   async function enviarLogo(file: File) {
     setUploading(true);
@@ -68,10 +83,11 @@ function Config() {
     if (wa.length < 10) { toast.error("WhatsApp da loja inválido."); return; }
     if (!/^#[0-9a-fA-F]{6}$/.test(f.cor_destaque)) { toast.error("Cor inválida."); return; }
     setSaving(true);
-    const { id: _id, updated_at: _u, ...rest } = f;
+    const { id: _id, updated_at: _u, menu_links: _m, ...rest } = f;
+    const menu_links = normalizeMenuLinks(menu.map((l) => ({ ...l, label: l.label.trim() })));
     const { error } = await supabase
       .from("configuracoes")
-      .update({ ...rest, whatsapp: wa.startsWith("55") && wa.length >= 12 ? wa : `55${wa}`, pedido_minimo: Math.max(1, Number(f.pedido_minimo) || 10) })
+      .update({ ...rest, menu_links, whatsapp: wa.startsWith("55") && wa.length >= 12 ? wa : `55${wa}`, pedido_minimo: Math.max(1, Number(f.pedido_minimo) || 10) })
       .eq("id", 1);
     setSaving(false);
     if (error) { toast.error(error.message); return; }
@@ -146,6 +162,29 @@ function Config() {
             <FieldLabel htmlFor="cfg-hs">Subtítulo</FieldLabel>
             <Textarea id="cfg-hs" rows={2} value={f.home_subtitulo} onChange={(e) => set("home_subtitulo", e.target.value)} />
           </div>
+        </Panel>
+
+        <Panel className="space-y-3">
+          <div>
+            <h2 className="font-sans text-lg font-bold tracking-normal">Menu do site</h2>
+            <p className="text-sm text-muted-foreground">
+              Os produtos do menu são as categorias ativas (edite em Categorias). Aqui você renomeia, reordena ou esconde os links de atendimento.
+            </p>
+          </div>
+          <ul className="space-y-2">
+            {menu.map((l, i) => (
+              <li key={l.to} className="flex items-center gap-2 rounded-xl border p-2">
+                <Input aria-label={`Nome do link ${l.to}`} value={l.label} maxLength={40} onChange={(e) => setLink(i, { label: e.target.value })} className="min-w-0 flex-1" />
+                <Switch checked={l.visivel} onCheckedChange={(v) => setLink(i, { visivel: v })} aria-label={`Mostrar ${l.label}`} />
+                <Button type="button" variant="ghost" size="icon" aria-label="Subir" disabled={i === 0} onClick={() => moveLink(i, -1)}>
+                  <ArrowUp />
+                </Button>
+                <Button type="button" variant="ghost" size="icon" aria-label="Descer" disabled={i === menu.length - 1} onClick={() => moveLink(i, 1)}>
+                  <ArrowDown />
+                </Button>
+              </li>
+            ))}
+          </ul>
         </Panel>
 
         <Panel className="space-y-4">

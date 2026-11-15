@@ -39,3 +39,5 @@ use the editor.
 - Admin access = `user_roles` row checked by `is_admin()`/RLS in the database; the admin role is granted by the `handle_auth_user` trigger. Internal order notes live in `pedido_notas` (admin-only) so customers can never read them.
 - Panel edits call `invalidateStore()` so store queries refetch immediately.
 - Bulk product import runs in the admin panel (`/admin/produtos/importar`) with the admin's own session and RLS, never with a service key in a local script; grouping/naming/brand rules live in `src/lib/bulk-import.ts` (tested) and storage paths are deterministic so re-runs resume.
+- `.env` (publishable backend URL/key only) must stay tracked in git — the published build reads `VITE_SUPABASE_*` from it; ignoring it made the live site fail with "Missing Supabase environment variable(s)". Never put secret keys in it.
+- Store menu "Atendimento" links come from `configuracoes.menu_links`, normalized by `src/lib/menu-links.ts` (tested); product menu entries are the active categories.

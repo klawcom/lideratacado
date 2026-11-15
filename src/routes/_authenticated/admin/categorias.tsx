@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { ArrowDown, ArrowUp, Pencil, Plus } from "lucide-react";
+import { ArrowDown, ArrowUp, Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -132,6 +132,17 @@ function CategoriaDialog({ value, total, onClose, onSaved }: { value: Partial<Ca
     onSaved();
   }
 
+  async function excluir() {
+    if (!form.id) return;
+    if (!confirm(`Excluir a categoria "${form.nome}"? Os produtos dela não são apagados: ficam "Sem categoria" e você pode movê-los depois.`)) return;
+    setSaving(true);
+    const { error } = await supabase.from("categorias").delete().eq("id", form.id);
+    setSaving(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Categoria excluída");
+    onSaved();
+  }
+
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-h-[90vh] overflow-y-auto">
@@ -171,6 +182,11 @@ function CategoriaDialog({ value, total, onClose, onSaved }: { value: Partial<Ca
           <Button type="submit" className="w-full" disabled={saving}>
             Salvar
           </Button>
+          {form.id && (
+            <Button type="button" variant="ghost" className="w-full text-destructive hover:text-destructive" disabled={saving} onClick={excluir}>
+              <Trash2 /> Excluir categoria
+            </Button>
+          )}
         </form>
       </DialogContent>
     </Dialog>
