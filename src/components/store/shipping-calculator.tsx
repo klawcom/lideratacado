@@ -117,7 +117,7 @@ export function ShippingCalculator({
           size="sm"
           onClick={() => consultar()}
           disabled={loading || onlyDigits(cep).length !== 8}
-          className="h-10 px-4 shrink-0 font-medium bg-[#14532D] hover:bg-[#0F3F24] text-white"
+          className="h-10 px-4 shrink-0 font-medium"
         >
           {loading ? <Loader2 className="size-4 animate-spin" /> : "Calcular"}
         </Button>

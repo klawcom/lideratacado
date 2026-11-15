@@ -11,7 +11,7 @@ import { StickyBar } from "@/components/store/sticky-bar";
 import { cart, useCart } from "@/lib/cart";
 import { useSyncCart } from "@/lib/use-sync-cart";
 import { calcularPedido, pecas } from "@/lib/pricing";
-import { UFS, brl, faltamPecas, maskCep, maskPhone, onlyDigits } from "@/lib/format";
+import { UFS, brl, faltamPecas, maskCep, maskCpf, maskPhone, onlyDigits } from "@/lib/format";
 import { siteQuery } from "@/lib/catalog.functions";
 import { criarPedido, pedidoSchema } from "@/lib/orders.functions";
 import { simularFrete } from "@/lib/frete.functions";
@@ -35,9 +35,10 @@ export const Route = createFileRoute("/finalizar")({
 });
 
 type Form = {
+  nome: string;
+  cpf: string;
   email: string;
   whatsapp: string;
-  nome: string;
   cep: string;
   rua: string;
   numero: string;
@@ -46,7 +47,7 @@ type Form = {
   cidade: string;
   estado: string;
 };
-const VAZIO: Form = { email: "", whatsapp: "", nome: "", cep: "", rua: "", numero: "", complemento: "", bairro: "", cidade: "", estado: "" };
+const VAZIO: Form = { nome: "", cpf: "", email: "", whatsapp: "", cep: "", rua: "", numero: "", complemento: "", bairro: "", cidade: "", estado: "" };
 
 function Field({
   id,
@@ -113,6 +114,7 @@ function FinalizarPage() {
         ...cur,
         email: data?.email || cur.email || user.email || "",
         nome: data?.nome || cur.nome || (user.user_metadata?.["full_name"] as string) || "",
+        cpf: (data as any)?.cpf ? maskCpf(String((data as any).cpf)) : cur.cpf,
         ...(data
           ? {
               whatsapp: maskPhone(data.whatsapp),
@@ -212,7 +214,14 @@ function FinalizarPage() {
     if (enviando || !resumo.podeFinalizar) return;
 
     if (!freteEscolhido) {
-      setErroFreteValidacao("Selecione uma opção de frete para continuar.");
+      if (onlyDigits(f.cep).length !== 8) {
+        setErros((e) => ({ ...e, cep: "Informe seu CEP para calcular o frete." }));
+        toast.error("Informe o CEP de entrega para calcular e selecionar o frete.");
+        document.getElementById("f-cep")?.focus();
+        return;
+      }
+      setErroFreteValidacao("Selecione obrigatoriamente uma opção de frete (PAC ou SEDEX) para envio do seu pedido.");
+      toast.error("Escolha uma opção de frete para continuar.");
       document.getElementById("secao-frete")?.scrollIntoView({ behavior: "smooth" });
       return;
     }
@@ -295,11 +304,24 @@ function FinalizarPage() {
             <Field id="f-nome" label="Nome completo" error={erros.nome} className="sm:col-span-2">
               <Input id="f-nome" autoComplete="name" autoCapitalize="words" enterKeyHint="next" value={f.nome} onChange={(e) => set("nome")(e.target.value)} {...inv("nome")} />
             </Field>
-            <Field id="f-email" label="E-mail" error={erros.email}>
-              <Input id="f-email" type="email" inputMode="email" autoComplete="email" autoCapitalize="none" spellCheck={false} enterKeyHint="next" value={f.email} onChange={(e) => set("email")(e.target.value.trim())} {...inv("email")} />
+            <Field id="f-cpf" label="CPF (para nota fiscal e Correios)" error={erros.cpf}>
+              <Input
+                id="f-cpf"
+                inputMode="numeric"
+                autoComplete="off"
+                placeholder="000.000.000-00"
+                maxLength={14}
+                enterKeyHint="next"
+                value={f.cpf}
+                onChange={(e) => set("cpf")(maskCpf(e.target.value))}
+                {...inv("cpf")}
+              />
             </Field>
             <Field id="f-whatsapp" label="WhatsApp com DDD" error={erros.whatsapp}>
               <Input id="f-whatsapp" type="tel" inputMode="tel" autoComplete="tel-national" placeholder="(66) 99999-9999" enterKeyHint="next" value={f.whatsapp} onChange={(e) => set("whatsapp")(maskPhone(e.target.value))} {...inv("whatsapp")} />
+            </Field>
+            <Field id="f-email" label="E-mail" error={erros.email} className="sm:col-span-2">
+              <Input id="f-email" type="email" inputMode="email" autoComplete="email" autoCapitalize="none" spellCheck={false} enterKeyHint="next" value={f.email} onChange={(e) => set("email")(e.target.value.trim())} {...inv("email")} />
             </Field>
           </fieldset>
 
@@ -359,9 +381,14 @@ function FinalizarPage() {
             </Field>
           </fieldset>
 
-          <fieldset id="secao-frete" className="rounded-2xl border bg-card p-4 sm:p-5 space-y-3.5">
+          <fieldset id="secao-frete" className="rounded-2xl border bg-card p-4 sm:p-5 space-y-3.5 shadow-2xs">
             <div className="flex items-center justify-between">
-              <legend className="font-display text-lg font-bold">Opção de envio / Frete</legend>
+              <legend className="flex items-center gap-2 font-display text-lg font-bold">
+                <span>Opção de envio / Frete</span>
+                <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-bold text-primary">
+                  Obrigatório
+                </span>
+              </legend>
               {onlyDigits(f.cep).length === 8 && !carregandoFrete && (
                 <button
                   type="button"
@@ -474,7 +501,10 @@ function FinalizarPage() {
             )}
 
             {erroFreteValidacao && (
-              <p className="text-sm font-semibold text-destructive">{erroFreteValidacao}</p>
+              <div className="flex items-center gap-2 rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-sm font-semibold text-destructive">
+                <AlertCircle className="size-4 shrink-0" />
+                <span>{erroFreteValidacao}</span>
+              </div>
             )}
           </fieldset>
 

@@ -28,6 +28,39 @@ export function maskCep(v: string): string {
   return d.length > 5 ? `${d.slice(0, 5)}-${d.slice(5)}` : d;
 }
 
+/** 000.000.000-00 */
+export function maskCpf(v: string): string {
+  const d = onlyDigits(v).slice(0, 11);
+  if (d.length <= 3) return d;
+  if (d.length <= 6) return `${d.slice(0, 3)}.${d.slice(3)}`;
+  if (d.length <= 9) return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6)}`;
+  return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6, 9)}-${d.slice(9)}`;
+}
+
+/** Validação de dígitos verificadores de CPF brasileiro */
+export function validarCpf(v: string): boolean {
+  const cpf = onlyDigits(v);
+  if (cpf.length !== 11) return false;
+  // Rejeita sequências com todos os dígitos iguais (ex: 111.111.111-11)
+  if (/^(\d)\1{10}$/.test(cpf)) return false;
+
+  let soma = 0;
+  for (let i = 0; i < 9; i++) {
+    soma += parseInt(cpf.charAt(i), 10) * (10 - i);
+  }
+  let resto = 11 - (soma % 11);
+  let digito1 = resto >= 10 ? 0 : resto;
+  if (digito1 !== parseInt(cpf.charAt(9), 10)) return false;
+
+  soma = 0;
+  for (let i = 0; i < 10; i++) {
+    soma += parseInt(cpf.charAt(i), 10) * (11 - i);
+  }
+  resto = 11 - (soma % 11);
+  let digito2 = resto >= 10 ? 0 : resto;
+  return digito2 === parseInt(cpf.charAt(10), 10);
+}
+
 /** (66) 99644-4461 — accepts 10 or 11 digit Brazilian numbers (without +55). */
 export function maskPhone(v: string): string {
   let d = onlyDigits(v);

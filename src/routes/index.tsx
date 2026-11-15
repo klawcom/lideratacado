@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { ArrowRight, MessageCircle, Ruler, Truck } from "lucide-react";
+import { ArrowRight, Layers, MessageCircle, ShieldCheck, Sparkles, Truck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ProductGrid } from "@/components/store/product-card";
 import { homeQuery, siteQuery } from "@/lib/catalog.functions";
@@ -29,10 +29,52 @@ export const Route = createFileRoute("/")({
   component: Home,
 });
 
+const VANTAGENS = [
+  {
+    icon: Truck,
+    titulo: "Frete Correios PAC e SEDEX",
+    sub: "Envio rápido para todo o Brasil",
+    gradient: "from-sky-500 to-blue-600",
+  },
+  {
+    icon: Layers,
+    titulo: "Atacado a partir de 10 peças",
+    sub: "Descontos progressivos até 50+ un.",
+    gradient: "from-emerald-500 to-teal-600",
+  },
+  {
+    icon: Sparkles,
+    titulo: "100% Algodão Pima Peruano",
+    sub: "Toque macio com elastano e durabilidade",
+    gradient: "from-violet-500 to-purple-600",
+  },
+  {
+    icon: ShieldCheck,
+    titulo: "Nota Fiscal & Envio Seguro",
+    sub: "Emissão oficial com CPF e rastreio",
+    gradient: "from-amber-500 to-orange-600",
+  },
+];
+
 const PASSOS = [
-  { icon: Ruler, titulo: "Escolha as peças por tamanho", texto: "Informe quantas quer em P, M, G e GG. Mínimo de 10 peças no total." },
-  { icon: MessageCircle, titulo: "Envie o pedido no WhatsApp", texto: "Preencha seus dados e o pedido chega pronto para nós." },
-  { icon: Truck, titulo: "Combine frete e pagamento", texto: "Respondemos com o frete e as formas de pagamento." },
+  {
+    icon: Sparkles,
+    titulo: "Escolha as peças e cores",
+    texto: "Selecione seus modelos favoritos, defina as cores e quantidades por tamanho (P ao GG). Pedido mínimo de 10 peças no atacado.",
+    gradient: "from-emerald-500 to-teal-600",
+  },
+  {
+    icon: Truck,
+    titulo: "Calcule o frete Correios",
+    texto: "Simulação de frete PAC ou SEDEX com prazos reais e dados para emissão de nota fiscal e etiqueta de postagem com seu CPF.",
+    gradient: "from-sky-500 to-blue-600",
+  },
+  {
+    icon: MessageCircle,
+    titulo: "Finalize direto no WhatsApp",
+    texto: "Seu pedido é enviado formatado com todos os itens, cores e frete escolhido para atendimento ágil da nossa equipe.",
+    gradient: "from-violet-500 to-purple-600",
+  },
 ];
 
 function Home() {
@@ -48,7 +90,7 @@ function Home() {
   return (
     <>
       <section className="container-page pt-4 md:pt-8">
-        <div className="relative overflow-hidden rounded-3xl border border-border/50 bg-muted">
+        <div className="relative overflow-hidden rounded-3xl border border-border/50 bg-muted shadow-soft">
           <picture>
             <source media="(min-width: 768px)" srcSet={bannerWideSrc} />
             <img
@@ -66,7 +108,7 @@ function Home() {
               <h1 className="text-[1.9rem] font-extrabold leading-[1.1] text-balance text-foreground md:text-5xl">{titulo}</h1>
               {sub && <p className="max-w-md text-[15px] sm:text-base font-medium text-foreground/80 dark:text-foreground/90">{sub}</p>}
               {primeira && (
-                <Button asChild size="lg" className="w-full sm:w-auto">
+                <Button asChild size="lg" className="w-full sm:w-auto shadow-sm">
                   <Link to="/categoria/$slug" params={{ slug: primeira.slug }}>
                     Ver produtos <ArrowRight />
                   </Link>
@@ -75,21 +117,41 @@ function Home() {
             </div>
           </div>
         </div>
+
+        {/* Barra de benefícios e destaques coloridos */}
+        <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {VANTAGENS.map((v) => (
+            <div
+              key={v.titulo}
+              className="card-hover flex items-center gap-3.5 rounded-2xl border bg-card p-3.5 sm:p-4 shadow-2xs"
+            >
+              <div
+                className={`grid size-11 shrink-0 place-items-center rounded-xl bg-gradient-to-br ${v.gradient} text-white shadow-xs`}
+              >
+                <v.icon className="size-5" />
+              </div>
+              <div className="min-w-0">
+                <p className="font-sans text-sm font-bold text-foreground leading-snug">{v.titulo}</p>
+                <p className="text-xs text-muted-foreground mt-0.5 truncate">{v.sub}</p>
+              </div>
+            </div>
+          ))}
+        </div>
       </section>
 
       {categorias.map((c) => (
-        <section key={c.id} className="container-page mt-16 md:mt-24" aria-labelledby={`cat-${c.id}`}>
+        <section key={c.id} className="container-page mt-14 md:mt-20" aria-labelledby={`cat-${c.id}`}>
           <div className="mb-6 flex items-end justify-between gap-4">
             <div className="min-w-0">
-              <h2 id={`cat-${c.id}`} className="text-2xl font-bold md:text-3xl">
+              <h2 id={`cat-${c.id}`} className="text-2xl font-bold md:text-3xl text-foreground">
                 {c.nome}
               </h2>
-              {c.descricao && <p className="mt-1 text-muted-foreground">{c.descricao}</p>}
+              {c.descricao && <p className="mt-1 text-sm sm:text-base text-muted-foreground">{c.descricao}</p>}
             </div>
           </div>
           <ProductGrid produtos={c.produtos} />
           <div className="mt-8 flex justify-center">
-            <Button asChild variant="outline" className="w-full sm:w-auto">
+            <Button asChild variant="outline" className="w-full sm:w-auto shadow-2xs">
               <Link to="/categoria/$slug" params={{ slug: c.slug }}>
                 Ver todos <ArrowRight />
               </Link>
@@ -98,22 +160,22 @@ function Home() {
         </section>
       ))}
 
-      <section className="container-page mt-20 md:mt-28" aria-labelledby="como-comprar">
-        <div className="rounded-3xl border bg-card p-6 md:p-10">
+      <section className="container-page mt-16 md:mt-24" aria-labelledby="como-comprar">
+        <div className="rounded-3xl border bg-card p-6 md:p-10 shadow-soft">
           <p className="eyebrow">Simples e rápido</p>
-          <h2 id="como-comprar" className="mt-2 text-2xl font-bold md:text-3xl">
+          <h2 id="como-comprar" className="mt-2 text-2xl font-bold md:text-3xl text-foreground">
             Como comprar
           </h2>
           <ol className="mt-8 grid gap-6 md:grid-cols-3">
             {PASSOS.map((p, i) => (
-              <li key={p.titulo} className="flex gap-4">
-                <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-accent text-accent-foreground">
+              <li key={p.titulo} className="card-hover flex gap-4 rounded-2xl border border-border/60 bg-muted/30 p-4 transition-all">
+                <span className={`grid size-12 shrink-0 place-items-center rounded-2xl bg-gradient-to-br ${p.gradient} text-white shadow-xs`}>
                   <p.icon className="size-6" />
                 </span>
                 <div>
-                  <p className="text-sm font-semibold text-muted-foreground">Passo {i + 1}</p>
-                  <h3 className="mt-0.5 font-sans text-lg font-bold tracking-normal">{p.titulo}</h3>
-                  <p className="mt-1 text-muted-foreground">{p.texto}</p>
+                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Passo {i + 1}</p>
+                  <h3 className="mt-0.5 font-sans text-base sm:text-lg font-bold tracking-normal text-foreground">{p.titulo}</h3>
+                  <p className="mt-1 text-sm text-muted-foreground leading-relaxed">{p.texto}</p>
                 </div>
               </li>
             ))}

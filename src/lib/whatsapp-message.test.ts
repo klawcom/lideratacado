@@ -61,6 +61,7 @@ describe("mensagem do pedido no WhatsApp", () => {
     const comFrete = montarMensagemPedido({
       ...base,
       total: 494.73, // 398.80 + 95.93
+      cliente: { ...base.cliente, cpf: "12345678909" },
       frete: {
         servico: "PAC Correios",
         preco: 95.93,
@@ -70,6 +71,7 @@ describe("mensagem do pedido no WhatsApp", () => {
     expect(comFrete).toContain("Total dos produtos: R$ 398,80");
     expect(comFrete).toContain("📦 Frete (PAC Correios): R$ 95,93 (Em até 8 dias úteis)");
     expect(comFrete).toContain("*Total do pedido: R$ 494,73*");
+    expect(comFrete).toContain("📄 CPF: 123.456.789-09");
     expect(comFrete).toContain("Aguardo a confirmação e as formas de pagamento. Obrigado!");
   });
   it("link wa.me mantém emojis e quebras de linha codificados", () => {

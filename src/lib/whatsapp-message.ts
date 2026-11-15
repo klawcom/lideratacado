@@ -1,5 +1,5 @@
 import { TAMANHOS, type Qtd } from "./pricing";
-import { formatDateTime, formatWhatsappIntl, maskCep, money, padNumero } from "./format";
+import { formatDateTime, formatWhatsappIntl, maskCep, maskCpf, money, padNumero } from "./format";
 import { formatarCorTamanhos } from "./colors";
 
 export type MensagemItem = {
@@ -24,7 +24,7 @@ export type MensagemPedido = {
     preco: number;
     prazo: string;
   };
-  cliente: { nome: string; email: string; whatsapp: string };
+  cliente: { nome: string; email: string; whatsapp: string; cpf?: string };
   entrega: {
     rua: string;
     numero: string;
@@ -89,6 +89,9 @@ export function montarMensagemPedido(p: MensagemPedido): string {
   L.push(SEP);
   L.push(`*CLIENTE*`);
   L.push(`👤 ${p.cliente.nome}`);
+  if (p.cliente.cpf) {
+    L.push(`📄 CPF: ${maskCpf(p.cliente.cpf)}`);
+  }
   L.push(`📧 ${p.cliente.email}`);
   L.push(`📱 ${formatWhatsappIntl(p.cliente.whatsapp)}`);
   L.push(`*ENTREGA*`);

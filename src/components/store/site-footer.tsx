@@ -25,7 +25,7 @@ export function SiteFooter() {
           <h2 className="mb-3 text-base font-semibold">Contato</h2>
           <div className="flex flex-col items-start gap-2.5">
             {wa && (
-              <Button asChild variant="default" size="sm" className="bg-[#14532D] hover:bg-[#0F3F24] text-white gap-2 font-medium">
+              <Button asChild variant="default" size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground gap-2 font-medium">
                 <a
                   href={`https://wa.me/${whatsappLinkNumber(wa)}`}
                   target="_blank"

@@ -3,7 +3,7 @@ import { getRequest } from "@tanstack/react-start/server";
 import { z } from "zod";
 import { calcularPedido } from "./pricing";
 import { linkWhatsapp, montarMensagemPedido } from "./whatsapp-message";
-import { faltamPecas, money, onlyDigits } from "./format";
+import { faltamPecas, maskCpf, money, onlyDigits, validarCpf } from "./format";
 import { formatarCorTamanhos } from "./colors";
 
 const qtd = z.number().int().min(0).max(100000);
@@ -16,6 +16,10 @@ const corQtdSchema = z.object({
 export const pedidoSchema = z.object({
   cliente: z.object({
     nome: z.string().trim().min(2, "Informe seu nome").max(120),
+    cpf: z
+      .string()
+      .transform(onlyDigits)
+      .refine(validarCpf, "CPF inválido. Informe os 11 dígitos para nota fiscal e etiqueta."),
     email: z.string().trim().toLowerCase().email("E-mail inválido").max(255),
     whatsapp: z
       .string()
@@ -36,13 +40,11 @@ export const pedidoSchema = z.object({
       .toUpperCase()
       .regex(/^[A-Z]{2}$/, "UF inválida"),
   }),
-  frete: z
-    .object({
-      servico: z.string().trim().min(1, "Informe a opção de frete"),
-      preco: z.number().min(0),
-      prazo: z.string().trim().min(1),
-    })
-    .optional(),
+  frete: z.object({
+    servico: z.string().trim().min(1, "Selecione uma opção de frete"),
+    preco: z.number().min(0),
+    prazo: z.string().trim().min(1),
+  }),
   observacao: z.string().trim().max(500).default(""),
   itens: z
     .array(
@@ -171,10 +173,11 @@ export const criarPedido = createServerFn({ method: "POST" })
 
     const valorFrete = data.frete?.preco ?? 0;
     const totalComFrete = Math.round((resumo.total + valorFrete) * 100) / 100;
+    const cpfObs = c.cpf ? `CPF: ${maskCpf(c.cpf)}` : "";
     const freteObs = data.frete
       ? `Frete: ${data.frete.servico} (R$ ${money(data.frete.preco)} - ${data.frete.prazo})`
       : "";
-    const observacaoFinal = [freteObs, data.observacao].filter(Boolean).join(" | ").slice(0, 500);
+    const observacaoFinal = [cpfObs, freteObs, data.observacao].filter(Boolean).join(" | ").slice(0, 500);
 
     const { data: pedido, error: pedErr } = await db
       .from("pedidos")
@@ -245,7 +248,7 @@ export const criarPedido = createServerFn({ method: "POST" })
       faixa: resumo.faixa,
       total: totalComFrete,
       frete: data.frete,
-      cliente: { nome: c.nome, email: c.email, whatsapp: c.whatsapp },
+      cliente: { nome: c.nome, email: c.email, whatsapp: c.whatsapp, cpf: c.cpf },
       entrega: { rua: c.rua, numero: c.numero, complemento: c.complemento, bairro: c.bairro, cidade: c.cidade, estado: c.estado, cep: c.cep },
       observacao: data.observacao,
     });
