@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { CheckCheck, Loader2, Save, Sparkles } from "lucide-react";
+import { CheckCheck, Loader2, Package, Save, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -57,6 +57,11 @@ function Precos() {
   const [selectedCatId, setSelectedCatId] = useState<string>("");
   const [catPrecos, setCatPrecos] = useState<Record<number, string>>({ 10: "", 20: "", 30: "", 50: "" });
   const [aplicandoLote, setAplicandoLote] = useState(false);
+
+  // Estoque em lote (tudo de uma vez ou por categoria)
+  const [loteEstoqueAlvo, setLoteEstoqueAlvo] = useState<string>("todos");
+  const [loteEstoqueQtd, setLoteEstoqueQtd] = useState<string>("1000");
+  const [salvandoEstoqueLote, setSalvandoEstoqueLote] = useState(false);
 
   useEffect(() => {
     if (!data) return;
@@ -149,6 +154,56 @@ function Precos() {
       toast.error(err instanceof Error ? err.message : "Erro ao salvar preços da categoria.");
     } finally {
       setAplicandoLote(false);
+    }
+  }
+
+  async function aplicarEstoqueLote(salvarDireto = false) {
+    const qtdNum = Math.max(0, parseInt(loteEstoqueQtd, 10) || 0);
+    const targetRows = loteEstoqueAlvo === "todos"
+      ? rows
+      : rows.filter((r) => r.categoriaId === loteEstoqueAlvo);
+
+    if (!targetRows.length) {
+      toast.error("Nenhum produto encontrado para aplicar o estoque.");
+      return;
+    }
+
+    const catObj = categorias.find((c) => c.id === loteEstoqueAlvo);
+    const alvoNome = loteEstoqueAlvo === "todos"
+      ? `todos os ${targetRows.length} produtos da loja`
+      : `${targetRows.length} produtos de "${catObj?.nome ?? "Categoria"}"`;
+
+    // Atualiza o estoque na tabela local
+    setRows((rs) =>
+      rs.map((r) =>
+        loteEstoqueAlvo === "todos" || r.categoriaId === loteEstoqueAlvo
+          ? { ...r, estoque: String(qtdNum) }
+          : r
+      )
+    );
+
+    if (!salvarDireto) {
+      toast.success(
+        `Estoque de ${qtdNum} peças preenchido na tabela para ${alvoNome}. Clique em "Salvar" no topo para gravar.`
+      );
+      return;
+    }
+
+    setSalvandoEstoqueLote(true);
+    try {
+      const ids = targetRows.map((r) => r.id);
+      const { error } = await supabase
+        .from("produtos")
+        .update({ estoque: qtdNum })
+        .in("id", ids);
+      if (error) throw error;
+      toast.success(`Estoque de ${qtdNum} peças salvo no banco para ${alvoNome}!`);
+      qc.invalidateQueries({ queryKey: ["admin"] });
+      invalidateStore(qc);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erro ao salvar estoque no banco.");
+    } finally {
+      setSalvandoEstoqueLote(false);
     }
   }
 
@@ -256,7 +311,73 @@ function Precos() {
               </div>
             </div>
           </div>
-          {/* Phone: one card per product */}
+          {/* Card: Alterar Estoque Tudo de Uma Vez */}
+          <div className="mb-6 rounded-2xl border bg-card p-4 sm:p-5 shadow-xs">
+            <div>
+              <h2 className="flex items-center gap-2 font-semibold text-base sm:text-lg">
+                <Package className="size-5 text-primary" /> Alterar Estoque Tudo de Uma Vez
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                Informe a quantidade de estoque e aplique a todos os produtos da loja ou por categoria com um clique.
+              </p>
+            </div>
+
+            <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_auto]">
+              <div className="grid gap-3 sm:grid-cols-2 max-w-lg">
+                <div>
+                  <label className="text-xs font-semibold text-muted-foreground block mb-1">Aplicar estoque em</label>
+                  <select
+                    className="h-11 w-full rounded-lg border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    value={loteEstoqueAlvo}
+                    onChange={(e) => setLoteEstoqueAlvo(e.target.value)}
+                  >
+                    <option value="todos">Todos os produtos da loja ({rows.length})</option>
+                    {categorias.map((c) => {
+                      const count = rows.filter((r) => r.categoriaId === c.id).length;
+                      return (
+                        <option key={c.id} value={c.id}>
+                          {c.nome} ({count})
+                        </option>
+                      );
+                    })}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-muted-foreground block mb-1">
+                    Novo estoque (peças)
+                  </label>
+                  <input
+                    className={cell}
+                    inputMode="numeric"
+                    placeholder="Ex.: 1000"
+                    value={loteEstoqueQtd}
+                    onChange={(e) => setLoteEstoqueQtd(e.target.value.replace(/\D/g, ""))}
+                  />
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-end gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => aplicarEstoqueLote(false)}
+                  disabled={salvandoEstoqueLote}
+                  className="w-full sm:w-auto"
+                >
+                  Preencher na tabela
+                </Button>
+                <Button
+                  type="button"
+                  onClick={() => aplicarEstoqueLote(true)}
+                  disabled={salvandoEstoqueLote}
+                  className="w-full sm:w-auto"
+                >
+                  {salvandoEstoqueLote ? <Loader2 className="animate-spin" /> : <CheckCheck className="size-4" />}
+                  Aplicar e Salvar no banco
+                </Button>
+              </div>
+            </div>
+          </div>
           <ul className="space-y-3 md:hidden">
             {rows.map((r, i) => (
               <li key={r.id} className="rounded-2xl border bg-card p-3">

@@ -80,8 +80,8 @@ export function ProductForm({ produto }: { produto?: ProdutoEdit }) {
     e.preventDefault();
     const nome = f.nome.trim();
     const codigo = f.codigo_modelo.trim();
-    const slug = slugify(f.slug || `${nome}`);
-    if (!nome || !codigo || !slug) { toast.error("Preencha nome, código do modelo e slug."); return; }
+    const slug = slugify(f.slug || nome);
+    if (!nome || !codigo) { toast.error("Preencha o nome e o código do modelo."); return; }
     const faixas: { quantidade_minima: number; preco_peca: number }[] = [];
     for (const q of FAIXAS) {
       const v = parsePreco(precos[q] ?? "");
@@ -133,27 +133,13 @@ export function ProductForm({ produto }: { produto?: ProdutoEdit }) {
             value={f.nome}
             onChange={(e) => {
               set("nome", e.target.value);
-              if (!slugTouched) set("slug", slugify(e.target.value));
+              set("slug", slugify(e.target.value));
             }}
           />
         </div>
         <div>
           <FieldLabel htmlFor="p-codigo">Código do modelo</FieldLabel>
           <Input id="p-codigo" autoCapitalize="characters" value={f.codigo_modelo} onChange={(e) => set("codigo_modelo", e.target.value)} />
-        </div>
-        <div>
-          <FieldLabel htmlFor="p-slug" hint="(endereço)">
-            Slug
-          </FieldLabel>
-          <Input
-            id="p-slug"
-            autoCapitalize="none"
-            value={f.slug}
-            onChange={(e) => {
-              setSlugTouched(true);
-              set("slug", e.target.value);
-            }}
-          />
         </div>
         <div>
           <FieldLabel htmlFor="p-cat">Categoria</FieldLabel>

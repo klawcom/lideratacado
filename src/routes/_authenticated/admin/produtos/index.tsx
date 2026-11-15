@@ -2,10 +2,11 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
-import { CheckSquare, Eye, EyeOff, FileText, FolderInput, FolderUp, Loader2, Plus, Search, Square, Trash2, X } from "lucide-react";
+import { CheckSquare, Eye, EyeOff, FileText, FolderInput, FolderUp, Loader2, Package, Plus, Save, Search, Square, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminPage, Empty, Loading, invalidateStore, selectClass } from "@/components/admin/ui";
 import { useCategoriasAdmin } from "@/components/admin/product-form";
@@ -27,6 +28,8 @@ function Produtos() {
   const [status, setStatus] = useState<"" | "ativo" | "inativo">("");
   const [sel, setSel] = useState<Set<string> | null>(null);
   const [busy, setBusy] = useState(false);
+  const [dialogEstoque, setDialogEstoque] = useState(false);
+  const [novoEstoqueLote, setNovoEstoqueLote] = useState("1000");
   const { data: cats } = useCategoriasAdmin();
   const { data, isLoading } = useQuery({
     queryKey: ["admin", "produtos"],
@@ -224,6 +227,9 @@ function Produtos() {
               <Button variant="outline" disabled={!n || busy} onClick={() => visibilidade(false)}>
                 <EyeOff /> Ocultar
               </Button>
+              <Button variant="outline" disabled={!n || busy} onClick={() => setDialogEstoque(true)}>
+                <Package /> Alterar estoque
+              </Button>
               <div className="relative">
                 <FolderInput className="pointer-events-none absolute left-3 top-1/2 size-5 -translate-y-1/2 text-muted-foreground" />
                 <select className={`${selectClass} pl-10`} disabled={!n || busy} value="" onChange={(e) => mover(e.target.value)} aria-label="Mover para categoria">
@@ -243,6 +249,50 @@ function Produtos() {
           </div>
         </div>
       )}
+
+      <Dialog open={dialogEstoque} onOpenChange={setDialogEstoque}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Alterar estoque de {plural}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <p className="text-sm text-muted-foreground">
+              Defina a quantidade de estoque para aplicar a todos os <strong>{plural}</strong> selecionados de uma só vez:
+            </p>
+            <div>
+              <label className="text-xs font-semibold text-muted-foreground block mb-1.5">
+                Quantidade em estoque (peças)
+              </label>
+              <Input
+                inputMode="numeric"
+                value={novoEstoqueLote}
+                onChange={(e) => setNovoEstoqueLote(e.target.value.replace(/\D/g, ""))}
+                placeholder="Ex.: 1000"
+                autoFocus
+              />
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button type="button" variant="outline" onClick={() => setDialogEstoque(false)} disabled={busy}>
+                Cancelar
+              </Button>
+              <Button
+                type="button"
+                onClick={async () => {
+                  const qtd = Math.max(0, parseInt(novoEstoqueLote, 10) || 0);
+                  await aplicar(
+                    async () => (await supabase.from("produtos").update({ estoque: qtd }).in("id", chosen)).error?.message ?? null,
+                    `Estoque de ${qtd} peças aplicado com sucesso para ${plural}!`
+                  );
+                  setDialogEstoque(false);
+                }}
+                disabled={busy}
+              >
+                {busy ? <Loader2 className="animate-spin" /> : <Save />} Aplicar estoque
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </AdminPage>
   );
 }

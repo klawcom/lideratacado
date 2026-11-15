@@ -68,7 +68,7 @@ function Categorias() {
               <div className="min-w-0 flex-1 py-1">
                 <p className="truncate font-semibold">{c.nome}</p>
                 <p className="truncate text-sm text-muted-foreground">
-                  /{c.slug} · {(c.produtos as unknown as { count: number }[])[0]?.count ?? 0} produtos
+                  {(c.produtos as unknown as { count: number }[])[0]?.count ?? 0} produtos
                 </p>
               </div>
               <label className="flex min-h-11 items-center gap-2 px-1 text-sm">
@@ -127,7 +127,7 @@ function CategoriaDialog({ value, total, onClose, onSaved }: { value: Partial<Ca
       ? await supabase.from("categorias").update(payload).eq("id", form.id)
       : await supabase.from("categorias").insert({ ...payload, ordem: total + 1 });
     setSaving(false);
-    if (error) { toast.error(error.code === "23505" ? "Já existe uma categoria com esse endereço (slug)." : error.message); return; }
+    if (error) { toast.error(error.code === "23505" ? "Já existe uma categoria com esse nome." : error.message); return; }
     toast.success("Categoria salva");
     onSaved();
   }
@@ -155,21 +155,7 @@ function CategoriaDialog({ value, total, onClose, onSaved }: { value: Partial<Ca
             <Input
               id="c-nome"
               value={form.nome ?? ""}
-              onChange={(e) => setForm((f) => ({ ...f, nome: e.target.value, ...(slugTouched ? {} : { slug: slugify(e.target.value) }) }))}
-            />
-          </div>
-          <div>
-            <FieldLabel htmlFor="c-slug" hint="(endereço na loja)">
-              Slug
-            </FieldLabel>
-            <Input
-              id="c-slug"
-              autoCapitalize="none"
-              value={form.slug ?? ""}
-              onChange={(e) => {
-                setSlugTouched(true);
-                setForm((f) => ({ ...f, slug: e.target.value }));
-              }}
+              onChange={(e) => setForm((f) => ({ ...f, nome: e.target.value, slug: slugify(e.target.value) }))}
             />
           </div>
           <div>

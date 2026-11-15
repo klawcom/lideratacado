@@ -488,30 +488,17 @@ function Importar() {
                     </div>
 
                     {(categoria === "nova" || !categoria) && (
-                      <div className="grid gap-3 sm:grid-cols-2 pt-2 border-t border-border/60">
-                        <div>
-                          <FieldLabel htmlFor="auto-cat-nome">Nome da nova categoria</FieldLabel>
-                          <Input
-                            id="auto-cat-nome"
-                            value={nomeNovaCategoria}
-                            disabled={rodando}
-                            onChange={(e) => {
-                              setNomeNovaCategoria(e.target.value);
-                              setSlugNovaCategoria(slugify(e.target.value));
-                            }}
-                          />
-                        </div>
-                        <div>
-                          <FieldLabel htmlFor="auto-cat-slug" hint="(endereço na loja)">
-                            Slug
-                          </FieldLabel>
-                          <Input
-                            id="auto-cat-slug"
-                            value={slugNovaCategoria}
-                            disabled={rodando}
-                            onChange={(e) => setSlugNovaCategoria(slugify(e.target.value))}
-                          />
-                        </div>
+                      <div className="pt-2 border-t border-border/60 max-w-md">
+                        <FieldLabel htmlFor="auto-cat-nome">Nome da nova categoria</FieldLabel>
+                        <Input
+                          id="auto-cat-nome"
+                          value={nomeNovaCategoria}
+                          disabled={rodando}
+                          onChange={(e) => {
+                            setNomeNovaCategoria(e.target.value);
+                            setSlugNovaCategoria(slugify(e.target.value));
+                          }}
+                        />
                       </div>
                     )}
                   </div>
@@ -547,35 +534,22 @@ function Importar() {
             )}
 
             {modoCategoria === "nova" && (
-              <div className="rounded-xl border bg-muted/40 p-3.5 space-y-3 max-w-xl">
+              <div className="rounded-xl border bg-muted/40 p-3.5 space-y-3 max-w-md">
                 <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   Dados da nova categoria
                 </p>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <div>
-                    <FieldLabel htmlFor="cat-nova-nome">Nome da nova categoria</FieldLabel>
-                    <Input
-                      id="cat-nova-nome"
-                      placeholder="Ex.: Camisas Polo Piquet, Bermudas"
-                      value={nomeNovaCategoria}
-                      disabled={rodando}
-                      onChange={(e) => {
-                        setNomeNovaCategoria(e.target.value);
-                        setSlugNovaCategoria(slugify(e.target.value));
-                      }}
-                    />
-                  </div>
-                  <div>
-                    <FieldLabel htmlFor="cat-nova-slug" hint="(endereço na loja)">
-                      Slug
-                    </FieldLabel>
-                    <Input
-                      id="cat-nova-slug"
-                      value={slugNovaCategoria}
-                      disabled={rodando}
-                      onChange={(e) => setSlugNovaCategoria(slugify(e.target.value))}
-                    />
-                  </div>
+                <div>
+                  <FieldLabel htmlFor="cat-nova-nome">Nome da nova categoria</FieldLabel>
+                  <Input
+                    id="cat-nova-nome"
+                    placeholder="Ex.: Camisas Polo Piquet, Bermudas"
+                    value={nomeNovaCategoria}
+                    disabled={rodando}
+                    onChange={(e) => {
+                      setNomeNovaCategoria(e.target.value);
+                      setSlugNovaCategoria(slugify(e.target.value));
+                    }}
+                  />
                 </div>
               </div>
             )}
