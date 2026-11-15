@@ -14,7 +14,9 @@ export const Route = createFileRoute("/_authenticated/admin/precos")({ component
 
 type Row = { id: string; nome: string; codigo: string; estoque: string; precos: Record<number, string> };
 
-const cell = "h-11 w-full min-w-0 rounded-lg border border-input bg-background px-2 text-right text-base tabular-nums focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
+const cellBase = "h-11 w-full min-w-0 rounded-lg border border-input bg-background px-2 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
+const cell = `${cellBase} text-right tabular-nums`;
+const nameCell = `${cellBase} font-semibold`;
 
 function Precos() {
   const qc = useQueryClient();
@@ -96,7 +98,7 @@ function Precos() {
               <li key={r.id} className="rounded-2xl border bg-card p-3">
                 <label className="text-sm">
                   <span className="text-muted-foreground">Nome · {r.codigo}</span>
-                  <input className={`${cell} text-left font-semibold`} value={r.nome} onChange={(e) => upd(i, { nome: e.target.value })} />
+                  <input className={nameCell} value={r.nome} onChange={(e) => upd(i, { nome: e.target.value })} />
                 </label>
                 <div className="mt-2 grid grid-cols-2 gap-2">
                   {FAIXAS.map((q) => (
@@ -131,7 +133,7 @@ function Precos() {
                 {rows.map((r, i) => (
                   <tr key={r.id}>
                     <td className="min-w-56 p-1.5">
-                      <input aria-label={`Nome ${r.codigo}`} className={`${cell} text-left font-semibold`} value={r.nome} onChange={(e) => upd(i, { nome: e.target.value })} />
+                      <input aria-label={`Nome ${r.codigo}`} className={nameCell} value={r.nome} onChange={(e) => upd(i, { nome: e.target.value })} />
                       <p className="px-2 pt-0.5 text-sm text-muted-foreground">{r.codigo}</p>
                     </td>
                     {FAIXAS.map((q) => (

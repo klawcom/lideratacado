@@ -169,9 +169,9 @@ function Produtos() {
                 </div>
               </>
             );
-            const cls = `flex w-full items-center gap-3 rounded-2xl border bg-card p-2 text-left transition hover:border-primary ${marcado ? "border-primary ring-1 ring-primary" : ""}`;
+            const cls = `flex w-full min-w-0 overflow-hidden items-center gap-3 rounded-2xl border bg-card p-2 text-left transition hover:border-primary ${marcado ? "border-primary ring-1 ring-primary" : ""}`;
             return (
-              <li key={p.id}>
+              <li key={p.id} className="min-w-0">
                 {selecting ? (
                   <button type="button" className={cls} onClick={() => toggle(p.id)} aria-pressed={marcado}>
                     {inner}
