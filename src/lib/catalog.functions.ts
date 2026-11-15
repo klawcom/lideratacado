@@ -40,6 +40,15 @@ function normFaixas<T extends { faixas_preco: { quantidade_minima: number; preco
   return { ...p, faixas_preco: p.faixas_preco.map((f) => ({ ...f, preco_peca: Number(f.preco_peca) })) };
 }
 
+export type SiteBannerItem = {
+  id: number;
+  wide: string | null;
+  mobile: string | null;
+  link?: string | null;
+  titulo?: string | null;
+  subtitulo?: string | null;
+};
+
 export const getSiteData = createServerFn({ method: "GET" }).handler(async () => {
   const { publicDb, requestOrigin } = await import("./public-db.server");
   const db = publicDb();
@@ -49,21 +58,82 @@ export const getSiteData = createServerFn({ method: "GET" }).handler(async () =>
   ]);
   if (error) throw new Error(error.message);
 
-  let bannerWide: string | null = null;
-  let bannerMobile: string | null = null;
+  const bannersList: SiteBannerItem[] = [];
   try {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: bannerFiles } = await supabaseAdmin.storage.from("produtos").list("banners");
-    if (bannerFiles?.some((b) => b.name === "hero-wide.webp")) bannerWide = "banners/hero-wide.webp";
-    if (bannerFiles?.some((b) => b.name === "hero-mobile.webp")) bannerMobile = "banners/hero-mobile.webp";
+    const fileNames = new Set(bannerFiles?.map((b) => b.name) ?? []);
+
+    const rawMenu = config?.menu_links as Record<string, unknown> | null;
+    const bannersMeta = Array.isArray(rawMenu?.banners)
+      ? (rawMenu?.banners as Array<{ id?: number; link?: string; titulo?: string; subtitulo?: string }>)
+      : [];
+
+    const meta1 = bannersMeta.find((m) => m?.id === 1);
+    const meta2 = bannersMeta.find((m) => m?.id === 2);
+    const meta3 = bannersMeta.find((m) => m?.id === 3);
+
+    // Slot 1: Principal
+    const b1Wide = fileNames.has("hero-wide.webp")
+      ? "banners/hero-wide.webp"
+      : fileNames.has("banner-1-wide.webp")
+        ? "banners/banner-1-wide.webp"
+        : null;
+    const b1Mobile = fileNames.has("hero-mobile.webp")
+      ? "banners/hero-mobile.webp"
+      : fileNames.has("banner-1-mobile.webp")
+        ? "banners/banner-1-mobile.webp"
+        : null;
+
+    bannersList.push({
+      id: 1,
+      wide: b1Wide,
+      mobile: b1Mobile,
+      link: meta1?.link || null,
+      titulo: meta1?.titulo || null,
+      subtitulo: meta1?.subtitulo || null,
+    });
+
+    // Slot 2
+    const b2Wide = fileNames.has("banner-2-wide.webp") ? "banners/banner-2-wide.webp" : null;
+    const b2Mobile = fileNames.has("banner-2-mobile.webp") ? "banners/banner-2-mobile.webp" : null;
+    if (b2Wide || b2Mobile) {
+      bannersList.push({
+        id: 2,
+        wide: b2Wide,
+        mobile: b2Mobile,
+        link: meta2?.link || null,
+        titulo: meta2?.titulo || null,
+        subtitulo: meta2?.subtitulo || null,
+      });
+    }
+
+    // Slot 3
+    const b3Wide = fileNames.has("banner-3-wide.webp") ? "banners/banner-3-wide.webp" : null;
+    const b3Mobile = fileNames.has("banner-3-mobile.webp") ? "banners/banner-3-mobile.webp" : null;
+    if (b3Wide || b3Mobile) {
+      bannersList.push({
+        id: 3,
+        wide: b3Wide,
+        mobile: b3Mobile,
+        link: meta3?.link || null,
+        titulo: meta3?.titulo || null,
+        subtitulo: meta3?.subtitulo || null,
+      });
+    }
   } catch {
-    // Falls back gracefully to bundled hero banners
+    // Falls back gracefully to default hero banner 1
+    bannersList.push({ id: 1, wide: null, mobile: null });
   }
 
   return {
     config: config as Config,
     categorias: categorias ?? [],
-    banners: { wide: bannerWide, mobile: bannerMobile },
+    banners: {
+      wide: bannersList[0]?.wide ?? null,
+      mobile: bannersList[0]?.mobile ?? null,
+      items: bannersList,
+    },
     origin: requestOrigin(getRequest()),
   };
 });

@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
-import { ArrowDown, ArrowUp, ImagePlus, Loader2, RotateCcw, Save, Truck } from "lucide-react";
+import { ArrowDown, ArrowUp, ImagePlus, Loader2, RotateCcw, Save, Sparkles, Trash2, Truck } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { normalizeMenuLinks, type MenuLink } from "@/lib/menu-links";
 import { toast } from "sonner";
@@ -41,8 +41,12 @@ function Config() {
   const [f, setF] = useState<Cfg | null>(null);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [uploadingBanner, setUploadingBanner] = useState<"wide" | "mobile" | null>(null);
+  const [uploadingBanner, setUploadingBanner] = useState<string | null>(null);
   const [bannerVersion, setBannerVersion] = useState<number>(Date.now());
+  const [activeBannerSlot, setActiveBannerSlot] = useState<1 | 2 | 3>(1);
+  const [bannerLinks, setBannerLinks] = useState<Record<1 | 2 | 3, string>>({ 1: "", 2: "", 3: "" });
+  const [bannerTitulos, setBannerTitulos] = useState<Record<1 | 2 | 3, string>>({ 1: "", 2: "", 3: "" });
+  const [bannerSubtitulos, setBannerSubtitulos] = useState<Record<1 | 2 | 3, string>>({ 1: "", 2: "", 3: "" });
   const [menu, setMenu] = useState<MenuLink[]>([]);
   const [tokenSuperFrete, setTokenSuperFrete] = useState("");
   const [cepOrigemSuperFrete, setCepOrigemSuperFrete] = useState("78464-222");
@@ -54,27 +58,49 @@ function Config() {
     queryKey: ["admin", "banners"],
     queryFn: async () => {
       const { data, error } = await supabase.storage.from("produtos").list("banners");
-      if (error) return { wide: false, mobile: false };
+      if (error) {
+        return {
+          1: { wide: false, mobile: false },
+          2: { wide: false, mobile: false },
+          3: { wide: false, mobile: false },
+        };
+      }
+      const names = new Set(data?.map((b) => b.name) ?? []);
       return {
-        wide: data?.some((b) => b.name === "hero-wide.webp") ?? false,
-        mobile: data?.some((b) => b.name === "hero-mobile.webp") ?? false,
+        1: {
+          wide: names.has("hero-wide.webp") || names.has("banner-1-wide.webp"),
+          mobile: names.has("hero-mobile.webp") || names.has("banner-1-mobile.webp"),
+        },
+        2: {
+          wide: names.has("banner-2-wide.webp"),
+          mobile: names.has("banner-2-mobile.webp"),
+        },
+        3: {
+          wide: names.has("banner-3-wide.webp"),
+          mobile: names.has("banner-3-mobile.webp"),
+        },
       };
     },
   });
 
-  async function enviarBanner(tipo: "wide" | "mobile", file: File) {
-    setUploadingBanner(tipo);
+  async function enviarBanner(slot: 1 | 2 | 3, tipo: "wide" | "mobile", file: File) {
+    setUploadingBanner(`${slot}-${tipo}`);
     try {
       const maxDim = tipo === "wide" ? 1920 : 1080;
       const blob = await resizeToWebp(file, maxDim, 0.85);
-      const filename = tipo === "wide" ? "hero-wide.webp" : "hero-mobile.webp";
+      const filename =
+        slot === 1
+          ? tipo === "wide"
+            ? "hero-wide.webp"
+            : "hero-mobile.webp"
+          : `banner-${slot}-${tipo}.webp`;
       const path = `banners/${filename}`;
       const { error } = await supabase.storage.from("produtos").upload(path, blob, {
         contentType: "image/webp",
         upsert: true,
       });
       if (error) throw error;
-      toast.success(`Banner ${tipo === "wide" ? "desktop" : "celular"} atualizado com sucesso!`);
+      toast.success(`Banner ${slot} (${tipo === "wide" ? "desktop" : "celular"}) enviado com sucesso!`);
       setBannerVersion(Date.now());
       await refetchBanners();
       invalidateStore(qc);
@@ -85,29 +111,62 @@ function Config() {
     }
   }
 
-  async function restaurarBanner(tipo: "wide" | "mobile") {
-    const filename = tipo === "wide" ? "hero-wide.webp" : "hero-mobile.webp";
-    const path = `banners/${filename}`;
-    const { error } = await supabase.storage.from("produtos").remove([path]);
-    if (error) {
-      toast.error(error.message);
-      return;
+  async function restaurarBanner(slot: 1 | 2 | 3, tipo?: "wide" | "mobile") {
+    try {
+      const pathsToDelete: string[] = [];
+      if (slot === 1) {
+        if (!tipo || tipo === "wide") {
+          pathsToDelete.push("banners/hero-wide.webp", "banners/banner-1-wide.webp");
+        }
+        if (!tipo || tipo === "mobile") {
+          pathsToDelete.push("banners/hero-mobile.webp", "banners/banner-1-mobile.webp");
+        }
+      } else {
+        if (!tipo || tipo === "wide") pathsToDelete.push(`banners/banner-${slot}-wide.webp`);
+        if (!tipo || tipo === "mobile") pathsToDelete.push(`banners/banner-${slot}-mobile.webp`);
+      }
+      const { error } = await supabase.storage.from("produtos").remove(pathsToDelete);
+      if (error) throw error;
+      toast.success(
+        slot === 1
+          ? "Banner 1 restaurado para a imagem padrão."
+          : tipo
+            ? `Imagem ${tipo === "wide" ? "desktop" : "celular"} do banner ${slot} removida.`
+            : `Banner ${slot} removido do carrossel.`
+      );
+      setBannerVersion(Date.now());
+      await refetchBanners();
+      invalidateStore(qc);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Falha ao remover banner");
     }
-    toast.success(`Banner ${tipo === "wide" ? "desktop" : "celular"} restaurado para o padrão.`);
-    setBannerVersion(Date.now());
-    await refetchBanners();
-    invalidateStore(qc);
   }
+
   useEffect(() => {
     if (data) {
       setF({ ...data, whatsapp: maskPhone(data.whatsapp.replace(/^55/, "")) });
       setMenu(normalizeMenuLinks(data.menu_links));
       if (data.menu_links && typeof data.menu_links === "object" && !Array.isArray(data.menu_links)) {
-        const sf = (data.menu_links as Record<string, unknown>).superfrete as
-          | { token?: string; cep_origem?: string }
-          | undefined;
-        if (sf?.token) setTokenSuperFrete(sf.token);
-        if (sf?.cep_origem) setCepOrigemSuperFrete(maskCep(sf.cep_origem));
+        const sf = data.menu_links as Record<string, unknown>;
+        const superfrete = sf.superfrete as { token?: string; cep_origem?: string } | undefined;
+        if (superfrete?.token) setTokenSuperFrete(superfrete.token);
+        if (superfrete?.cep_origem) setCepOrigemSuperFrete(maskCep(superfrete.cep_origem));
+
+        if (Array.isArray(sf.banners)) {
+          const links: Record<1 | 2 | 3, string> = { 1: "", 2: "", 3: "" };
+          const titulos: Record<1 | 2 | 3, string> = { 1: "", 2: "", 3: "" };
+          const subs: Record<1 | 2 | 3, string> = { 1: "", 2: "", 3: "" };
+          for (const b of sf.banners as Array<{ id?: number; link?: string; titulo?: string; subtitulo?: string }>) {
+            if (b?.id === 1 || b?.id === 2 || b?.id === 3) {
+              links[b.id] = b.link || "";
+              titulos[b.id] = b.titulo || "";
+              subs[b.id] = b.subtitulo || "";
+            }
+          }
+          setBannerLinks(links);
+          setBannerTitulos(titulos);
+          setBannerSubtitulos(subs);
+        }
       }
     }
   }, [data]);
@@ -149,12 +208,18 @@ function Config() {
     setSaving(true);
     const { id: _id, updated_at: _u, menu_links: _m, ...rest } = f;
     const linksNormalizados = normalizeMenuLinks(menu.map((l) => ({ ...l, label: l.label.trim() })));
+    const bannersMeta = [
+      { id: 1, link: (bannerLinks[1] || "").trim(), titulo: (bannerTitulos[1] || "").trim(), subtitulo: (bannerSubtitulos[1] || "").trim() },
+      { id: 2, link: (bannerLinks[2] || "").trim(), titulo: (bannerTitulos[2] || "").trim(), subtitulo: (bannerSubtitulos[2] || "").trim() },
+      { id: 3, link: (bannerLinks[3] || "").trim(), titulo: (bannerTitulos[3] || "").trim(), subtitulo: (bannerSubtitulos[3] || "").trim() },
+    ];
     const menu_links = {
       links: linksNormalizados,
       superfrete: {
         token: tokenSuperFrete.trim(),
         cep_origem: onlyDigits(cepOrigemSuperFrete),
       },
+      banners: bannersMeta,
     };
     const { error } = await supabase
       .from("configuracoes")
@@ -229,123 +294,329 @@ function Config() {
         </Panel>
 
         <Panel className="space-y-6">
-          <div>
-            <h2 className="font-sans text-lg font-bold tracking-normal">Página inicial — Textos e Banners</h2>
-            <p className="text-sm text-muted-foreground">Personalize o título, subtítulo e as imagens do banner principal da loja.</p>
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b pb-4">
             <div>
-              <FieldLabel htmlFor="cfg-ht">Título do banner</FieldLabel>
-              <Input id="cfg-ht" value={f.home_titulo} onChange={(e) => set("home_titulo", e.target.value)} />
+              <h2 className="font-sans text-lg font-bold tracking-normal">Carrossel de Banners da Loja</h2>
+              <p className="text-sm text-muted-foreground">
+                Configure até 3 banners para exibir no carrossel da página inicial. O Banner 1 é o principal; os Banners 2 e 3 entram automaticamente no carrossel quando imagens forem enviadas.
+              </p>
             </div>
-            <div>
-              <FieldLabel htmlFor="cfg-hs">Subtítulo</FieldLabel>
-              <Textarea id="cfg-hs" rows={2} value={f.home_subtitulo} onChange={(e) => set("home_subtitulo", e.target.value)} />
+            <div className="flex items-center gap-1.5 self-start shrink-0 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+              <Sparkles className="size-3.5" /> 3 Opções de Banners
             </div>
           </div>
 
-          <div className="grid gap-6 pt-2 md:grid-cols-2">
-            {/* Banner Desktop */}
-            <div className="space-y-2.5 rounded-2xl border p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="font-semibold text-base">Banner Desktop / Tablet</h3>
-                  <p className="text-xs text-muted-foreground">Formato horizontal (recomendado 16:7 ou 1920×840)</p>
-                </div>
-                {banners?.wide && (
-                  <span className="rounded-full bg-primary/20 px-2 py-0.5 text-xs font-semibold text-primary">Personalizado</span>
+          {/* Abas dos 3 Banners */}
+          <div className="grid grid-cols-3 gap-2 rounded-2xl bg-muted/70 p-1.5 border border-border/50">
+            {([1, 2, 3] as const).map((slotNum) => {
+              const hasW = banners?.[slotNum]?.wide;
+              const hasM = banners?.[slotNum]?.mobile;
+              const isConfigured = slotNum === 1 ? true : (hasW || hasM);
+              const isSelected = activeBannerSlot === slotNum;
+              return (
+                <button
+                  key={slotNum}
+                  type="button"
+                  onClick={() => setActiveBannerSlot(slotNum)}
+                  className={`flex items-center justify-center gap-2 rounded-xl py-2.5 px-3 text-xs sm:text-sm font-semibold transition-all ${
+                    isSelected
+                      ? "bg-card text-foreground shadow-xs border border-border/70"
+                      : "text-muted-foreground hover:text-foreground hover:bg-card/40"
+                  }`}
+                >
+                  <span className="truncate">Banner {slotNum} {slotNum === 1 ? "(Principal)" : ""}</span>
+                  {isConfigured ? (
+                    <span className="size-2 shrink-0 rounded-full bg-emerald-500" title="Ativo no carrossel" />
+                  ) : (
+                    <span className="size-2 shrink-0 rounded-full bg-muted-foreground/30" title="Vazio" />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Configuração do Banner Selecionado */}
+          <div className="space-y-5 rounded-2xl border bg-card/50 p-4 sm:p-5">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/50 pb-3">
+              <div>
+                <h3 className="font-semibold text-base">
+                  Banner {activeBannerSlot} {activeBannerSlot === 1 ? "— Principal da Loja" : "— Slide do Carrossel"}
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  {activeBannerSlot === 1
+                    ? "Exibido por padrão. Se nenhuma imagem for enviada, usa o modelo original da Líder Atacado."
+                    : "Será exibido automaticamente no carrossel da home assim que uma imagem for adicionada."}
+                </p>
+              </div>
+              <div>
+                {activeBannerSlot === 1 ? (
+                  (banners?.[1]?.wide || banners?.[1]?.mobile) ? (
+                    <span className="rounded-full bg-primary/20 px-2.5 py-1 text-xs font-semibold text-primary">
+                      Personalizado
+                    </span>
+                  ) : (
+                    <span className="rounded-full bg-muted px-2.5 py-1 text-xs font-semibold text-muted-foreground">
+                      Padrão da loja
+                    </span>
+                  )
+                ) : (
+                  (banners?.[activeBannerSlot]?.wide || banners?.[activeBannerSlot]?.mobile) ? (
+                    <span className="rounded-full bg-emerald-500/20 px-2.5 py-1 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
+                      ✓ Ativo no carrossel
+                    </span>
+                  ) : (
+                    <span className="rounded-full bg-muted px-2.5 py-1 text-xs font-semibold text-muted-foreground">
+                      Vazio (não exibido)
+                    </span>
+                  )
                 )}
               </div>
-              <div className="relative aspect-[16/7] overflow-hidden rounded-xl bg-muted border">
-                <img
-                  src={banners?.wide ? `${mediaUrl("banners/hero-wide.webp")}?v=${bannerVersion}` : heroWide}
-                  alt="Banner Desktop"
-                  className="h-full w-full object-cover"
-                />
+            </div>
+
+            {/* Campos de texto e links */}
+            {activeBannerSlot === 1 ? (
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <FieldLabel htmlFor="cfg-ht">Título do Banner 1</FieldLabel>
+                  <Input id="cfg-ht" value={f.home_titulo} onChange={(e) => set("home_titulo", e.target.value)} />
+                </div>
+                <div>
+                  <FieldLabel htmlFor="cfg-hs">Subtítulo</FieldLabel>
+                  <Textarea id="cfg-hs" rows={2} value={f.home_subtitulo} onChange={(e) => set("home_subtitulo", e.target.value)} />
+                </div>
+                <div className="sm:col-span-2">
+                  <FieldLabel htmlFor="cfg-b1-link" hint="(opcional, ex: /categoria/camisetas-cotton-pima)">
+                    Link do botão do Banner 1
+                  </FieldLabel>
+                  <Input
+                    id="cfg-b1-link"
+                    placeholder="/categoria/camisetas-cotton-pima"
+                    value={bannerLinks[1]}
+                    onChange={(e) => setBannerLinks((prev) => ({ ...prev, 1: e.target.value }))}
+                  />
+                </div>
               </div>
-              <div className="flex flex-wrap gap-2 pt-1">
+            ) : (
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <FieldLabel htmlFor={`cfg-b${activeBannerSlot}-title`} hint="(opcional, deixe em branco para banner gráfico)">
+                    Título do Banner {activeBannerSlot}
+                  </FieldLabel>
+                  <Input
+                    id={`cfg-b${activeBannerSlot}-title`}
+                    placeholder="Ex: Nova Coleção Camisas Polo"
+                    value={bannerTitulos[activeBannerSlot]}
+                    onChange={(e) => setBannerTitulos((prev) => ({ ...prev, [activeBannerSlot]: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <FieldLabel htmlFor={`cfg-b${activeBannerSlot}-sub`} hint="(opcional)">
+                    Subtítulo do Banner {activeBannerSlot}
+                  </FieldLabel>
+                  <Input
+                    id={`cfg-b${activeBannerSlot}-sub`}
+                    placeholder="Ex: Peças exclusivas no atacado a partir de 10 unidades"
+                    value={bannerSubtitulos[activeBannerSlot]}
+                    onChange={(e) => setBannerSubtitulos((prev) => ({ ...prev, [activeBannerSlot]: e.target.value }))}
+                  />
+                </div>
+                <div className="sm:col-span-2">
+                  <FieldLabel htmlFor={`cfg-b${activeBannerSlot}-link`} hint="(opcional, link aberto ao clicar no banner)">
+                    Link de destino do Banner {activeBannerSlot}
+                  </FieldLabel>
+                  <Input
+                    id={`cfg-b${activeBannerSlot}-link`}
+                    placeholder="Ex: /categoria/camisas-polos-peruanas ou /categoria/plus-size"
+                    value={bannerLinks[activeBannerSlot]}
+                    onChange={(e) => setBannerLinks((prev) => ({ ...prev, [activeBannerSlot]: e.target.value }))}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Uploads Desktop e Mobile */}
+            <div className="grid gap-6 pt-2 md:grid-cols-2">
+              {/* Banner Desktop */}
+              {(() => {
+                const slot = activeBannerSlot;
+                const hasW = banners?.[slot]?.wide;
+                const wideSrc =
+                  slot === 1
+                    ? (hasW ? `${mediaUrl("banners/hero-wide.webp")}?v=${bannerVersion}` : heroWide)
+                    : (hasW ? `${mediaUrl(`banners/banner-${slot}-wide.webp`)}?v=${bannerVersion}` : null);
+
+                return (
+                  <div className="space-y-2.5 rounded-2xl border p-4 bg-background">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="font-semibold text-sm">Banner Desktop / Tablet</h4>
+                        <p className="text-xs text-muted-foreground">Formato horizontal (recomendado 16:7 ou 1920×840)</p>
+                      </div>
+                      {hasW && (
+                        <span className="rounded-full bg-primary/20 px-2 py-0.5 text-xs font-semibold text-primary">
+                          {slot === 1 ? "Personalizado" : "Enviado"}
+                        </span>
+                      )}
+                    </div>
+                    <div className="relative aspect-[16/7] overflow-hidden rounded-xl bg-muted border">
+                      {wideSrc ? (
+                        <img
+                          src={wideSrc}
+                          alt={`Banner Desktop ${slot}`}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-full flex-col items-center justify-center p-4 text-center text-muted-foreground">
+                          <ImagePlus className="size-8 opacity-40 mb-1.5" />
+                          <p className="text-xs font-semibold">Nenhuma imagem desktop</p>
+                          <p className="text-[11px] opacity-75">Clique em "Escolher foto" abaixo</p>
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex flex-wrap gap-2 pt-1">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => wideBannerRef.current?.click()}
+                        disabled={uploadingBanner !== null}
+                      >
+                        {uploadingBanner === `${slot}-wide` ? (
+                          <Loader2 className="animate-spin" />
+                        ) : (
+                          <ImagePlus className="size-4" />
+                        )}
+                        {hasW ? "Substituir foto" : "Escolher foto"}
+                      </Button>
+                      {hasW && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => restaurarBanner(slot, "wide")}
+                          disabled={uploadingBanner !== null}
+                        >
+                          <RotateCcw className="size-4" /> {slot === 1 ? "Restaurar padrão" : "Remover foto"}
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* Banner Mobile */}
+              {(() => {
+                const slot = activeBannerSlot;
+                const hasM = banners?.[slot]?.mobile;
+                const mobileSrc =
+                  slot === 1
+                    ? (hasM ? `${mediaUrl("banners/hero-mobile.webp")}?v=${bannerVersion}` : heroMobile)
+                    : (hasM ? `${mediaUrl(`banners/banner-${slot}-mobile.webp`)}?v=${bannerVersion}` : null);
+
+                return (
+                  <div className="space-y-2.5 rounded-2xl border p-4 bg-background">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="font-semibold text-sm">Banner Celular / Mobile</h4>
+                        <p className="text-xs text-muted-foreground">Formato compacto (recomendado 4:3 ou 900×675)</p>
+                      </div>
+                      {hasM && (
+                        <span className="rounded-full bg-primary/20 px-2 py-0.5 text-xs font-semibold text-primary">
+                          {slot === 1 ? "Personalizado" : "Enviado"}
+                        </span>
+                      )}
+                    </div>
+                    <div className="relative aspect-[4/3] max-h-52 overflow-hidden rounded-xl bg-muted border">
+                      {mobileSrc ? (
+                        <img
+                          src={mobileSrc}
+                          alt={`Banner Mobile ${slot}`}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-full flex-col items-center justify-center p-4 text-center text-muted-foreground">
+                          <ImagePlus className="size-8 opacity-40 mb-1.5" />
+                          <p className="text-xs font-semibold">Nenhuma imagem celular</p>
+                          <p className="text-[11px] opacity-75">Clique em "Escolher foto" abaixo</p>
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex flex-wrap gap-2 pt-1">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => mobileBannerRef.current?.click()}
+                        disabled={uploadingBanner !== null}
+                      >
+                        {uploadingBanner === `${slot}-mobile` ? (
+                          <Loader2 className="animate-spin" />
+                        ) : (
+                          <ImagePlus className="size-4" />
+                        )}
+                        {hasM ? "Substituir foto" : "Escolher foto"}
+                      </Button>
+                      {hasM && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => restaurarBanner(slot, "mobile")}
+                          disabled={uploadingBanner !== null}
+                        >
+                          <RotateCcw className="size-4" /> {slot === 1 ? "Restaurar padrão" : "Remover foto"}
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+
+            {/* Botão de exclusão total do Banner 2 ou 3 */}
+            {activeBannerSlot > 1 && (banners?.[activeBannerSlot]?.wide || banners?.[activeBannerSlot]?.mobile) && (
+              <div className="flex justify-end pt-2 border-t border-border/40">
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => wideBannerRef.current?.click()}
+                  className="text-destructive hover:bg-destructive/10 border-destructive/30"
+                  onClick={() => restaurarBanner(activeBannerSlot)}
                   disabled={uploadingBanner !== null}
                 >
-                  {uploadingBanner === "wide" ? <Loader2 className="animate-spin" /> : <ImagePlus className="size-4" />}
-                  {banners?.wide ? "Substituir foto" : "Trocar foto"}
+                  <Trash2 className="size-4" /> Excluir Banner {activeBannerSlot} do carrossel
                 </Button>
-                {banners?.wide && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => restaurarBanner("wide")}
-                    disabled={uploadingBanner !== null}
-                  >
-                    <RotateCcw className="size-4" /> Restaurar padrão
-                  </Button>
-                )}
-                <input
-                  ref={wideBannerRef}
-                  type="file"
-                  accept="image/*"
-                  hidden
-                  onChange={(e) => e.target.files?.[0] && enviarBanner("wide", e.target.files[0])}
-                />
               </div>
-            </div>
-
-            {/* Banner Mobile */}
-            <div className="space-y-2.5 rounded-2xl border p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="font-semibold text-base">Banner Celular / Mobile</h3>
-                  <p className="text-xs text-muted-foreground">Formato compacto (recomendado 4:3 ou 900×675)</p>
-                </div>
-                {banners?.mobile && (
-                  <span className="rounded-full bg-primary/20 px-2 py-0.5 text-xs font-semibold text-primary">Personalizado</span>
-                )}
-              </div>
-              <div className="relative aspect-[4/3] max-h-52 overflow-hidden rounded-xl bg-muted border">
-                <img
-                  src={banners?.mobile ? `${mediaUrl("banners/hero-mobile.webp")}?v=${bannerVersion}` : heroMobile}
-                  alt="Banner Mobile"
-                  className="h-full w-full object-cover"
-                />
-              </div>
-              <div className="flex flex-wrap gap-2 pt-1">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => mobileBannerRef.current?.click()}
-                  disabled={uploadingBanner !== null}
-                >
-                  {uploadingBanner === "mobile" ? <Loader2 className="animate-spin" /> : <ImagePlus className="size-4" />}
-                  {banners?.mobile ? "Substituir foto" : "Trocar foto"}
-                </Button>
-                {banners?.mobile && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => restaurarBanner("mobile")}
-                    disabled={uploadingBanner !== null}
-                  >
-                    <RotateCcw className="size-4" /> Restaurar padrão
-                  </Button>
-                )}
-                <input
-                  ref={mobileBannerRef}
-                  type="file"
-                  accept="image/*"
-                  hidden
-                  onChange={(e) => e.target.files?.[0] && enviarBanner("mobile", e.target.files[0])}
-                />
-              </div>
-            </div>
+            )}
           </div>
+
+          {/* Inputs de arquivo ocultos compartilhados */}
+          <input
+            ref={wideBannerRef}
+            type="file"
+            accept="image/*"
+            hidden
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) {
+                enviarBanner(activeBannerSlot, "wide", file);
+                e.target.value = "";
+              }
+            }}
+          />
+          <input
+            ref={mobileBannerRef}
+            type="file"
+            accept="image/*"
+            hidden
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) {
+                enviarBanner(activeBannerSlot, "mobile", file);
+                e.target.value = "";
+              }
+            }}
+          />
         </Panel>
 
         <Panel className="space-y-3">

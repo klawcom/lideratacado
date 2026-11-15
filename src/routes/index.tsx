@@ -1,6 +1,7 @@
+import { useCallback, useEffect, useRef, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { ArrowRight, Headphones, Layers, MessageCircle, Sparkles, Truck } from "lucide-react";
+import { ArrowRight, ChevronLeft, ChevronRight, Headphones, Layers, MessageCircle, Sparkles, Truck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ProductGrid } from "@/components/store/product-card";
 import { homeQuery, siteQuery } from "@/lib/catalog.functions";
@@ -77,6 +78,215 @@ const PASSOS = [
   },
 ];
 
+interface BannerSlideData {
+  id: number;
+  wideSrc: string;
+  mobileSrc: string;
+  link: string | null;
+  titulo: string | null;
+  subtitulo: string | null;
+}
+
+function BannerCarousel({
+  slides,
+  primeira,
+}: {
+  slides: BannerSlideData[];
+  primeira?: { slug: string; nome: string };
+}) {
+  const [current, setCurrent] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+  const touchStartX = useRef<number | null>(null);
+  const touchDeltaX = useRef<number>(0);
+  const count = slides.length;
+
+  const next = useCallback(() => {
+    setCurrent((prev) => (prev + 1) % count);
+  }, [count]);
+
+  const prev = useCallback(() => {
+    setCurrent((prev) => (prev - 1 + count) % count);
+  }, [count]);
+
+  useEffect(() => {
+    if (count <= 1 || isPaused) return;
+    const timer = setInterval(() => {
+      setCurrent((p) => (p + 1) % count);
+    }, 5500);
+    return () => clearInterval(timer);
+  }, [count, isPaused]);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0]?.clientX ?? null;
+    touchDeltaX.current = 0;
+    setIsPaused(true);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (touchStartX.current === null) return;
+    const currentX = e.touches[0]?.clientX ?? 0;
+    touchDeltaX.current = currentX - touchStartX.current;
+  };
+
+  const handleTouchEnd = () => {
+    if (touchStartX.current !== null) {
+      if (touchDeltaX.current < -45) {
+        next();
+      } else if (touchDeltaX.current > 45) {
+        prev();
+      }
+    }
+    touchStartX.current = null;
+    touchDeltaX.current = 0;
+    setIsPaused(false);
+  };
+
+  return (
+    <div
+      className="relative overflow-hidden rounded-3xl border border-border/50 bg-muted shadow-soft group"
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      role="region"
+      aria-roledescription="carousel"
+      aria-label="Carrossel de banners em destaque"
+    >
+      <div
+        className="flex transition-transform duration-500 ease-out"
+        style={{ transform: `translateX(-${current * 100}%)` }}
+      >
+        {slides.map((slide, idx) => (
+          <div
+            key={slide.id || idx}
+            className="relative w-full shrink-0"
+            role="group"
+            aria-roledescription="slide"
+            aria-label={`Banner ${idx + 1} de ${count}`}
+            aria-hidden={idx !== current}
+          >
+            {slide.link && !slide.titulo ? (
+              <a
+                href={slide.link}
+                tabIndex={idx === current ? 0 : -1}
+                className="block relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              >
+                <picture>
+                  <source media="(min-width: 768px)" srcSet={slide.wideSrc} />
+                  <img
+                    src={slide.mobileSrc}
+                    alt="Banner promocional Líder Atacado"
+                    width={900}
+                    height={691}
+                    fetchPriority={idx === 0 ? "high" : "auto"}
+                    loading={idx === 0 ? "eager" : "lazy"}
+                    className="aspect-[4/3] w-full object-cover md:aspect-[16/7]"
+                  />
+                </picture>
+                <div className="p-4 sm:p-5 bg-card flex items-center justify-between border-t border-border/40">
+                  <span className="font-sans text-sm font-semibold text-foreground">
+                    Líder Atacado · Direto de Fábrica
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary">
+                    Conferir catálogo <ArrowRight className="size-3.5" />
+                  </span>
+                </div>
+              </a>
+            ) : (
+              <div className="relative">
+                <picture>
+                  <source media="(min-width: 768px)" srcSet={slide.wideSrc} />
+                  <img
+                    src={slide.mobileSrc}
+                    alt={slide.titulo || "Pilhas de camisetas básicas e camisas polo lisas em cores neutras"}
+                    width={900}
+                    height={691}
+                    fetchPriority={idx === 0 ? "high" : "auto"}
+                    loading={idx === 0 ? "eager" : "lazy"}
+                    className="aspect-[4/3] w-full object-cover md:aspect-[16/7]"
+                  />
+                </picture>
+
+                <div className="md:absolute md:inset-y-0 md:left-0 md:flex md:w-3/5 lg:w-1/2 md:items-center md:bg-gradient-to-r md:from-background/95 md:via-background/85 md:to-transparent">
+                  <div className="space-y-4 p-6 bg-card md:bg-transparent md:p-12">
+                    <p className="eyebrow drop-shadow-xs">Atacado · Pedido pelo WhatsApp</p>
+                    <h2 className="text-[1.9rem] font-extrabold leading-[1.1] text-balance text-foreground md:text-5xl">
+                      {slide.titulo || "Camisetas básicas e polos no atacado, a partir de 10 peças"}
+                    </h2>
+                    {slide.subtitulo && (
+                      <p className="max-w-md text-[15px] sm:text-base font-medium text-foreground/80 dark:text-foreground/90">
+                        {slide.subtitulo}
+                      </p>
+                    )}
+                    {slide.link ? (
+                      <Button asChild size="lg" className="w-full sm:w-auto shadow-sm">
+                        {slide.link.startsWith("http") ? (
+                          <a href={slide.link} target="_blank" rel="noopener noreferrer">
+                            Ver produtos <ArrowRight />
+                          </a>
+                        ) : (
+                          <a href={slide.link}>
+                            Ver produtos <ArrowRight />
+                          </a>
+                        )}
+                      </Button>
+                    ) : primeira ? (
+                      <Button asChild size="lg" className="w-full sm:w-auto shadow-sm">
+                        <Link to="/categoria/$slug" params={{ slug: primeira.slug }}>
+                          Ver produtos <ArrowRight />
+                        </Link>
+                      </Button>
+                    ) : null}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {count > 1 && (
+        <>
+          <button
+            type="button"
+            onClick={prev}
+            className="absolute left-2.5 top-1/3 -translate-y-1/2 md:top-1/2 z-20 flex size-11 items-center justify-center rounded-full bg-background/85 text-foreground backdrop-blur-md shadow-md border border-border/40 hover:bg-background hover:scale-105 active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            aria-label="Banner anterior"
+          >
+            <ChevronLeft className="size-6" />
+          </button>
+          <button
+            type="button"
+            onClick={next}
+            className="absolute right-2.5 top-1/3 -translate-y-1/2 md:top-1/2 z-20 flex size-11 items-center justify-center rounded-full bg-background/85 text-foreground backdrop-blur-md shadow-md border border-border/40 hover:bg-background hover:scale-105 active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            aria-label="Próximo banner"
+          >
+            <ChevronRight className="size-6" />
+          </button>
+
+          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 rounded-full bg-background/70 px-3 py-1.5 backdrop-blur-md border border-border/40 shadow-xs">
+            {slides.map((_, dotIdx) => (
+              <button
+                key={dotIdx}
+                type="button"
+                onClick={() => setCurrent(dotIdx)}
+                className={`h-2.5 rounded-full transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+                  dotIdx === current
+                    ? "w-7 bg-primary"
+                    : "w-2.5 bg-muted-foreground/40 hover:bg-foreground/70"
+                }`}
+                aria-label={`Ir para banner ${dotIdx + 1}`}
+                aria-current={dotIdx === current ? "true" : undefined}
+              />
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 function Home() {
   const { data: site } = useSuspenseQuery(siteQuery());
   const { data: categorias } = useSuspenseQuery(homeQuery());
@@ -84,39 +294,45 @@ function Home() {
   const sub = site.config?.home_subtitulo;
   const primeira = categorias[0];
 
-  const bannerWideSrc = site.banners?.wide ? mediaUrl(site.banners.wide) : heroWide;
-  const bannerMobileSrc = site.banners?.mobile ? mediaUrl(site.banners.mobile) : heroMobile;
+  const rawItems = (site.banners as { items?: Array<{ id: number; wide: string | null; mobile: string | null; link?: string | null; titulo?: string | null; subtitulo?: string | null }> })?.items;
+
+  const slides: BannerSlideData[] = (rawItems && rawItems.length > 0)
+    ? rawItems.map((item) => {
+        const isFirst = item.id === 1;
+        const wideSrc = item.wide
+          ? mediaUrl(item.wide)
+          : item.mobile
+            ? mediaUrl(item.mobile)
+            : heroWide;
+        const mobileSrc = item.mobile
+          ? mediaUrl(item.mobile)
+          : item.wide
+            ? mediaUrl(item.wide)
+            : heroMobile;
+        return {
+          id: item.id,
+          wideSrc,
+          mobileSrc,
+          link: item.link || (isFirst && primeira ? `/categoria/${primeira.slug}` : null),
+          titulo: isFirst ? (item.titulo || titulo) : (item.titulo || null),
+          subtitulo: isFirst ? (item.subtitulo || sub) : (item.subtitulo || null),
+        };
+      })
+    : [
+        {
+          id: 1,
+          wideSrc: site.banners?.wide ? mediaUrl(site.banners.wide) : heroWide,
+          mobileSrc: site.banners?.mobile ? mediaUrl(site.banners.mobile) : heroMobile,
+          link: primeira ? `/categoria/${primeira.slug}` : null,
+          titulo,
+          subtitulo: sub,
+        },
+      ];
 
   return (
     <>
       <section className="container-page pt-4 md:pt-8">
-        <div className="relative overflow-hidden rounded-3xl border border-border/50 bg-muted shadow-soft">
-          <picture>
-            <source media="(min-width: 768px)" srcSet={bannerWideSrc} />
-            <img
-              src={bannerMobileSrc}
-              alt="Pilhas de camisetas básicas e camisas polo lisas em cores neutras"
-              width={900}
-              height={691}
-              fetchPriority="high"
-              className="aspect-[4/3] w-full object-cover md:aspect-[16/7]"
-            />
-          </picture>
-          <div className="md:absolute md:inset-y-0 md:left-0 md:flex md:w-3/5 lg:w-1/2 md:items-center md:bg-gradient-to-r md:from-background/95 md:via-background/85 md:to-transparent">
-            <div className="space-y-4 p-6 bg-card md:bg-transparent md:p-12">
-              <p className="eyebrow drop-shadow-xs">Atacado · Pedido pelo WhatsApp</p>
-              <h1 className="text-[1.9rem] font-extrabold leading-[1.1] text-balance text-foreground md:text-5xl">{titulo}</h1>
-              {sub && <p className="max-w-md text-[15px] sm:text-base font-medium text-foreground/80 dark:text-foreground/90">{sub}</p>}
-              {primeira && (
-                <Button asChild size="lg" className="w-full sm:w-auto shadow-sm">
-                  <Link to="/categoria/$slug" params={{ slug: primeira.slug }}>
-                    Ver produtos <ArrowRight />
-                  </Link>
-                </Button>
-              )}
-            </div>
-          </div>
-        </div>
+        <BannerCarousel slides={slides} primeira={primeira} />
 
         {/* Barra de benefícios e destaques coloridos */}
         <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
