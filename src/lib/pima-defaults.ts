@@ -44,3 +44,43 @@ export function isProdutoCottonPima(p: {
   if (/^PIMA/i.test(p.codigo_modelo ?? "")) return true;
   return false;
 }
+
+/**
+ * Padrões de medidas e descrição para anúncios da categoria Polo.
+ */
+export const MEDIDAS_POLO = [
+  { tamanho: "P", largura: "50cm", altura: "63cm" },
+  { tamanho: "M", largura: "52cm", altura: "66cm" },
+  { tamanho: "G", largura: "55cm", altura: "69cm" },
+  { tamanho: "GG", largura: "58cm", altura: "70cm" },
+];
+
+export const TEXTO_MEDIDAS_POLO = `Medidas aproximadas
+
+CAMISAS POLOS MASCULINAS
+P. 50cm largura x 63cm altura
+M. 52cm largura x 66cm altura
+G. 55cm largura x 69cm altura
+GG. 58cm largura x 70cm altura`;
+
+export const DESCRICAO_BASE_POLO = `Camisa polo de caimento clássico e toque confortável. Cores sortidas, conforme disponibilidade do estoque.`;
+
+export const DESCRICAO_COMPLETA_POLO = `${DESCRICAO_BASE_POLO}
+
+${TEXTO_MEDIDAS_POLO}`;
+
+/**
+ * Identifica se um produto pertence à categoria Camisas Polo.
+ */
+export function isProdutoPolo(p: {
+  categoria_id?: string | null;
+  codigo_modelo?: string | null;
+  nome?: string | null;
+  categorias?: { slug?: string; nome?: string } | null;
+}): boolean {
+  if (p.categorias?.slug && /polo/i.test(p.categorias.slug)) return true;
+  if (/polo/i.test(p.categorias?.nome ?? "")) return true;
+  if (/polo/i.test(p.nome ?? "")) return true;
+  if (/^POLO/i.test(p.codigo_modelo ?? "")) return true;
+  return false;
+}

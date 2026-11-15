@@ -304,7 +304,7 @@ function FinalizarPage() {
             <Field id="f-nome" label="Nome completo" error={erros.nome} className="sm:col-span-2">
               <Input id="f-nome" autoComplete="name" autoCapitalize="words" enterKeyHint="next" value={f.nome} onChange={(e) => set("nome")(e.target.value)} {...inv("nome")} />
             </Field>
-            <Field id="f-cpf" label="CPF (para nota fiscal e Correios)" error={erros.cpf}>
+            <Field id="f-cpf" label="CPF (para Correios e envio)" error={erros.cpf}>
               <Input
                 id="f-cpf"
                 inputMode="numeric"

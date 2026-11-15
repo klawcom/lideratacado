@@ -19,7 +19,7 @@ export const pedidoSchema = z.object({
     cpf: z
       .string()
       .transform(onlyDigits)
-      .refine(validarCpf, "CPF inválido. Informe os 11 dígitos para nota fiscal e etiqueta."),
+      .refine(validarCpf, "CPF inválido. Informe os 11 dígitos para etiqueta e envio."),
     email: z.string().trim().toLowerCase().email("E-mail inválido").max(255),
     whatsapp: z
       .string()

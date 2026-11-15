@@ -1,7 +1,7 @@
 import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { ChevronLeft, Info, MessageCircle, ShieldCheck, ShoppingBag, Sparkles, Truck, X } from "lucide-react";
+import { ChevronLeft, Headphones, Info, MessageCircle, ShoppingBag, Sparkles, Truck, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -18,7 +18,9 @@ import {
   COMPOSICAO_COTTON_PIMA,
   DESCRICAO_COTTON_PIMA,
   MEDIDAS_COTTON_PIMA,
+  MEDIDAS_POLO,
   isProdutoCottonPima,
+  isProdutoPolo,
 } from "@/lib/pima-defaults";
 import { canonical, seo } from "@/lib/seo";
 import { cn } from "@/lib/utils";
@@ -88,6 +90,7 @@ function ProdutoPage() {
   if (!p) return null;
 
   const isPima = isProdutoCottonPima(p);
+  const isPolo = !isPima && isProdutoPolo(p);
   const { composicaoLimpa, coresHabilitadas } = decodeCoresProduto(p.composicao);
   const coresDisponiveis = CORES_PADRAO.filter((c) => coresHabilitadas.includes(c.nome));
   const listaCores = coresDisponiveis.length > 0 ? coresDisponiveis : CORES_PADRAO;
@@ -102,7 +105,9 @@ function ProdutoPage() {
     ? isGenericDesc
       ? DESCRICAO_COTTON_PIMA
       : p.descricao.split(/Medidas aproximadas/i)[0].trim()
-    : p.descricao;
+    : isPolo
+      ? (p.descricao ? p.descricao.split(/Medidas aproximadas/i)[0].trim() : "")
+      : p.descricao;
 
   const compFinal = isPima ? (composicaoLimpa || COMPOSICAO_COTTON_PIMA) : composicaoLimpa;
 
@@ -180,7 +185,7 @@ function ProdutoPage() {
         <div className="space-y-5">
           <MediaGallery midias={p.produto_midias} nome={p.nome} />
 
-          {(descFinal || compFinal || isPima) && (
+          {(descFinal || compFinal || isPima || isPolo) && (
             <section aria-labelledby="secao-descricao" className="rounded-2xl border bg-card/60 p-4 sm:p-5 space-y-3.5">
               {descFinal && (
                 <div>
@@ -200,18 +205,18 @@ function ProdutoPage() {
                 </div>
               )}
 
-              {isPima && (
+              {(isPima || isPolo) && (
                 <div className={descFinal || compFinal ? "pt-3 border-t border-border/60 space-y-2" : "space-y-2"}>
                   <div className="flex items-center justify-between">
                     <h2 className="font-sans text-sm font-semibold tracking-normal text-foreground">
                       Medidas aproximadas
                     </h2>
                     <span className="text-[11px] text-muted-foreground uppercase font-medium">
-                      Camisetas Masculinas
+                      {isPolo ? "Camisas Polos Masculinas" : "Camisetas Masculinas"}
                     </span>
                   </div>
                   <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                    {MEDIDAS_COTTON_PIMA.map((m) => (
+                    {(isPolo ? MEDIDAS_POLO : MEDIDAS_COTTON_PIMA).map((m) => (
                       <div
                         key={m.tamanho}
                         className="rounded-xl border bg-background/70 p-2.5 text-center shadow-2xs"
@@ -433,11 +438,11 @@ function ProdutoPage() {
               </div>
               <div className="card-hover flex items-center gap-2.5 rounded-xl border bg-card/60 p-2.5 shadow-2xs">
                 <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 text-white shadow-2xs">
-                  <ShieldCheck className="size-4" />
+                  <Headphones className="size-4" />
                 </span>
                 <div className="min-w-0">
-                  <p className="text-xs font-bold text-foreground truncate">Nota Fiscal</p>
-                  <p className="text-[11px] text-muted-foreground truncate">Com CPF e rastreio</p>
+                  <p className="text-xs font-bold text-foreground truncate">Atendimento 24h</p>
+                  <p className="text-[11px] text-muted-foreground truncate">100% humanizado</p>
                 </div>
               </div>
               <div className="card-hover flex items-center gap-2.5 rounded-xl border bg-card/60 p-2.5 shadow-2xs">
@@ -445,8 +450,8 @@ function ProdutoPage() {
                   <Sparkles className="size-4" />
                 </span>
                 <div className="min-w-0">
-                  <p className="text-xs font-bold text-foreground truncate">Algodão Pima</p>
-                  <p className="text-[11px] text-muted-foreground truncate">Alta qualidade</p>
+                  <p className="text-xs font-bold text-foreground truncate">{isPolo ? "Polo Premium" : "Algodão Pima"}</p>
+                  <p className="text-[11px] text-muted-foreground truncate">{isPolo ? "Piquet de alta qualidade" : "Alta qualidade"}</p>
                 </div>
               </div>
               <div className="card-hover flex items-center gap-2.5 rounded-xl border bg-card/60 p-2.5 shadow-2xs">

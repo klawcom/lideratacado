@@ -164,3 +164,40 @@ export const syncDescricaoCottonPima = createServerFn({ method: "POST" }).handle
   await Promise.all(updates);
   return { atualizados: pimas.length };
 });
+
+/** Atualiza no banco a descrição e tabela de medidas de todos os anúncios da categoria Polo */
+export const syncDescricaoPolos = createServerFn({ method: "POST" }).handler(async () => {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { TEXTO_MEDIDAS_POLO, DESCRICAO_COMPLETA_POLO, isProdutoPolo } = await import("./pima-defaults");
+
+  const { data: todos, error: errBusca } = await supabaseAdmin
+    .from("produtos")
+    .select("id, descricao, nome, codigo_modelo, categoria_id, categorias ( id, nome, slug )");
+
+  if (errBusca) throw new Error(errBusca.message);
+  if (!todos || todos.length === 0) return { atualizados: 0 };
+
+  const polos = todos.filter((p) => isProdutoPolo(p as any));
+  if (polos.length === 0) return { atualizados: 0 };
+
+  const updates = polos.map((p) => {
+    const descAtual = p.descricao || "";
+    let novaDesc: string;
+    if (!descAtual.trim()) {
+      novaDesc = DESCRICAO_COMPLETA_POLO;
+    } else if (/Medidas aproximadas/i.test(descAtual)) {
+      const base = descAtual.split(/Medidas aproximadas/i)[0].trim();
+      novaDesc = base ? `${base}\n\n${TEXTO_MEDIDAS_POLO}` : DESCRICAO_COMPLETA_POLO;
+    } else {
+      novaDesc = `${descAtual.trim()}\n\n${TEXTO_MEDIDAS_POLO}`;
+    }
+
+    return supabaseAdmin
+      .from("produtos")
+      .update({ descricao: novaDesc })
+      .eq("id", p.id);
+  });
+
+  await Promise.all(updates);
+  return { atualizados: polos.length };
+});

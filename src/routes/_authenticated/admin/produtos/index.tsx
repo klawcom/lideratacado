@@ -11,7 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { AdminPage, Empty, Loading, invalidateStore, selectClass } from "@/components/admin/ui";
 import { useCategoriasAdmin } from "@/components/admin/product-form";
 import { excluirProdutos } from "@/lib/admin-products";
-import { syncDescricaoCottonPima } from "@/lib/catalog.functions";
+import { syncDescricaoCottonPima, syncDescricaoPolos } from "@/lib/catalog.functions";
 import { imagemPrincipal } from "@/lib/media";
 import { menorPreco } from "@/lib/pricing";
 import { brl } from "@/lib/format";
@@ -23,6 +23,7 @@ const SEM = "__sem__";
 function Produtos() {
   const qc = useQueryClient();
   const syncPima = useServerFn(syncDescricaoCottonPima);
+  const syncPolos = useServerFn(syncDescricaoPolos);
   const [busca, setBusca] = useState("");
   const [cat, setCat] = useState("");
   const [status, setStatus] = useState<"" | "ativo" | "inativo">("");
@@ -116,6 +117,29 @@ function Produtos() {
           >
             {busy ? <Loader2 className="size-4 animate-spin" /> : <FileText className="size-4" />}
             <span className="hidden sm:inline">Padronizar Cotton Pima</span>
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={async () => {
+              if (!confirm("Aplicar a tabela de medidas oficiais (P ao GG) para todos os anúncios da categoria Polo?")) return;
+              setBusy(true);
+              try {
+                const res = await syncPolos();
+                toast.success(`${res.atualizados} anúncios Polo atualizados no banco com tabela de medidas!`);
+                qc.invalidateQueries({ queryKey: ["admin"] });
+                invalidateStore(qc);
+              } catch (e) {
+                toast.error(e instanceof Error ? e.message : "Erro ao atualizar produtos.");
+              } finally {
+                setBusy(false);
+              }
+            }}
+            disabled={busy}
+            title="Padronizar medidas da categoria Polo"
+          >
+            {busy ? <Loader2 className="size-4 animate-spin" /> : <FileText className="size-4" />}
+            <span className="hidden sm:inline">Padronizar Polos</span>
           </Button>
           <Button asChild variant="outline">
             <Link to="/admin/produtos/importar">

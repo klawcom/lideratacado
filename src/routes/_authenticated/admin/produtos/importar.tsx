@@ -26,7 +26,11 @@ import {
   type Arquivo,
   type Grupo,
 } from "@/lib/bulk-import";
-import { COMPOSICAO_COTTON_PIMA, DESCRICAO_COMPLETA_COTTON_PIMA } from "@/lib/pima-defaults";
+import {
+  COMPOSICAO_COTTON_PIMA,
+  DESCRICAO_COMPLETA_COTTON_PIMA,
+  DESCRICAO_COMPLETA_POLO,
+} from "@/lib/pima-defaults";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/admin/produtos/importar")({ component: Importar });
@@ -112,7 +116,7 @@ function Importar() {
       setPrefixo("POLO");
       setNomeModelo("Camisa Polo");
       setComposicao("");
-      setDescricao("Camisa polo. Cores sortidas, conforme disponibilidade do estoque.");
+      setDescricao(DESCRICAO_COMPLETA_POLO);
     } else if (/pima/i.test(catNome)) {
       setPrefixo("PIMA");
       setNomeModelo("Camiseta Pima");

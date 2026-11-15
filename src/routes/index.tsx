@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { ArrowRight, Layers, MessageCircle, ShieldCheck, Sparkles, Truck } from "lucide-react";
+import { ArrowRight, Headphones, Layers, MessageCircle, Sparkles, Truck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ProductGrid } from "@/components/store/product-card";
 import { homeQuery, siteQuery } from "@/lib/catalog.functions";
@@ -49,9 +49,9 @@ const VANTAGENS = [
     gradient: "from-violet-500 to-purple-600",
   },
   {
-    icon: ShieldCheck,
-    titulo: "Nota Fiscal & Envio Seguro",
-    sub: "Emissão oficial com CPF e rastreio",
+    icon: Headphones,
+    titulo: "Atendimento Humanizado 24h",
+    sub: "Suporte dedicado e ágil para seu pedido",
     gradient: "from-amber-500 to-orange-600",
   },
 ];
@@ -66,7 +66,7 @@ const PASSOS = [
   {
     icon: Truck,
     titulo: "Calcule o frete Correios",
-    texto: "Simulação de frete PAC ou SEDEX com prazos reais e dados para emissão de nota fiscal e etiqueta de postagem com seu CPF.",
+    texto: "Simulação de frete PAC ou SEDEX com prazos reais e etiqueta de postagem com seu CPF para envio rápido e seguro.",
     gradient: "from-sky-500 to-blue-600",
   },
   {
