@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { MediaGallery } from "@/components/store/media-gallery";
 import { QtyStepper } from "@/components/store/qty-stepper";
-import { StickyBar } from "@/components/store/sticky-bar";
 import { produtoQuery, siteQuery } from "@/lib/catalog.functions";
 import { imagemPrincipal } from "@/lib/media";
 import { FAIXAS, TAMANHOS, faixaDoTotal, menorPreco, pecas, precoNaFaixa, type Qtd } from "@/lib/pricing";
@@ -145,45 +144,45 @@ function ProdutoPage() {
   const coresPreenchidas = Object.entries(coresQtd).filter(([_, q]) => pecas(q) > 0);
 
   return (
-    <div className="container-page pb-bar pt-4 md:pt-8">
+    <div className="container-page pb-12 pt-4 md:pt-6">
       {p.categorias && (
         <Link
           to="/categoria/$slug"
           params={{ slug: p.categorias.slug }}
-          className="-ml-2 mb-2 inline-flex min-h-11 items-center gap-1 rounded-lg px-2 text-muted-foreground hover:text-foreground"
+          className="-ml-1 mb-2 inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs text-muted-foreground hover:text-foreground"
         >
-          <ChevronLeft className="size-5" /> {p.categorias.nome}
+          <ChevronLeft className="size-4" /> {p.categorias.nome}
         </Link>
       )}
-      <div className="grid gap-8 md:grid-cols-2 md:gap-12">
+      <div className="grid gap-6 md:grid-cols-2 md:gap-10">
         <MediaGallery midias={p.produto_midias} nome={p.nome} />
 
-        <div className="min-w-0 space-y-8">
+        <div className="min-w-0 space-y-5">
           <div>
-            <p className="text-sm text-muted-foreground">Modelo {p.codigo_modelo}</p>
-            <h1 className="mt-1 text-3xl font-extrabold md:text-4xl">{p.nome}</h1>
+            <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Modelo {p.codigo_modelo}</p>
+            <h1 className="mt-1 text-xl sm:text-2xl font-bold tracking-tight text-foreground">{p.nome}</h1>
             {min !== null && (
-              <p className="mt-2 text-lg">
-                a partir de <strong>R$ {money(min)}</strong> por peça
+              <p className="mt-1 text-sm text-muted-foreground">
+                a partir de <strong className="font-semibold text-foreground">R$ {money(min)}</strong> por peça
               </p>
             )}
           </div>
 
-          <section aria-labelledby="tabela-precos" className="rounded-2xl border bg-card p-4">
-            <h2 id="tabela-precos" className="font-sans text-base font-bold tracking-normal">
+          <section aria-labelledby="tabela-precos" className="rounded-2xl border bg-card p-3.5 sm:p-4">
+            <h2 id="tabela-precos" className="font-sans text-sm font-semibold tracking-normal">
               Preço por peça
             </h2>
-            <p className="text-sm text-muted-foreground">Conforme o total de peças no pedido, somando todos os produtos.</p>
-            <ul className="mt-3 divide-y">
+            <p className="text-xs text-muted-foreground">Conforme o total de peças no pedido, somando todos os produtos.</p>
+            <ul className="mt-2.5 divide-y divide-border/60 text-sm">
               {FAIXAS.map((f) => {
                 const v = precoNaFaixa(p.faixas_preco, f);
                 const ativa = f === faixaAtual;
                 return (
-                  <li key={f} className={cn("flex items-center justify-between gap-3 py-2.5", ativa && "font-semibold")}>
+                  <li key={f} className={cn("flex items-center justify-between gap-3 py-1.5", ativa && "font-semibold")}>
                     <span className="flex items-center gap-2">
-                      {ativa && <span className="size-2 rounded-full bg-primary" aria-hidden />}a partir de {f} peças no pedido
+                      {ativa && <span className="size-1.5 rounded-full bg-primary" aria-hidden />}a partir de {f} peças no pedido
                     </span>
-                    <span className={cn("tabular-nums", ativa && "text-gold-ink")}>R$ {money(v)}</span>
+                    <span className={cn("tabular-nums", ativa && "text-gold-ink font-bold")}>R$ {money(v)}</span>
                   </li>
                 );
               })}
@@ -191,21 +190,21 @@ function ProdutoPage() {
           </section>
 
           {/* Seleção de cores e tamanhos */}
-          <section aria-labelledby="secao-cores" className="space-y-4">
+          <section aria-labelledby="secao-cores" className="space-y-3.5">
             <div>
               <div className="flex items-baseline justify-between">
-                <h2 id="secao-cores" className="font-sans text-base font-bold tracking-normal">
-                  Cor: <span className="text-primary">{corDefAtiva.nome}</span>
+                <h2 id="secao-cores" className="font-sans text-sm font-semibold tracking-normal">
+                  Cor: <span className="font-bold text-foreground">{corDefAtiva.nome}</span>
                 </h2>
                 {pecasCorAtiva > 0 && (
-                  <span className="text-sm text-muted-foreground tabular-nums">
-                    {pecasCorAtiva} {pecasCorAtiva === 1 ? "peça selecionada" : "peças selecionadas"}
+                  <span className="text-xs text-muted-foreground tabular-nums">
+                    {pecasCorAtiva} {pecasCorAtiva === 1 ? "peça nesta cor" : "peças nesta cor"}
                   </span>
                 )}
               </div>
               <p className="text-xs text-muted-foreground mt-0.5">Toque na cor para definir os tamanhos:</p>
-              {/* Botões de cor: apenas o botão da cor */}
-              <div className="mt-2.5 flex flex-wrap gap-2.5">
+              {/* Botões de cor reduzidos */}
+              <div className="mt-2 flex flex-wrap gap-2">
                 {listaCores.map((cor) => {
                   const ativa = cor.nome === corAtiva;
                   const count = pecas(coresQtd[cor.nome] ?? ZERO);
@@ -218,16 +217,16 @@ function ProdutoPage() {
                       aria-pressed={ativa}
                       title={cor.nome}
                       className={cn(
-                        "relative size-11 rounded-full transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-                        cor.border && "border border-border",
+                        "relative size-7 sm:size-8 rounded-full transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                        cor.border && "border border-border/70",
                         ativa
-                          ? "ring-3 ring-primary ring-offset-2 scale-105 shadow-sm"
-                          : "hover:scale-105 opacity-90 hover:opacity-100",
+                          ? "ring-2 ring-primary ring-offset-2 scale-110 shadow-xs"
+                          : "hover:scale-105 opacity-85 hover:opacity-100",
                       )}
                       style={{ backgroundColor: cor.hex }}
                     >
                       {count > 0 && (
-                        <span className="absolute -top-1 -right-1 flex min-w-5 h-5 items-center justify-center rounded-full bg-primary px-1 text-[11px] font-bold text-primary-foreground shadow-xs">
+                        <span className="absolute -top-1 -right-1 flex size-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground shadow-xs">
                           {count}
                         </span>
                       )}
@@ -237,17 +236,18 @@ function ProdutoPage() {
               </div>
             </div>
 
-            <div className="space-y-2.5 rounded-2xl border bg-card/60 p-4">
+            <div className="space-y-2 rounded-2xl border bg-card/60 p-3.5">
               <div className="flex items-baseline justify-between">
-                <h3 className="font-sans text-sm font-bold tracking-normal">
+                <h3 className="font-sans text-xs font-semibold uppercase tracking-normal text-muted-foreground">
                   Tamanhos para {corDefAtiva.nome}
                 </h3>
                 <span className="text-xs text-muted-foreground tabular-nums">{pecasCorAtiva} peças</span>
               </div>
-              <div className="grid gap-2.5 sm:grid-cols-2">
+              <div className="grid gap-2 sm:grid-cols-2">
                 {TAMANHOS.map((t) => (
                   <QtyStepper
                     key={t.key}
+                    compact
                     label={t.label}
                     value={qtdCorAtiva[t.key]}
                     onChange={(v) => setQtdCor(t.key, v)}
@@ -257,7 +257,7 @@ function ProdutoPage() {
             </div>
 
             {coresPreenchidas.length > 0 && (
-              <div className="rounded-2xl border bg-card p-3 space-y-2">
+              <div className="rounded-2xl border bg-card p-3 space-y-1.5">
                 <div className="flex items-center justify-between text-xs">
                   <span className="font-semibold text-foreground">Cores escolhidas no produto:</span>
                   <span className="text-muted-foreground tabular-nums">Total: {n} peças</span>
@@ -266,10 +266,10 @@ function ProdutoPage() {
                   {coresPreenchidas.map(([corNome, q]) => (
                     <div
                       key={corNome}
-                      className="inline-flex items-center gap-1.5 rounded-lg border bg-muted/50 px-2.5 py-1 text-xs"
+                      className="inline-flex items-center gap-1.5 rounded-lg border bg-muted/50 px-2 py-0.5 text-xs"
                     >
                       <span
-                        className="size-3 rounded-full border border-border"
+                        className="size-2.5 rounded-full border border-border"
                         style={{ backgroundColor: getCorDef(corNome).hex }}
                       />
                       <span className="font-medium">{formatarCorTamanhos(corNome, q)}</span>
@@ -285,7 +285,7 @@ function ProdutoPage() {
                         className="ml-1 text-muted-foreground hover:text-destructive"
                         title={`Remover cor ${corNome}`}
                       >
-                        <X className="size-3.5" />
+                        <X className="size-3" />
                       </button>
                     </div>
                   ))}
@@ -293,60 +293,77 @@ function ProdutoPage() {
               </div>
             )}
 
-            <div className="flex gap-3 rounded-2xl bg-accent p-4 text-accent-foreground">
-              <Info className="mt-0.5 size-5 shrink-0" />
-              <p className="text-[15px] font-medium">
+            <div className="flex gap-2.5 rounded-2xl bg-accent p-3 text-accent-foreground text-xs sm:text-sm">
+              <Info className="mt-0.5 size-4 shrink-0" />
+              <p className="font-medium leading-relaxed">
                 As cores selecionadas serão atendidas conforme disponibilidade do estoque. Caso alguma cor escolhida não esteja disponível, enviaremos cores sortidas.
               </p>
             </div>
 
             <div>
-              <label htmlFor="obs-item" className="mb-1.5 block font-medium">
+              <label htmlFor="obs-item" className="mb-1 block text-xs font-medium text-foreground">
                 Observação do item <span className="font-normal text-muted-foreground">(opcional)</span>
               </label>
               <Textarea
                 id="obs-item"
                 maxLength={300}
-                rows={3}
+                rows={2}
                 value={obs}
                 onChange={(e) => setObs(e.target.value.slice(0, 300))}
                 placeholder="Ex.: preferência de tons claros, se houver"
                 enterKeyHint="done"
+                className="text-sm"
               />
-              <p className="mt-1 text-right text-sm text-muted-foreground">{obs.length}/300</p>
+              <p className="mt-1 text-right text-xs text-muted-foreground">{obs.length}/300</p>
+            </div>
+
+            {/* Adicionar ao pedido colocado diretamente na página */}
+            <div className="rounded-2xl border bg-card p-4 space-y-3 shadow-xs">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-semibold text-base tabular-nums">
+                    {n > 0 ? `${n} ${n === 1 ? "peça selecionada" : "peças selecionadas"}` : "Nenhuma peça selecionada"}
+                  </p>
+                  <p className="text-xs text-muted-foreground tabular-nums">
+                    {n > 0 ? `${brl(precoAtual * n)} · R$ ${money(precoAtual)}/peça` : `${noCarrinho} peças no carrinho`}
+                  </p>
+                </div>
+                {n > 0 && (
+                  <span className="text-xs font-semibold rounded-full bg-primary/10 text-primary px-2.5 py-1">
+                    Faixa: {faixaAtual}+ peças
+                  </span>
+                )}
+              </div>
+
+              <Button
+                size="lg"
+                onClick={adicionar}
+                disabled={n < 1}
+                className="w-full text-base font-semibold h-12 shadow-sm"
+              >
+                <ShoppingBag className="mr-2 size-5" /> Adicionar ao pedido
+              </Button>
             </div>
           </section>
 
           {(p.descricao || composicaoLimpa) && (
-            <section className="space-y-4">
+            <section className="space-y-3 pt-2">
               {p.descricao && (
                 <div>
-                  <h2 className="font-sans text-base font-bold tracking-normal">Descrição</h2>
-                  <p className="mt-1 whitespace-pre-line text-muted-foreground">{p.descricao}</p>
+                  <h2 className="font-sans text-sm font-semibold tracking-normal">Descrição</h2>
+                  <p className="mt-1 whitespace-pre-line text-sm text-muted-foreground leading-relaxed">{p.descricao}</p>
                 </div>
               )}
               {composicaoLimpa && (
                 <div>
-                  <h2 className="font-sans text-base font-bold tracking-normal">Composição</h2>
-                  <p className="mt-1 text-muted-foreground">{composicaoLimpa}</p>
+                  <h2 className="font-sans text-sm font-semibold tracking-normal">Composição</h2>
+                  <p className="mt-1 text-sm text-muted-foreground">{composicaoLimpa}</p>
                 </div>
               )}
             </section>
           )}
         </div>
       </div>
-
-      <StickyBar>
-        <div className="min-w-0 flex-1 leading-tight">
-          <p className="font-semibold tabular-nums">{n > 0 ? `${n} ${n === 1 ? "peça" : "peças"}` : "0 peças"}</p>
-          <p className="truncate text-sm text-muted-foreground tabular-nums">
-            {n > 0 ? `${brl(precoAtual * n)} · R$ ${money(precoAtual)}/peça` : `${noCarrinho} no pedido`}
-          </p>
-        </div>
-        <Button size="lg" onClick={adicionar} disabled={n < 1} className="shrink-0 px-5">
-          <ShoppingBag /> Adicionar ao pedido
-        </Button>
-      </StickyBar>
     </div>
   );
 }
