@@ -30,7 +30,7 @@ const NAV = [
   { to: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { to: "/admin/pedidos", label: "Pedidos", icon: Receipt },
   { to: "/admin/produtos", label: "Produtos", icon: Package },
-  { to: "/admin/precos", label: "Preços e estoque", icon: Tags },
+  { to: "/admin/precos", label: "Edição rápida", icon: Tags },
   { to: "/admin/categorias", label: "Categorias", icon: FolderTree },
   { to: "/admin/clientes", label: "Clientes", icon: Users },
   { to: "/admin/configuracoes", label: "Configurações", icon: Settings },
