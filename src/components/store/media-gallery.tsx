@@ -66,8 +66,6 @@ export function MediaGallery({ midias, nome }: { midias: MidiaRow[]; nome: strin
   const firstPhoto = list.find((m) => m.tipo === "foto" && m.url);
   const fallbackPoster = firstPhoto ? mediaUrl(firstPhoto.url) : "";
 
-  if (list.length === 0) return <div className="aspect-square rounded-3xl bg-muted" />;
-
   function go(i: number) {
     const el = track.current;
     if (!el) return;
@@ -78,9 +76,11 @@ export function MediaGallery({ midias, nome }: { midias: MidiaRow[]; nome: strin
     const strip = thumbs.current;
     const btn = strip?.children[idx] as HTMLElement | undefined;
     if (!strip || !btn) return;
-    const left = btn.offsetLeft - (strip.clientWidth - btn.clientWidth) / 2;
-    strip.scrollTo({ left: Math.max(0, left), behavior: "smooth" });
+    const offset = btn.getBoundingClientRect().left - strip.getBoundingClientRect().left + strip.scrollLeft;
+    strip.scrollTo({ left: Math.max(0, offset - (strip.clientWidth - btn.clientWidth) / 2), behavior: "smooth" });
   }, [idx]);
+
+  if (list.length === 0) return <div className="aspect-square rounded-3xl bg-muted" />;
 
   return (
     <div className="min-w-0">
