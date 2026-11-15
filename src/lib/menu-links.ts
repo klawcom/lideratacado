@@ -16,7 +16,7 @@ export function normalizeMenuLinks(raw: unknown): MenuLink[] {
   const out: MenuLink[] = [];
   for (const item of saved) {
     if (!item || typeof item !== "object") continue;
-    const r = item as Record<string, unknown>;
+    const r = item as { to?: unknown; label?: unknown; visivel?: unknown };
     const page = MENU_PAGES.find((p) => p.to === r.to);
     if (!page || out.some((o) => o.to === page.to)) continue;
     const label = typeof r.label === "string" && r.label.trim() ? r.label.trim().slice(0, 40) : page.label;
