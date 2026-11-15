@@ -103,6 +103,7 @@ export type Database = {
           home_titulo: string
           id: number
           logo_url: string | null
+          menu_links: Json
           pedido_minimo: number
           texto_como_comprar: string
           texto_faq: string
@@ -119,6 +120,7 @@ export type Database = {
           home_titulo?: string
           id?: number
           logo_url?: string | null
+          menu_links?: Json
           pedido_minimo?: number
           texto_como_comprar?: string
           texto_faq?: string
@@ -135,6 +137,7 @@ export type Database = {
           home_titulo?: string
           id?: number
           logo_url?: string | null
+          menu_links?: Json
           pedido_minimo?: number
           texto_como_comprar?: string
           texto_faq?: string
