@@ -400,7 +400,7 @@ function Importar() {
                     <input type="checkbox" className="size-5 accent-[var(--primary)]" checked={publicar && temPrecos} disabled={!temPrecos || rodando} onChange={(e) => setPublicar(e.target.checked)} />
                     Mostrar na loja ao terminar
                   </label>
-                  {!temPrecos && <p className="text-sm text-muted-foreground">Sem os 4 preços, os produtos entram ocultos. Depois é só ajustar em Preços e estoque e ativar.</p>}
+                  {!temPrecos && <p className="text-sm text-muted-foreground">Sem os 4 preços, os produtos entram ocultos. Depois é só ajustar em Edição rápida e mostrar na loja.</p>}
                 </div>
               </div>
             </Panel>
