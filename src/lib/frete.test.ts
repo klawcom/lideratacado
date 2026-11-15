@@ -38,16 +38,16 @@ describe("módulo de frete", () => {
     ).toBe(3.05);
   });
 
-  it("calcula dimensões de pacote adequadas para os correios", () => {
+  it("usa dimensões base de 1cm altura, 8cm largura e 13cm comprimento", () => {
     const p1 = calcularDimensoesPacote(5);
-    expect(p1.comprimento).toBeGreaterThanOrEqual(15);
-    expect(p1.largura).toBeGreaterThanOrEqual(10);
-    expect(p1.altura).toBeGreaterThanOrEqual(2);
+    expect(p1.altura).toBe(1);
+    expect(p1.largura).toBe(8);
+    expect(p1.comprimento).toBe(13);
 
-    const p2 = calcularDimensoesPacote(20);
-    expect(p2.comprimento).toBe(32);
-    expect(p2.largura).toBe(25);
-    expect(p2.altura).toBe(15);
+    const p2 = calcularDimensoesPacote(50);
+    expect(p2.altura).toBe(1);
+    expect(p2.largura).toBe(8);
+    expect(p2.comprimento).toBe(13);
   });
 
   it("formata prazo de dias úteis", () => {

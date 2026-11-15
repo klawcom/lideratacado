@@ -88,18 +88,15 @@ export function ShippingCalculator({
     <div className={cn("rounded-2xl border bg-card/60 p-4 space-y-3", className)}>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Truck className="size-4 text-primary" />
+          <Truck className="size-4 text-emerald-700 dark:text-emerald-500" />
           <h3 className="font-sans text-sm font-semibold tracking-normal text-foreground">
             Simular frete e prazo
           </h3>
         </div>
-        <span className="text-xs text-muted-foreground tabular-nums">
-          {totalPecas} {totalPecas === 1 ? "peça" : "peças"} (~{pesoEstimado.toFixed(2)} kg)
-        </span>
       </div>
 
       <p className="text-xs text-muted-foreground">
-        Cotação aproximada via SuperFrete (Correios) para entrega no seu endereço:
+        Consulte o valor e prazo estimado para o seu endereço:
       </p>
 
       <div className="flex gap-2">
@@ -116,17 +113,17 @@ export function ShippingCalculator({
         </div>
         <Button
           type="button"
-          variant="secondary"
+          variant="default"
           size="sm"
           onClick={() => consultar()}
           disabled={loading || onlyDigits(cep).length !== 8}
-          className="h-10 px-4 shrink-0 font-medium"
+          className="h-10 px-4 shrink-0 font-medium bg-[#14532D] hover:bg-[#0F3F24] text-white"
         >
           {loading ? <Loader2 className="size-4 animate-spin" /> : "Calcular"}
         </Button>
       </div>
 
-      <div className="flex items-center justify-between text-xs text-muted-foreground">
+      <div className="text-xs text-muted-foreground">
         <a
           href="https://buscacepinter.correios.com.br/app/endereco/index.php"
           target="_blank"
@@ -135,9 +132,6 @@ export function ShippingCalculator({
         >
           Não sei meu CEP <ExternalLink className="size-3" />
         </a>
-        <span className="text-[11px] text-muted-foreground">
-          Base: 200g camiseta / 250g polo
-        </span>
       </div>
 
       {erro && (

@@ -221,7 +221,7 @@ function Config() {
             <div className="flex items-center gap-3">
               <input id="cfg-cor" type="color" value={f.cor_destaque} onChange={(e) => set("cor_destaque", e.target.value)} className="h-12 w-16 cursor-pointer rounded-xl border bg-card p-1" />
               <Input value={f.cor_destaque} onChange={(e) => set("cor_destaque", e.target.value)} className="max-w-36 font-mono" autoCapitalize="none" />
-              <Button type="button" variant="ghost" size="sm" onClick={() => set("cor_destaque", "#C9A227")}>
+              <Button type="button" variant="ghost" size="sm" onClick={() => set("cor_destaque", "#14532D")}>
                 Padrão
               </Button>
             </div>

@@ -57,6 +57,21 @@ describe("mensagem do pedido no WhatsApp", () => {
   it("inclui observação geral quando preenchida", () => {
     expect(montarMensagemPedido({ ...base, observacao: "Entregar à tarde" })).toContain("📝 *Observação do pedido:*\nEntregar à tarde");
   });
+  it("inclui frete detalhado e total com frete quando selecionado", () => {
+    const comFrete = montarMensagemPedido({
+      ...base,
+      total: 494.73, // 398.80 + 95.93
+      frete: {
+        servico: "PAC Correios",
+        preco: 95.93,
+        prazo: "Em até 8 dias úteis",
+      },
+    });
+    expect(comFrete).toContain("Total dos produtos: R$ 398,80");
+    expect(comFrete).toContain("📦 Frete (PAC Correios): R$ 95,93 (Em até 8 dias úteis)");
+    expect(comFrete).toContain("*Total do pedido: R$ 494,73*");
+    expect(comFrete).toContain("Aguardo a confirmação e as formas de pagamento. Obrigado!");
+  });
   it("link wa.me mantém emojis e quebras de linha codificados", () => {
     const url = linkWhatsapp("5566996444461", msg);
     expect(url.startsWith("https://wa.me/5566996444461?text=")).toBe(true);

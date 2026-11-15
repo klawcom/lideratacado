@@ -67,9 +67,9 @@
   --card-foreground: oklch(0.2 0.01 70);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.2 0.01 70);
-  /* Gold accent, overridable at runtime by the store's "cor de destaque" */
-  --primary: oklch(0.8 0.14 83);
-  --primary-foreground: oklch(0.2 0.02 70);
+  /* Verde escuro para botões de ação e destaque */
+  --primary: #14532D;
+  --primary-foreground: #FFFFFF;
   --secondary: oklch(0.965 0.005 85);
   --secondary-foreground: oklch(0.2 0.01 70);
   --muted: oklch(0.965 0.005 85);
@@ -108,8 +108,8 @@
   --card-foreground: oklch(0.97 0.004 85);
   --popover: oklch(0.21 0.007 70);
   --popover-foreground: oklch(0.97 0.004 85);
-  --primary: oklch(0.8 0.14 83);
-  --primary-foreground: oklch(0.18 0.02 70);
+  --primary: #166534;
+  --primary-foreground: #FFFFFF;
   --secondary: oklch(0.26 0.008 70);
   --secondary-foreground: oklch(0.97 0.004 85);
   --muted: oklch(0.24 0.008 70);

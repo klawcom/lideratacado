@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { Mail, MessageCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Logo } from "./logo";
 import { siteQuery } from "@/lib/catalog.functions";
 import { visibleMenuLinks } from "@/lib/menu-links";
@@ -22,27 +23,27 @@ export function SiteFooter() {
         </div>
         <div>
           <h2 className="mb-3 text-base font-semibold">Contato</h2>
-          <ul className="space-y-1">
+          <div className="flex flex-col items-start gap-2.5">
             {wa && (
-              <li>
+              <Button asChild variant="default" size="sm" className="bg-[#14532D] hover:bg-[#0F3F24] text-white gap-2 font-medium">
                 <a
                   href={`https://wa.me/${whatsappLinkNumber(wa)}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex min-h-11 items-center gap-2 hover:text-gold-ink"
+                  aria-label="Abrir conversa no WhatsApp"
                 >
-                  <MessageCircle className="size-5" /> {formatWhatsappIntl(wa.replace(/^55/, ""))}
+                  <MessageCircle className="size-4" /> {formatWhatsappIntl(wa.replace(/^55/, ""))}
                 </a>
-              </li>
+              </Button>
             )}
             {cfg?.email_contato && (
-              <li>
-                <a href={`mailto:${cfg.email_contato}`} className="inline-flex min-h-11 items-center gap-2 hover:text-gold-ink">
-                  <Mail className="size-5" /> {cfg.email_contato}
+              <Button asChild variant="outline" size="sm" className="gap-2 font-medium">
+                <a href={`mailto:${cfg.email_contato}`} aria-label="Enviar e-mail">
+                  <Mail className="size-4" /> {cfg.email_contato}
                 </a>
-              </li>
+              </Button>
             )}
-          </ul>
+          </div>
         </div>
         <div>
           <h2 className="mb-3 text-base font-semibold">Institucional</h2>

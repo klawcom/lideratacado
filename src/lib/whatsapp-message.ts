@@ -19,6 +19,11 @@ export type MensagemPedido = {
   totalPecas: number;
   faixa: number;
   total: number;
+  frete?: {
+    servico: string;
+    preco: number;
+    prazo: string;
+  };
   cliente: { nome: string; email: string; whatsapp: string };
   entrega: {
     rua: string;
@@ -71,8 +76,15 @@ export function montarMensagemPedido(p: MensagemPedido): string {
   L.push(`*RESUMO*`);
   L.push(`Total de peças: ${p.totalPecas}`);
   L.push(`Faixa aplicada: a partir de ${p.faixa} peças`);
-  L.push(`*Total dos produtos: R$ ${money(p.total)}*`);
-  L.push(`Frete e pagamento: a combinar`);
+  if (p.frete) {
+    const totalProdutos = p.total - p.frete.preco;
+    L.push(`Total dos produtos: R$ ${money(totalProdutos > 0 ? totalProdutos : p.total)}`);
+    L.push(`📦 Frete (${p.frete.servico}): R$ ${money(p.frete.preco)} (${p.frete.prazo})`);
+    L.push(`*Total do pedido: R$ ${money(p.total)}*`);
+  } else {
+    L.push(`*Total dos produtos: R$ ${money(p.total)}*`);
+    L.push(`Frete e pagamento: a combinar`);
+  }
   L.push(`⚠️ *Cores:* Conforme disponibilidade do estoque. Caso alguma cor escolhida não esteja disponível, enviaremos cores sortidas.`);
   L.push(SEP);
   L.push(`*CLIENTE*`);
@@ -90,7 +102,11 @@ export function montarMensagemPedido(p: MensagemPedido): string {
     L.push(p.observacao.trim());
   }
   L.push("");
-  L.push("Aguardo o valor do frete e as formas de pagamento. Obrigado!");
+  if (p.frete) {
+    L.push("Aguardo a confirmação e as formas de pagamento. Obrigado!");
+  } else {
+    L.push("Aguardo o valor do frete e as formas de pagamento. Obrigado!");
+  }
   return L.join("\n");
 }
 

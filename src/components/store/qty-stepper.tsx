@@ -14,17 +14,17 @@ export function QtyStepper({
 }) {
   const set = (v: number) => onChange(Math.max(0, Math.min(99999, Math.floor(v) || 0)));
   return (
-    <div className={cn("flex items-center justify-between gap-3 rounded-2xl border bg-card", compact ? "p-1.5 pl-4" : "p-2 pl-5")}>
-      <span className={cn("font-display font-bold", compact ? "text-base" : "text-xl")}>{label}</span>
+    <div className={cn("flex items-center justify-between gap-2 rounded-xl border bg-card", compact ? "p-1 pl-2.5" : "p-1.5 pl-3")}>
+      <span className="font-sans text-xs sm:text-sm font-semibold text-foreground">{label}</span>
       <div className="flex items-center gap-1">
         <button
           type="button"
           onClick={() => set(value - 1)}
           disabled={value <= 0}
           aria-label={`Diminuir ${label}`}
-          className={cn("grid place-items-center rounded-xl bg-secondary transition active:scale-95 disabled:opacity-40", compact ? "size-11" : "size-12")}
+          className="grid size-7 sm:size-8 place-items-center rounded-lg bg-secondary text-foreground transition active:scale-95 disabled:opacity-30 hover:bg-secondary/80"
         >
-          <Minus className="size-5" />
+          <Minus className="size-3.5" />
         </button>
         <input
           type="text"
@@ -34,15 +34,15 @@ export function QtyStepper({
           value={value}
           onFocus={(e) => e.currentTarget.select()}
           onChange={(e) => set(Number(e.target.value.replace(/\D/g, "")))}
-          className={cn("bg-transparent text-center font-semibold tabular-nums outline-none", compact ? "w-12 text-base" : "w-14 text-lg")}
+          className="w-8 text-center text-xs sm:text-sm font-semibold tabular-nums outline-none bg-transparent"
         />
         <button
           type="button"
           onClick={() => set(value + 1)}
           aria-label={`Aumentar ${label}`}
-          className={cn("grid place-items-center rounded-xl bg-primary text-primary-foreground transition active:scale-95", compact ? "size-11" : "size-12")}
+          className="grid size-7 sm:size-8 place-items-center rounded-lg bg-[#14532D] text-white transition active:scale-95 hover:bg-[#0F3F24]"
         >
-          <Plus className="size-5" />
+          <Plus className="size-3.5" />
         </button>
       </div>
     </div>

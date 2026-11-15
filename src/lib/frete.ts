@@ -53,16 +53,20 @@ export function calcularPesoTotalKg(itens: ItemFrete[]): number {
 }
 
 /**
- * Define dimensões da embalagem (cm) conforme o volume de peças.
- * Mantém os limites mínimos permitidos pelos Correios (comprimento >= 15cm, largura >= 10cm, altura >= 2cm).
+ * Dimensões base para cálculo de frete (cm): altura 1cm, largura 8cm, comprimento 13cm.
  */
-export function calcularDimensoesPacote(totalPecas: number): { altura: number; largura: number; comprimento: number } {
-  const n = Math.max(1, totalPecas);
-  if (n <= 5) return { altura: 6, largura: 18, comprimento: 24 };
-  if (n <= 15) return { altura: 10, largura: 22, comprimento: 28 };
-  if (n <= 30) return { altura: 15, largura: 25, comprimento: 32 };
-  if (n <= 50) return { altura: 20, largura: 28, comprimento: 36 };
-  return { altura: 25, largura: 32, comprimento: 40 };
+export const DIMENSOES_BASE = {
+  altura: 1,
+  largura: 8,
+  comprimento: 13,
+};
+
+/**
+ * Define dimensões da embalagem (cm).
+ * Base fixa para todos os cálculos: altura 1cm, largura 8cm, comprimento 13cm.
+ */
+export function calcularDimensoesPacote(_totalPecas?: number): { altura: number; largura: number; comprimento: number } {
+  return { ...DIMENSOES_BASE };
 }
 
 export function formatarPrazoFrete(dias: number): string {

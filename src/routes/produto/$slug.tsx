@@ -156,7 +156,30 @@ function ProdutoPage() {
         </Link>
       )}
       <div className="grid gap-6 md:grid-cols-2 md:gap-10">
-        <MediaGallery midias={p.produto_midias} nome={p.nome} />
+        <div className="space-y-5">
+          <MediaGallery midias={p.produto_midias} nome={p.nome} />
+
+          {(p.descricao || composicaoLimpa) && (
+            <section aria-labelledby="secao-descricao" className="rounded-2xl border bg-card/60 p-4 sm:p-5 space-y-3.5">
+              {p.descricao && (
+                <div>
+                  <h2 id="secao-descricao" className="font-sans text-sm font-semibold tracking-normal text-foreground">
+                    Descrição do produto
+                  </h2>
+                  <p className="mt-1.5 whitespace-pre-line text-sm text-muted-foreground leading-relaxed">
+                    {p.descricao}
+                  </p>
+                </div>
+              )}
+              {composicaoLimpa && (
+                <div className={p.descricao ? "pt-3 border-t border-border/60" : ""}>
+                  <h2 className="font-sans text-sm font-semibold tracking-normal text-foreground">Composição</h2>
+                  <p className="mt-1 text-sm text-muted-foreground">{composicaoLimpa}</p>
+                </div>
+              )}
+            </section>
+          )}
+        </div>
 
         <div className="min-w-0 space-y-5">
           <div>
@@ -348,23 +371,6 @@ function ProdutoPage() {
 
             <ShippingCalculator itens={[{ nome: p.nome, pecas: n > 0 ? n : 10 }]} />
           </section>
-
-          {(p.descricao || composicaoLimpa) && (
-            <section className="space-y-3 pt-2">
-              {p.descricao && (
-                <div>
-                  <h2 className="font-sans text-sm font-semibold tracking-normal">Descrição</h2>
-                  <p className="mt-1 whitespace-pre-line text-sm text-muted-foreground leading-relaxed">{p.descricao}</p>
-                </div>
-              )}
-              {composicaoLimpa && (
-                <div>
-                  <h2 className="font-sans text-sm font-semibold tracking-normal">Composição</h2>
-                  <p className="mt-1 text-sm text-muted-foreground">{composicaoLimpa}</p>
-                </div>
-              )}
-            </section>
-          )}
         </div>
       </div>
     </div>

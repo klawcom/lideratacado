@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useRef, useState } from "react";
-import { ChevronLeft, Loader2, MessageCircle } from "lucide-react";
+import { AlertCircle, CheckCircle2, ChevronLeft, Loader2, MessageCircle, RefreshCw, Truck } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,14 +10,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { StickyBar } from "@/components/store/sticky-bar";
 import { cart, useCart } from "@/lib/cart";
 import { useSyncCart } from "@/lib/use-sync-cart";
-import { calcularPedido } from "@/lib/pricing";
+import { calcularPedido, pecas } from "@/lib/pricing";
 import { UFS, brl, faltamPecas, maskCep, maskPhone, onlyDigits } from "@/lib/format";
 import { siteQuery } from "@/lib/catalog.functions";
 import { criarPedido, pedidoSchema } from "@/lib/orders.functions";
+import { simularFrete } from "@/lib/frete.functions";
+import { formatarPrazoFrete, type FreteOpcao } from "@/lib/frete";
 import { lerDadosEntrega, salvarDadosEntrega, salvarUltimoPedido } from "@/lib/checkout-storage";
 import { tamanhosLinha } from "@/lib/whatsapp-message";
 import { formatarCorTamanhos } from "@/lib/colors";
-import { ShippingCalculator } from "@/components/store/shipping-calculator";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { seo } from "@/lib/seo";
@@ -84,12 +85,18 @@ function FinalizarPage() {
   const minimo = site?.config?.pedido_minimo ?? 10;
   const resumo = calcularPedido(items, minimo);
   const enviar = useServerFn(criarPedido);
+  const simular = useServerFn(simularFrete);
 
   const [f, setF] = useState<Form>(VAZIO);
   const [obs, setObs] = useState("");
   const [erros, setErros] = useState<Partial<Record<keyof Form, string>>>({});
   const [enviando, setEnviando] = useState(false);
   const [buscandoCep, setBuscandoCep] = useState(false);
+  const [opcoesFrete, setOpcoesFrete] = useState<FreteOpcao[] | null>(null);
+  const [freteEscolhido, setFreteEscolhido] = useState<FreteOpcao | null>(null);
+  const [carregandoFrete, setCarregandoFrete] = useState(false);
+  const [erroFrete, setErroFrete] = useState<string | null>(null);
+  const [erroFreteValidacao, setErroFreteValidacao] = useState<string | null>(null);
   const numeroRef = useRef<HTMLInputElement>(null);
   const lastCep = useRef("");
 
@@ -121,6 +128,52 @@ function FinalizarPage() {
       }));
     })();
   }, [user]);
+
+  const consultarFrete = async (cepMask: string) => {
+    const cep = onlyDigits(cepMask);
+    if (cep.length !== 8) {
+      setOpcoesFrete(null);
+      setFreteEscolhido(null);
+      setErroFrete(null);
+      return;
+    }
+    setCarregandoFrete(true);
+    setErroFrete(null);
+    setErroFreteValidacao(null);
+    try {
+      const res = await simular({
+        data: {
+          cepDestino: cep,
+          itens: items.map((i) => ({ nome: i.nome, pecas: pecas(i.qtd) })),
+        },
+      });
+      if (res.sucesso && res.opcoes.length > 0) {
+        setOpcoesFrete(res.opcoes);
+        setFreteEscolhido((cur) => {
+          if (!cur) return res.opcoes[0];
+          const found = res.opcoes.find((o) => o.id === cur.id || o.nome === cur.nome);
+          return found ?? res.opcoes[0];
+        });
+      } else {
+        setOpcoesFrete([]);
+        setFreteEscolhido(null);
+        setErroFrete(res.mensagem || "Não foi possível calcular o frete para este CEP.");
+      }
+    } catch (e) {
+      setOpcoesFrete([]);
+      setFreteEscolhido(null);
+      setErroFrete(e instanceof Error ? e.message : "Erro ao consultar frete.");
+    } finally {
+      setCarregandoFrete(false);
+    }
+  };
+
+  useEffect(() => {
+    const cep = onlyDigits(f.cep);
+    if (cep.length === 8) {
+      consultarFrete(cep);
+    }
+  }, [f.cep, items.length]);
 
   const set = (k: keyof Form) => (v: string) => {
     setF((cur) => ({ ...cur, [k]: v }));
@@ -157,8 +210,20 @@ function FinalizarPage() {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (enviando || !resumo.podeFinalizar) return;
+
+    if (!freteEscolhido) {
+      setErroFreteValidacao("Selecione uma opção de frete para continuar.");
+      document.getElementById("secao-frete")?.scrollIntoView({ behavior: "smooth" });
+      return;
+    }
+
     const payload = {
       cliente: { ...f },
+      frete: {
+        servico: `${freteEscolhido.nome} (${freteEscolhido.transportadora})`,
+        preco: freteEscolhido.preco,
+        prazo: formatarPrazoFrete(freteEscolhido.prazoDias),
+      },
       observacao: obs,
       itens: items.map((i) => ({ produtoId: i.produtoId, qtd: i.qtd, cores: i.cores, observacao: i.observacao })),
     };
@@ -167,6 +232,7 @@ function FinalizarPage() {
       const errs: Partial<Record<keyof Form, string>> = {};
       for (const issue of parsed.error.issues) {
         if (issue.path[0] === "cliente") errs[issue.path[1] as keyof Form] ??= issue.message;
+        if (issue.path[0] === "frete") setErroFreteValidacao(issue.message);
       }
       setErros(errs);
       const first = Object.keys(errs)[0];
@@ -293,6 +359,111 @@ function FinalizarPage() {
             </Field>
           </fieldset>
 
+          <fieldset id="secao-frete" className="rounded-2xl border bg-card p-4 sm:p-5 space-y-3.5">
+            <div className="flex items-center justify-between">
+              <legend className="font-display text-lg font-bold">Opção de envio / Frete</legend>
+              {onlyDigits(f.cep).length === 8 && !carregandoFrete && (
+                <button
+                  type="button"
+                  onClick={() => consultarFrete(f.cep)}
+                  className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+                >
+                  <RefreshCw className="size-3" /> Recalcular frete
+                </button>
+              )}
+            </div>
+
+            {onlyDigits(f.cep).length !== 8 && (
+              <div className="rounded-xl border border-dashed p-4 text-center text-sm text-muted-foreground">
+                <Truck className="mx-auto mb-1.5 size-5 opacity-60" />
+                Informe o seu CEP acima para calcular o frete e os prazos dos Correios (PAC / SEDEX).
+              </div>
+            )}
+
+            {carregandoFrete && (
+              <div className="flex items-center justify-center gap-2 rounded-xl border bg-muted/30 p-5 text-sm text-muted-foreground">
+                <Loader2 className="size-5 animate-spin text-primary" />
+                <span>Calculando frete com os Correios...</span>
+              </div>
+            )}
+
+            {!carregandoFrete && erroFrete && (
+              <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-3.5 text-sm text-destructive">
+                <div className="flex items-start gap-2">
+                  <AlertCircle className="mt-0.5 size-4 shrink-0" />
+                  <div className="flex-1">
+                    <p className="font-semibold">Não foi possível calcular o frete</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{erroFrete}</p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => consultarFrete(f.cep)}
+                    className="h-8 text-xs shrink-0"
+                  >
+                    Tentar novamente
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {!carregandoFrete && opcoesFrete && opcoesFrete.length > 0 && (
+              <div className="space-y-2.5">
+                <p className="text-xs text-muted-foreground">
+                  Selecione uma opção de frete obrigatória para envio do pedido:
+                </p>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {opcoesFrete.map((op) => {
+                    const selecionado = freteEscolhido?.id === op.id || freteEscolhido?.nome === op.nome;
+                    return (
+                      <button
+                        key={op.id || op.nome}
+                        type="button"
+                        onClick={() => {
+                          setFreteEscolhido(op);
+                          setErroFreteValidacao(null);
+                        }}
+                        className={cn(
+                          "relative flex flex-col justify-between rounded-xl border p-3.5 text-left transition-all",
+                          selecionado
+                            ? "border-primary bg-primary/5 ring-2 ring-primary shadow-xs"
+                            : "bg-card hover:border-foreground/30 hover:bg-muted/40",
+                        )}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-bold text-foreground text-sm">{op.nome}</span>
+                              <span className="text-[11px] text-muted-foreground font-medium">({op.transportadora})</span>
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                              {formatarPrazoFrete(op.prazoDias)}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <span className="text-base font-bold text-foreground tabular-nums">
+                              {brl(op.preco)}
+                            </span>
+                          </div>
+                        </div>
+                        {selecionado && (
+                          <div className="mt-2 flex items-center gap-1 text-[11px] font-semibold text-primary">
+                            <CheckCircle2 className="size-3.5" /> Selecionado
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {erroFreteValidacao && (
+              <p className="text-sm font-semibold text-destructive">{erroFreteValidacao}</p>
+            )}
+          </fieldset>
+
           <div>
             <label htmlFor="f-obs" className="mb-1.5 block font-display text-lg font-bold">
               Observação geral do pedido <span className="font-sans text-base font-normal text-muted-foreground">(opcional)</span>
@@ -327,34 +498,55 @@ function FinalizarPage() {
             })}
           </ul>
           <dl className="mt-2 space-y-1.5 border-t pt-3">
-            <div className="flex justify-between">
+            <div className="flex justify-between text-sm">
               <dt className="text-muted-foreground">Total de peças</dt>
               <dd className="font-semibold tabular-nums">{resumo.totalPecas}</dd>
             </div>
-            <div className="flex justify-between">
+            <div className="flex justify-between text-sm">
               <dt className="text-muted-foreground">Faixa aplicada</dt>
               <dd className="font-semibold">a partir de {resumo.faixa} peças</dd>
             </div>
-            <div className="flex justify-between text-lg">
-              <dt className="font-semibold">Total dos produtos</dt>
-              <dd className="font-bold tabular-nums">{brl(resumo.total)}</dd>
+            <div className="flex justify-between text-sm">
+              <dt className="text-muted-foreground">Total dos produtos</dt>
+              <dd className="font-semibold tabular-nums">{brl(resumo.total)}</dd>
+            </div>
+            <div className="flex justify-between text-sm">
+              <dt className="text-muted-foreground">
+                Frete {freteEscolhido ? `(${freteEscolhido.nome})` : ""}
+              </dt>
+              <dd className={cn("font-semibold tabular-nums", !freteEscolhido && "text-xs text-muted-foreground")}>
+                {freteEscolhido ? brl(freteEscolhido.preco) : "Selecione o frete"}
+              </dd>
+            </div>
+            <div className="flex justify-between text-lg border-t border-border pt-2.5">
+              <dt className="font-bold">Total do pedido</dt>
+              <dd className="font-extrabold text-foreground tabular-nums">
+                {brl(resumo.total + (freteEscolhido?.preco ?? 0))}
+              </dd>
             </div>
           </dl>
-          <p className="mt-2 text-sm text-muted-foreground">Frete e pagamento: a combinar.</p>
-
-          <ShippingCalculator
-            itens={resumo.itens.map((i) => ({ nome: i.nome, pecas: i.pecas }))}
-            className="mt-4"
-          />
+          {freteEscolhido ? (
+            <p className="mt-2 text-xs text-muted-foreground">
+              📦 Envio via {freteEscolhido.nome} · {formatarPrazoFrete(freteEscolhido.prazoDias)}
+            </p>
+          ) : (
+            <p className="mt-2 text-xs text-amber-600 dark:text-amber-400 font-medium">
+              ⚠️ Escolha o frete acima para concluir
+            </p>
+          )}
         </aside>
       </div>
 
       <StickyBar>
         <div className="min-w-0 flex-1 leading-tight">
-          <p className="text-lg font-bold tabular-nums">{brl(resumo.total)}</p>
-          <p className="truncate text-sm text-muted-foreground">{resumo.totalPecas} peças</p>
+          <p className="text-lg font-bold tabular-nums">
+            {brl(resumo.total + (freteEscolhido?.preco ?? 0))}
+          </p>
+          <p className="truncate text-xs sm:text-sm text-muted-foreground">
+            {resumo.totalPecas} peças {freteEscolhido ? `· Frete: ${brl(freteEscolhido.preco)}` : "· Frete pendente"}
+          </p>
         </div>
-        <Button type="submit" form="form-pedido" size="lg" className="shrink-0" disabled={enviando}>
+        <Button type="submit" form="form-pedido" size="lg" className="shrink-0 font-semibold" disabled={enviando}>
           {enviando ? <Loader2 className="animate-spin" /> : <MessageCircle />}
           {enviando ? "Enviando..." : "Enviar pedido"}
         </Button>

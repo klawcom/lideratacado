@@ -3,7 +3,7 @@ import { getRequest } from "@tanstack/react-start/server";
 import { z } from "zod";
 import { calcularPedido } from "./pricing";
 import { linkWhatsapp, montarMensagemPedido } from "./whatsapp-message";
-import { faltamPecas, onlyDigits } from "./format";
+import { faltamPecas, money, onlyDigits } from "./format";
 import { formatarCorTamanhos } from "./colors";
 
 const qtd = z.number().int().min(0).max(100000);
@@ -36,6 +36,13 @@ export const pedidoSchema = z.object({
       .toUpperCase()
       .regex(/^[A-Z]{2}$/, "UF inválida"),
   }),
+  frete: z
+    .object({
+      servico: z.string().trim().min(1, "Informe a opção de frete"),
+      preco: z.number().min(0),
+      prazo: z.string().trim().min(1),
+    })
+    .optional(),
   observacao: z.string().trim().max(500).default(""),
   itens: z
     .array(
@@ -162,15 +169,22 @@ export const criarPedido = createServerFn({ method: "POST" })
       clienteId = novo.id;
     }
 
+    const valorFrete = data.frete?.preco ?? 0;
+    const totalComFrete = Math.round((resumo.total + valorFrete) * 100) / 100;
+    const freteObs = data.frete
+      ? `Frete: ${data.frete.servico} (R$ ${money(data.frete.preco)} - ${data.frete.prazo})`
+      : "";
+    const observacaoFinal = [freteObs, data.observacao].filter(Boolean).join(" | ").slice(0, 500);
+
     const { data: pedido, error: pedErr } = await db
       .from("pedidos")
       .insert({
         cliente_id: clienteId,
         user_id: userId,
-        total: resumo.total,
+        total: totalComFrete,
         total_pecas: resumo.totalPecas,
         faixa_aplicada: resumo.faixa,
-        observacao: data.observacao,
+        observacao: observacaoFinal,
         cliente_nome: c.nome,
         cliente_email: c.email,
         cliente_whatsapp: c.whatsapp,
@@ -229,7 +243,8 @@ export const criarPedido = createServerFn({ method: "POST" })
       itens: itensMsg,
       totalPecas: resumo.totalPecas,
       faixa: resumo.faixa,
-      total: resumo.total,
+      total: totalComFrete,
+      frete: data.frete,
       cliente: { nome: c.nome, email: c.email, whatsapp: c.whatsapp },
       entrega: { rua: c.rua, numero: c.numero, complemento: c.complemento, bairro: c.bairro, cidade: c.cidade, estado: c.estado, cep: c.cep },
       observacao: data.observacao,
@@ -240,6 +255,6 @@ export const criarPedido = createServerFn({ method: "POST" })
       criadoEm: pedido.created_at,
       mensagem,
       waUrl: linkWhatsapp(config?.whatsapp ?? "5566996444461", mensagem),
-      resumo: { itens: itensMsg, totalPecas: resumo.totalPecas, faixa: resumo.faixa, total: resumo.total },
+      resumo: { itens: itensMsg, totalPecas: resumo.totalPecas, faixa: resumo.faixa, total: totalComFrete },
     };
   });

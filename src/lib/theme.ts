@@ -12,9 +12,9 @@ export function setTheme(t: "light" | "dark") {
   }
 }
 
-/** Runtime override of the gold accent from the store settings. */
+/** Runtime override of the primary accent from the store settings. */
 export function accentCss(hex: string | null | undefined): string {
-  if (!hex || !/^#[0-9a-fA-F]{6}$/.test(hex)) return "";
+  if (!hex || !/^#[0-9a-fA-F]{6}$/.test(hex) || hex.toUpperCase() === "#C9A227") return "";
   const r = parseInt(hex.slice(1, 3), 16) / 255;
   const g = parseInt(hex.slice(3, 5), 16) / 255;
   const b = parseInt(hex.slice(5, 7), 16) / 255;
