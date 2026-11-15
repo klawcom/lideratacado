@@ -13,6 +13,7 @@ export type CorDef = {
 export const CORES_PADRAO: CorDef[] = [
   { nome: "Branca", hex: "#FFFFFF", border: true },
   { nome: "Preta", hex: "#111111" },
+  { nome: "Cinza", hex: "#9CA3AF" },
   { nome: "Azul", hex: "#2563EB" },
   { nome: "Azul Marinho", hex: "#1E3A8A" },
   { nome: "Azul Bebê", hex: "#93C5FD" },

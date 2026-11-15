@@ -2,10 +2,11 @@ import { describe, expect, it } from "vitest";
 import { CORES_PADRAO, decodeCoresProduto, encodeCoresProduto, formatarCorTamanhos, getCorDef } from "./colors";
 
 describe("colors module", () => {
-  it("tem 21 cores padrão configuradas", () => {
-    expect(CORES_PADRAO.length).toBe(21);
+  it("tem 22 cores padrão configuradas", () => {
+    expect(CORES_PADRAO.length).toBe(22);
     expect(CORES_PADRAO.map((c) => c.nome)).toContain("Branca");
     expect(CORES_PADRAO.map((c) => c.nome)).toContain("Preta");
+    expect(CORES_PADRAO.map((c) => c.nome)).toContain("Cinza");
     expect(CORES_PADRAO.map((c) => c.nome)).toContain("Azul Marinho");
   });
 
@@ -14,6 +15,8 @@ describe("colors module", () => {
     expect(branca.hex).toBe("#FFFFFF");
     const preta = getCorDef("PRETA");
     expect(preta.hex).toBe("#111111");
+    const cinza = getCorDef("cinza");
+    expect(cinza.hex).toBe("#9CA3AF");
     const desc = getCorDef("cor inexistente");
     expect(desc.hex).toBe("#888888");
   });
@@ -21,7 +24,7 @@ describe("colors module", () => {
   it("decodeCoresProduto retorna todas as cores quando vazio", () => {
     const res = decodeCoresProduto("100% Algodão");
     expect(res.composicaoLimpa).toBe("100% Algodão");
-    expect(res.coresHabilitadas.length).toBe(21);
+    expect(res.coresHabilitadas.length).toBe(22);
   });
 
   it("encode e decode preservam cores selecionadas e limpam texto", () => {
