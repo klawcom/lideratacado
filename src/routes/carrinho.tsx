@@ -13,6 +13,7 @@ import { brl, faltamPecas, money } from "@/lib/format";
 import { siteQuery } from "@/lib/catalog.functions";
 import { tamanhosLinha } from "@/lib/whatsapp-message";
 import { formatarCorTamanhos } from "@/lib/colors";
+import { ShippingCalculator } from "@/components/store/shipping-calculator";
 import { seo } from "@/lib/seo";
 
 export const Route = createFileRoute("/carrinho")({
@@ -145,6 +146,11 @@ function CarrinhoPage() {
           <Button variant="link" asChild className="mt-2 px-0">
             <Link to="/">Continuar escolhendo</Link>
           </Button>
+
+          <ShippingCalculator
+            itens={resumo.itens.map((i) => ({ nome: i.nome, pecas: i.pecas }))}
+            className="mt-4"
+          />
         </aside>
       </div>
 

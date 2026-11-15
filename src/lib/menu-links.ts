@@ -12,7 +12,12 @@ export type MenuLink = { to: MenuPath; label: string; visivel: boolean };
 
 /** Accepts whatever is saved and always returns every known page once, in the saved order. */
 export function normalizeMenuLinks(raw: unknown): MenuLink[] {
-  const saved = Array.isArray(raw) ? raw : [];
+  let saved: unknown[] = [];
+  if (Array.isArray(raw)) {
+    saved = raw;
+  } else if (raw && typeof raw === "object" && "links" in raw && Array.isArray((raw as Record<string, unknown>).links)) {
+    saved = (raw as Record<string, unknown>).links as unknown[];
+  }
   const out: MenuLink[] = [];
   for (const item of saved) {
     if (!item || typeof item !== "object") continue;

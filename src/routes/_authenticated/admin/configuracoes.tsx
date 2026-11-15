@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
-import { ArrowDown, ArrowUp, ImagePlus, Loader2, RotateCcw, Save } from "lucide-react";
+import { ArrowDown, ArrowUp, ImagePlus, Loader2, RotateCcw, Save, Truck } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { normalizeMenuLinks, type MenuLink } from "@/lib/menu-links";
 import { toast } from "sonner";
@@ -13,7 +13,7 @@ import type { Tables } from "@/integrations/supabase/types";
 import { AdminPage, FieldLabel, Loading, Panel, invalidateStore } from "@/components/admin/ui";
 import { mediaUrl } from "@/lib/media";
 import { resizeToWebp } from "@/lib/image-resize";
-import { maskPhone, onlyDigits } from "@/lib/format";
+import { maskCep, maskPhone, onlyDigits } from "@/lib/format";
 import heroWide from "@/assets/hero-wide.webp";
 import heroMobile from "@/assets/hero-mobile.webp";
 
@@ -44,6 +44,8 @@ function Config() {
   const [uploadingBanner, setUploadingBanner] = useState<"wide" | "mobile" | null>(null);
   const [bannerVersion, setBannerVersion] = useState<number>(Date.now());
   const [menu, setMenu] = useState<MenuLink[]>([]);
+  const [tokenSuperFrete, setTokenSuperFrete] = useState("");
+  const [cepOrigemSuperFrete, setCepOrigemSuperFrete] = useState("78464-222");
   const logoRef = useRef<HTMLInputElement>(null);
   const wideBannerRef = useRef<HTMLInputElement>(null);
   const mobileBannerRef = useRef<HTMLInputElement>(null);
@@ -100,6 +102,13 @@ function Config() {
     if (data) {
       setF({ ...data, whatsapp: maskPhone(data.whatsapp.replace(/^55/, "")) });
       setMenu(normalizeMenuLinks(data.menu_links));
+      if (data.menu_links && typeof data.menu_links === "object" && !Array.isArray(data.menu_links)) {
+        const sf = (data.menu_links as Record<string, unknown>).superfrete as
+          | { token?: string; cep_origem?: string }
+          | undefined;
+        if (sf?.token) setTokenSuperFrete(sf.token);
+        if (sf?.cep_origem) setCepOrigemSuperFrete(maskCep(sf.cep_origem));
+      }
     }
   }, [data]);
 
@@ -139,10 +148,22 @@ function Config() {
     if (!/^#[0-9a-fA-F]{6}$/.test(f.cor_destaque)) { toast.error("Cor inválida."); return; }
     setSaving(true);
     const { id: _id, updated_at: _u, menu_links: _m, ...rest } = f;
-    const menu_links = normalizeMenuLinks(menu.map((l) => ({ ...l, label: l.label.trim() })));
+    const linksNormalizados = normalizeMenuLinks(menu.map((l) => ({ ...l, label: l.label.trim() })));
+    const menu_links = {
+      links: linksNormalizados,
+      superfrete: {
+        token: tokenSuperFrete.trim(),
+        cep_origem: onlyDigits(cepOrigemSuperFrete),
+      },
+    };
     const { error } = await supabase
       .from("configuracoes")
-      .update({ ...rest, menu_links, whatsapp: wa.startsWith("55") && wa.length >= 12 ? wa : `55${wa}`, pedido_minimo: Math.max(1, Number(f.pedido_minimo) || 10) })
+      .update({
+        ...rest,
+        menu_links,
+        whatsapp: wa.startsWith("55") && wa.length >= 12 ? wa : `55${wa}`,
+        pedido_minimo: Math.max(1, Number(f.pedido_minimo) || 10),
+      })
       .eq("id", 1);
     setSaving(false);
     if (error) { toast.error(error.message); return; }
@@ -348,6 +369,57 @@ function Config() {
               </li>
             ))}
           </ul>
+        </Panel>
+
+        <Panel className="space-y-4">
+          <div className="flex items-center gap-2">
+            <Truck className="size-5 text-primary" />
+            <div>
+              <h2 className="font-sans text-lg font-bold tracking-normal">SuperFrete — Cálculo de Frete</h2>
+              <p className="text-sm text-muted-foreground">
+                Integração para cotação em tempo real de PAC e SEDEX para os clientes na página do produto e carrinho.
+              </p>
+            </div>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <FieldLabel htmlFor="cfg-sf-cep" hint="(Lucas do Rio Verde/MT)">
+                CEP de Origem (Remetente)
+              </FieldLabel>
+              <Input
+                id="cfg-sf-cep"
+                value={cepOrigemSuperFrete}
+                onChange={(e) => setCepOrigemSuperFrete(maskCep(e.target.value))}
+                placeholder="78464-222"
+                inputMode="numeric"
+                maxLength={9}
+              />
+            </div>
+
+            <div>
+              <FieldLabel htmlFor="cfg-sf-token" hint="(Bearer Token)">
+                Token da API SuperFrete
+              </FieldLabel>
+              <Input
+                id="cfg-sf-token"
+                type="password"
+                value={tokenSuperFrete}
+                onChange={(e) => setTokenSuperFrete(e.target.value)}
+                placeholder="Cole o token da API SuperFrete"
+                autoCapitalize="none"
+              />
+            </div>
+          </div>
+
+          <div className="rounded-xl bg-accent p-3.5 text-xs text-accent-foreground leading-relaxed">
+            <p className="font-semibold mb-1">📦 Regras de peso aplicadas automaticamente:</p>
+            <ul className="list-disc pl-4 space-y-0.5">
+              <li><strong>Camiseta:</strong> 200g (0,20 kg) por peça</li>
+              <li><strong>Polo:</strong> 250g (0,25 kg) por peça</li>
+              <li>Dimensões da embalagem calculadas proporcionalmente à quantidade de peças do pedido.</li>
+            </ul>
+          </div>
         </Panel>
 
         <Panel className="space-y-4">

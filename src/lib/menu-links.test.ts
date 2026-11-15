@@ -14,4 +14,13 @@ describe("menu links", () => {
   it("falls back to all five default pages when nothing is saved", () => {
     expect(normalizeMenuLinks(null)).toHaveLength(5);
   });
+  it("aceita objeto com links e configurações adicionais como superfrete", () => {
+    const raw = {
+      links: [{ to: "/sobre", label: "História", visivel: true }],
+      superfrete: { token: "123", cep_origem: "78464222" },
+    };
+    const v = normalizeMenuLinks(raw);
+    expect(v[0]).toEqual({ to: "/sobre", label: "História", visivel: true });
+    expect(v).toHaveLength(5);
+  });
 });

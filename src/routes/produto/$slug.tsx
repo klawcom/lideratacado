@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { MediaGallery } from "@/components/store/media-gallery";
 import { QtyStepper } from "@/components/store/qty-stepper";
+import { ShippingCalculator } from "@/components/store/shipping-calculator";
 import { produtoQuery, siteQuery } from "@/lib/catalog.functions";
 import { imagemPrincipal } from "@/lib/media";
 import { FAIXAS, TAMANHOS, faixaDoTotal, menorPreco, pecas, precoNaFaixa, type Qtd } from "@/lib/pricing";
@@ -344,6 +345,8 @@ function ProdutoPage() {
                 <ShoppingBag className="mr-2 size-5" /> Adicionar ao pedido
               </Button>
             </div>
+
+            <ShippingCalculator itens={[{ nome: p.nome, pecas: n > 0 ? n : 10 }]} />
           </section>
 
           {(p.descricao || composicaoLimpa) && (

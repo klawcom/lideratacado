@@ -17,6 +17,7 @@ import { criarPedido, pedidoSchema } from "@/lib/orders.functions";
 import { lerDadosEntrega, salvarDadosEntrega, salvarUltimoPedido } from "@/lib/checkout-storage";
 import { tamanhosLinha } from "@/lib/whatsapp-message";
 import { formatarCorTamanhos } from "@/lib/colors";
+import { ShippingCalculator } from "@/components/store/shipping-calculator";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { seo } from "@/lib/seo";
@@ -340,6 +341,11 @@ function FinalizarPage() {
             </div>
           </dl>
           <p className="mt-2 text-sm text-muted-foreground">Frete e pagamento: a combinar.</p>
+
+          <ShippingCalculator
+            itens={resumo.itens.map((i) => ({ nome: i.nome, pecas: i.pecas }))}
+            className="mt-4"
+          />
         </aside>
       </div>
 
