@@ -4,6 +4,7 @@ import { onlyDigits } from "./format";
 import {
   calcularDimensoesPacote,
   calcularPesoTotalKg,
+  logoFrete,
   type FreteOpcao,
   type SimulacaoFreteResultado,
 } from "./frete";
@@ -126,14 +127,15 @@ export const simularFrete = createServerFn({ method: "POST" })
       const opcoes: FreteOpcao[] = [];
       for (const item of raw) {
         if (item.has_error || item.error || typeof item.price !== "number") continue;
+        const nomeServico = String(item.name ?? "Correios");
         opcoes.push({
           id: Number(item.id),
-          nome: String(item.name ?? "Correios"),
+          nome: nomeServico,
           transportadora: String(item.company?.name ?? "Correios"),
           preco: Number(item.price),
           prazoDias: Number(item.delivery_time ?? 0),
           desconto: item.discount ? String(item.discount) : undefined,
-          icone: item.company?.picture,
+          icone: logoFrete(nomeServico) ?? item.company?.picture,
         });
       }
 

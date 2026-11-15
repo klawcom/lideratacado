@@ -5,6 +5,7 @@ import {
   calcularDimensoesPacote,
   calcularPesoTotalKg,
   formatarPrazoFrete,
+  logoFrete,
   pesoUnitarioKg,
 } from "./frete";
 
@@ -54,5 +55,14 @@ describe("módulo de frete", () => {
     expect(formatarPrazoFrete(1)).toBe("Em até 1 dia útil");
     expect(formatarPrazoFrete(4)).toBe("Em até 4 dias úteis");
     expect(formatarPrazoFrete(8)).toBe("Em até 8 dias úteis");
+  });
+
+  it("retorna o logo correto para PAC e SEDEX", () => {
+    expect(logoFrete("PAC")).toBe("/frete-pac.png");
+    expect(logoFrete("PAC Correios")).toBe("/frete-pac.png");
+    expect(logoFrete("SEDEX")).toBe("/frete-sedex.png");
+    expect(logoFrete("SEDEX 10")).toBe("/frete-sedex.png");
+    expect(logoFrete("Transportadora")).toBeNull();
+    expect(logoFrete("")).toBeNull();
   });
 });

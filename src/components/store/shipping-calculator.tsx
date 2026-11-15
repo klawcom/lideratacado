@@ -4,7 +4,7 @@ import { ArrowRight, Check, ExternalLink, Loader2, Package, Truck } from "lucide
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { brl, maskCep, onlyDigits } from "@/lib/format";
-import { calcularPesoTotalKg, formatarPrazoFrete, type FreteOpcao, type ItemFrete } from "@/lib/frete";
+import { calcularPesoTotalKg, formatarPrazoFrete, logoFrete, type FreteOpcao, type ItemFrete } from "@/lib/frete";
 import { simularFrete } from "@/lib/frete.functions";
 import { lerDadosEntrega } from "@/lib/checkout-storage";
 import { cn } from "@/lib/utils";
@@ -146,36 +146,47 @@ export function ShippingCalculator({
             Opções disponíveis para o CEP {cep}:
           </p>
           <div className="space-y-2">
-            {opcoes.map((op) => (
-              <div
-                key={op.id}
-                className="flex items-center justify-between rounded-xl border bg-background/80 p-2.5 text-xs"
-              >
-                <div className="flex items-center gap-2.5">
-                  <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-primary/10 font-bold text-[11px] text-primary">
-                    {op.nome === "SEDEX" ? "SED" : "PAC"}
-                  </span>
-                  <div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="font-semibold text-foreground text-sm">{op.nome}</span>
-                      <span className="text-muted-foreground">({op.transportadora})</span>
+            {opcoes.map((op) => {
+              const icone = op.icone || logoFrete(op.nome);
+              return (
+                <div
+                  key={op.id}
+                  className="flex items-center justify-between rounded-xl border bg-background/80 p-2.5 text-xs"
+                >
+                  <div className="flex items-center gap-2.5">
+                    {icone ? (
+                      <img
+                        src={icone}
+                        alt={op.nome}
+                        className="size-8 rounded-full object-contain shrink-0 shadow-xs"
+                      />
+                    ) : (
+                      <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 font-bold text-[11px] text-primary">
+                        {op.nome === "SEDEX" ? "SED" : "PAC"}
+                      </span>
+                    )}
+                    <div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-semibold text-foreground text-sm">{op.nome}</span>
+                        <span className="text-muted-foreground">({op.transportadora})</span>
+                      </div>
+                      <p className="text-muted-foreground">{formatarPrazoFrete(op.prazoDias)}</p>
                     </div>
-                    <p className="text-muted-foreground">{formatarPrazoFrete(op.prazoDias)}</p>
+                  </div>
+
+                  <div className="text-right">
+                    <span className="font-bold text-sm text-foreground tabular-nums">
+                      {brl(op.preco)}
+                    </span>
+                    {op.desconto && (
+                      <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">
+                        com desconto SuperFrete
+                      </p>
+                    )}
                   </div>
                 </div>
-
-                <div className="text-right">
-                  <span className="font-bold text-sm text-foreground tabular-nums">
-                    {brl(op.preco)}
-                  </span>
-                  {op.desconto && (
-                    <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">
-                      com desconto SuperFrete
-                    </p>
-                  )}
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           <p className="text-[11px] leading-relaxed text-muted-foreground pt-1">

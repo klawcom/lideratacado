@@ -15,7 +15,7 @@ import { UFS, brl, faltamPecas, maskCep, maskPhone, onlyDigits } from "@/lib/for
 import { siteQuery } from "@/lib/catalog.functions";
 import { criarPedido, pedidoSchema } from "@/lib/orders.functions";
 import { simularFrete } from "@/lib/frete.functions";
-import { formatarPrazoFrete, type FreteOpcao } from "@/lib/frete";
+import { formatarPrazoFrete, logoFrete, type FreteOpcao } from "@/lib/frete";
 import { lerDadosEntrega, salvarDadosEntrega, salvarUltimoPedido } from "@/lib/checkout-storage";
 import { tamanhosLinha } from "@/lib/whatsapp-message";
 import { formatarCorTamanhos } from "@/lib/colors";
@@ -416,6 +416,7 @@ function FinalizarPage() {
                 <div className="grid gap-2 sm:grid-cols-2">
                   {opcoesFrete.map((op) => {
                     const selecionado = freteEscolhido?.id === op.id || freteEscolhido?.nome === op.nome;
+                    const icone = op.icone || logoFrete(op.nome);
                     return (
                       <button
                         key={op.id || op.nome}
@@ -431,24 +432,37 @@ function FinalizarPage() {
                             : "bg-card hover:border-foreground/30 hover:bg-muted/40",
                         )}
                       >
-                        <div className="flex items-start justify-between gap-2">
-                          <div>
-                            <div className="flex items-center gap-1.5">
-                              <span className="font-bold text-foreground text-sm">{op.nome}</span>
-                              <span className="text-[11px] text-muted-foreground font-medium">({op.transportadora})</span>
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex items-start gap-2.5">
+                            {icone ? (
+                              <img
+                                src={icone}
+                                alt={op.nome}
+                                className="size-9 rounded-full object-contain shrink-0 shadow-xs mt-0.5"
+                              />
+                            ) : (
+                              <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 font-bold text-xs text-primary mt-0.5">
+                                {op.nome.slice(0, 3)}
+                              </span>
+                            )}
+                            <div>
+                              <div className="flex items-center gap-1.5">
+                                <span className="font-bold text-foreground text-sm">{op.nome}</span>
+                                <span className="text-[11px] text-muted-foreground font-medium">({op.transportadora})</span>
+                              </div>
+                              <p className="text-xs text-muted-foreground mt-0.5">
+                                {formatarPrazoFrete(op.prazoDias)}
+                              </p>
                             </div>
-                            <p className="text-xs text-muted-foreground mt-0.5">
-                              {formatarPrazoFrete(op.prazoDias)}
-                            </p>
                           </div>
-                          <div className="text-right">
+                          <div className="text-right shrink-0">
                             <span className="text-base font-bold text-foreground tabular-nums">
                               {brl(op.preco)}
                             </span>
                           </div>
                         </div>
                         {selecionado && (
-                          <div className="mt-2 flex items-center gap-1 text-[11px] font-semibold text-primary">
+                          <div className="mt-2.5 flex items-center gap-1 text-[11px] font-semibold text-primary">
                             <CheckCircle2 className="size-3.5" /> Selecionado
                           </div>
                         )}
@@ -526,8 +540,19 @@ function FinalizarPage() {
             </div>
           </dl>
           {freteEscolhido ? (
-            <p className="mt-2 text-xs text-muted-foreground">
-              📦 Envio via {freteEscolhido.nome} · {formatarPrazoFrete(freteEscolhido.prazoDias)}
+            <p className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground">
+              {logoFrete(freteEscolhido.nome) ? (
+                <img
+                  src={logoFrete(freteEscolhido.nome)!}
+                  alt={freteEscolhido.nome}
+                  className="size-4 rounded-full object-contain shrink-0"
+                />
+              ) : (
+                <span>📦</span>
+              )}
+              <span>
+                Envio via {freteEscolhido.nome} · {formatarPrazoFrete(freteEscolhido.prazoDias)}
+              </span>
             </p>
           ) : (
             <p className="mt-2 text-xs text-amber-600 dark:text-amber-400 font-medium">

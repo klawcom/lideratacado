@@ -73,3 +73,14 @@ export function formatarPrazoFrete(dias: number): string {
   if (dias <= 1) return "Em até 1 dia útil";
   return `Em até ${dias} dias úteis`;
 }
+
+/**
+ * Retorna o caminho do logo oficial para o serviço de frete (PAC ou SEDEX).
+ */
+export function logoFrete(nomeOuServico?: string | null): string | null {
+  if (!nomeOuServico) return null;
+  const s = nomeOuServico.toUpperCase();
+  if (s.includes("SEDEX")) return "/frete-sedex.png";
+  if (s.includes("PAC")) return "/frete-pac.png";
+  return null;
+}

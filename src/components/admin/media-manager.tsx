@@ -1,6 +1,23 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRef, useState } from "react";
-import { ArrowDown, ArrowUp, Camera, GripVertical, ImagePlus, Loader2, Play, Star, Trash2, Youtube } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowUp,
+  Camera,
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+  GripVertical,
+  ImagePlus,
+  Loader2,
+  Play,
+  Star,
+  Trash2,
+  X,
+  Youtube,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,6 +45,7 @@ export function MediaManager({ produtoId }: { produtoId: string }) {
   const [drag, setDrag] = useState(false);
   const [draggingIdx, setDraggingIdx] = useState<number | null>(null);
   const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [yt, setYt] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
   const camRef = useRef<HTMLInputElement>(null);
@@ -36,6 +54,30 @@ export function MediaManager({ produtoId }: { produtoId: string }) {
     qc.invalidateQueries({ queryKey: key });
     invalidateStore(qc);
   };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const selectAll = () => {
+    if (selectedIds.size === midias.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(midias.map((m) => m.id)));
+    }
+  };
+
+  const clearSelection = () => {
+    setSelectedIds(new Set());
+  };
+
+  const selectedCount = selectedIds.size;
+  const allSelected = midias.length > 0 && selectedCount === midias.length;
 
   async function upload(files: FileList | File[]) {
     const list = Array.from(files);
@@ -99,11 +141,42 @@ export function MediaManager({ produtoId }: { produtoId: string }) {
 
   async function reordenar(fromIdx: number, toIdx: number) {
     if (fromIdx === toIdx) return;
-    const list = [...midias];
-    const [moved] = list.splice(fromIdx, 1);
-    if (!moved) return;
-    list.splice(toIdx, 0, moved);
-    await Promise.all(list.map((m, n) => supabase.from("produto_midias").update({ ordem: n }).eq("id", m.id)));
+    const draggedItem = midias[fromIdx];
+    if (!draggedItem) return;
+
+    let novaLista: typeof midias;
+
+    // Se o item arrastado está entre os selecionados e há mais de 1 selecionado:
+    // Move o grupo inteiro de selecionados para a posição de destino mantendo a ordem relativa
+    if (selectedIds.has(draggedItem.id) && selectedIds.size > 1) {
+      const targetItem = midias[toIdx];
+      const selecionados = midias.filter((m) => selectedIds.has(m.id));
+      const restantes = midias.filter((m) => !selectedIds.has(m.id));
+
+      let targetRestantesIdx = targetItem ? restantes.findIndex((m) => m.id === targetItem.id) : -1;
+      if (targetRestantesIdx === -1) {
+        targetRestantesIdx = toIdx > fromIdx ? restantes.length : 0;
+      } else if (toIdx > fromIdx) {
+        targetRestantesIdx += 1;
+      }
+
+      novaLista = [
+        ...restantes.slice(0, targetRestantesIdx),
+        ...selecionados,
+        ...restantes.slice(targetRestantesIdx),
+      ];
+    } else {
+      // Movimentação individual simples
+      const list = [...midias];
+      const [moved] = list.splice(fromIdx, 1);
+      if (!moved) return;
+      list.splice(toIdx, 0, moved);
+      novaLista = list;
+    }
+
+    await Promise.all(
+      novaLista.map((m, n) => supabase.from("produto_midias").update({ ordem: n }).eq("id", m.id))
+    );
     refresh();
   }
 
@@ -113,6 +186,39 @@ export function MediaManager({ produtoId }: { produtoId: string }) {
     if (j < 0 || j >= list.length) return;
     [list[i], list[j]] = [list[j]!, list[i]!];
     await Promise.all(list.map((m, n) => supabase.from("produto_midias").update({ ordem: n }).eq("id", m.id)));
+    refresh();
+  }
+
+  async function moverLote(destino: "inicio" | "fim" | -1 | 1) {
+    if (selectedIds.size === 0) return;
+    const list = [...midias];
+    const selecionados = list.filter((m) => selectedIds.has(m.id));
+    const naoSelecionados = list.filter((m) => !selectedIds.has(m.id));
+
+    let novaLista: typeof midias;
+    if (destino === "inicio") {
+      novaLista = [...selecionados, ...naoSelecionados];
+    } else if (destino === "fim") {
+      novaLista = [...naoSelecionados, ...selecionados];
+    } else if (destino === -1) {
+      novaLista = [...list];
+      for (let i = 1; i < novaLista.length; i++) {
+        if (selectedIds.has(novaLista[i].id) && !selectedIds.has(novaLista[i - 1].id)) {
+          [novaLista[i], novaLista[i - 1]] = [novaLista[i - 1], novaLista[i]];
+        }
+      }
+    } else {
+      novaLista = [...list];
+      for (let i = novaLista.length - 2; i >= 0; i--) {
+        if (selectedIds.has(novaLista[i].id) && !selectedIds.has(novaLista[i + 1].id)) {
+          [novaLista[i], novaLista[i + 1]] = [novaLista[i + 1], novaLista[i]];
+        }
+      }
+    }
+
+    await Promise.all(
+      novaLista.map((m, n) => supabase.from("produto_midias").update({ ordem: n }).eq("id", m.id))
+    );
     refresh();
   }
 
@@ -128,6 +234,44 @@ export function MediaManager({ produtoId }: { produtoId: string }) {
     if (paths.length) await supabase.storage.from("produtos").remove(paths);
     const { error } = await supabase.from("produto_midias").delete().eq("id", m.id);
     if (error) { toast.error(error.message); return; }
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      next.delete(m.id);
+      return next;
+    });
+    refresh();
+  }
+
+  async function excluirSelecionadas() {
+    const count = selectedIds.size;
+    if (count === 0) return;
+    if (!confirm(`Excluir as ${count} ${count === 1 ? "mídia selecionada" : "mídias selecionadas"}?`)) return;
+
+    const selecionadas = midias.filter((m) => selectedIds.has(m.id));
+    const paths = selecionadas.flatMap((m) => [m.url, m.capa_url]).filter(isStoragePath) as string[];
+
+    if (paths.length > 0) {
+      await supabase.storage.from("produtos").remove(paths);
+    }
+
+    const ids = Array.from(selectedIds);
+    const { error } = await supabase.from("produto_midias").delete().in("id", ids);
+    if (error) {
+      toast.error(`Erro ao excluir: ${error.message}`);
+      return;
+    }
+
+    const restantes = midias.filter((m) => !selectedIds.has(m.id));
+    if (restantes.length > 0 && selecionadas.some((m) => m.principal)) {
+      await supabase.from("produto_midias").update({ principal: true }).eq("id", restantes[0].id);
+    }
+
+    await Promise.all(
+      restantes.map((m, idx) => supabase.from("produto_midias").update({ ordem: idx }).eq("id", m.id))
+    );
+
+    setSelectedIds(new Set());
+    toast.success(`${count} ${count === 1 ? "mídia excluída" : "mídias excluídas"}`);
     refresh();
   }
 
@@ -178,14 +322,118 @@ export function MediaManager({ produtoId }: { produtoId: string }) {
       </div>
 
       {midias.length > 0 && (
-        <div className="mt-4 space-y-2">
-          <p className="text-xs text-muted-foreground">
-            💡 Dica: Arraste os cards para reorganizar a ordem das fotos e vídeos, ou use as setas.
-          </p>
+        <div className="mt-5 space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/60 pb-2">
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={selectAll}
+                className="h-8 text-xs gap-1.5"
+              >
+                <Check className={cn("size-3.5", allSelected ? "opacity-100" : "opacity-40")} />
+                {allSelected ? "Desmarcar todas" : "Selecionar todas"}
+              </Button>
+              <span className="text-xs text-muted-foreground">
+                {midias.length} {midias.length === 1 ? "mídia" : "mídias no anúncio"}
+              </span>
+            </div>
+
+            <p className="text-xs text-muted-foreground hidden sm:block">
+              💡 Arraste para reordenar (individual ou em lote)
+            </p>
+          </div>
+
+          {selectedCount > 0 && (
+            <div className="sticky top-16 z-30 flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-primary/40 bg-card/95 p-3 shadow-md backdrop-blur-md animate-in fade-in slide-in-from-top-1">
+              <div className="flex items-center gap-2">
+                <span className="flex size-6 items-center justify-center rounded-full bg-primary text-xs font-bold text-white shadow-xs">
+                  {selectedCount}
+                </span>
+                <span className="text-xs sm:text-sm font-semibold text-foreground">
+                  {selectedCount === 1 ? "foto selecionada" : "fotos selecionadas"}
+                </span>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-1.5">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => moverLote("inicio")}
+                  title="Mover fotos selecionadas para o início"
+                  className="h-8 text-xs gap-1"
+                >
+                  <ChevronsLeft className="size-3.5" />
+                  <span className="hidden sm:inline">Início</span>
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => moverLote(-1)}
+                  title="Mover fotos selecionadas 1 posição para a esquerda"
+                  className="h-8 text-xs gap-1"
+                >
+                  <ChevronLeft className="size-3.5" />
+                  <span className="hidden sm:inline">Esquerda</span>
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => moverLote(1)}
+                  title="Mover fotos selecionadas 1 posição para a direita"
+                  className="h-8 text-xs gap-1"
+                >
+                  <span className="hidden sm:inline">Direita</span>
+                  <ChevronRight className="size-3.5" />
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => moverLote("fim")}
+                  title="Mover fotos selecionadas para o final"
+                  className="h-8 text-xs gap-1"
+                >
+                  <span className="hidden sm:inline">Fim</span>
+                  <ChevronsRight className="size-3.5" />
+                </Button>
+
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="sm"
+                  onClick={excluirSelecionadas}
+                  className="h-8 text-xs gap-1 font-semibold"
+                >
+                  <Trash2 className="size-3.5" />
+                  <span>Excluir ({selectedCount})</span>
+                </Button>
+
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={clearSelection}
+                  className="h-8 text-xs text-muted-foreground hover:text-foreground"
+                >
+                  <X className="size-3.5 mr-1" /> Limpar
+                </Button>
+              </div>
+            </div>
+          )}
+
           <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
             {midias.map((m, i) => {
               const ytId = youtubeId(m.video_externo);
               const thumb = m.tipo === "foto" ? mediaUrl(m.url) : m.capa_url ? mediaUrl(m.capa_url) : ytId ? youtubeThumb(ytId) : "";
+              const isSelected = selectedIds.has(m.id);
+              const isBeingDragged = draggingIdx === i;
+              const isBatchDragged = draggingIdx !== null && selectedIds.has(midias[draggingIdx]?.id ?? "") && isSelected;
+
               return (
                 <li
                   key={m.id}
@@ -216,13 +464,39 @@ export function MediaManager({ produtoId }: { produtoId: string }) {
                     setDragOverIdx(null);
                   }}
                   className={cn(
-                    "overflow-hidden rounded-2xl border bg-background transition-all select-none cursor-grab active:cursor-grabbing",
-                    m.principal && "ring-2 ring-primary",
-                    draggingIdx === i && "opacity-40 scale-95 border-dashed border-primary",
+                    "relative overflow-hidden rounded-2xl border bg-background transition-all select-none cursor-grab active:cursor-grabbing",
+                    isSelected
+                      ? "ring-2 ring-primary border-primary bg-primary/5 shadow-sm"
+                      : "hover:border-foreground/30",
+                    m.principal && !isSelected && "ring-2 ring-primary/80",
+                    (isBeingDragged || isBatchDragged) && "opacity-40 scale-95 border-dashed border-primary",
                     dragOverIdx === i && draggingIdx !== i && "ring-2 ring-primary ring-offset-2 scale-[1.02]"
                   )}
                 >
-                  <div className="relative aspect-[4/5] bg-muted">
+                  {/* Botão de seleção em lote */}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleSelect(m.id);
+                    }}
+                    aria-label={isSelected ? "Desmarcar mídia" : "Selecionar mídia"}
+                    aria-pressed={isSelected}
+                    title={isSelected ? "Desmarcar" : "Selecionar"}
+                    className={cn(
+                      "absolute left-2 top-2 z-20 flex size-7 items-center justify-center rounded-lg border transition-all shadow-xs",
+                      isSelected
+                        ? "bg-primary border-primary text-primary-foreground"
+                        : "bg-background/85 border-border text-transparent hover:border-foreground/60 hover:bg-background"
+                    )}
+                  >
+                    <Check className={cn("size-4 stroke-[3]", isSelected ? "opacity-100 text-white" : "opacity-0")} />
+                  </button>
+
+                  <div
+                    onClick={() => toggleSelect(m.id)}
+                    className="relative aspect-[4/5] bg-muted cursor-pointer"
+                  >
                     {thumb ? (
                       <img src={thumb} alt="" loading="lazy" className="h-full w-full object-cover pointer-events-none" />
                     ) : (
@@ -232,11 +506,15 @@ export function MediaManager({ produtoId }: { produtoId: string }) {
                       <GripVertical className="size-4" />
                     </span>
                     {m.tipo === "video" && (
-                      <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-background/90 px-2 py-0.5 text-xs font-semibold">
+                      <span className="absolute left-11 top-2 inline-flex items-center gap-1 rounded-full bg-background/90 px-2 py-0.5 text-xs font-semibold">
                         <Play className="size-3" /> {ytId ? "YouTube" : "Vídeo"}
                       </span>
                     )}
-                    {m.principal && <span className="absolute right-2 top-2 rounded-full bg-primary px-2 py-0.5 text-xs font-bold text-primary-foreground">Principal</span>}
+                    {m.principal && (
+                      <span className="absolute right-2 top-2 rounded-full bg-primary px-2 py-0.5 text-xs font-bold text-primary-foreground shadow-xs">
+                        Principal
+                      </span>
+                    )}
                   </div>
                   <div className="grid grid-cols-4">
                     <Button type="button" variant="ghost" size="icon" className="w-full rounded-none" aria-label="Mover para trás" disabled={i === 0} onClick={() => mover(i, -1)}>
