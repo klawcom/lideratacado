@@ -14,6 +14,12 @@ import { FAIXAS, TAMANHOS, faixaDoTotal, menorPreco, pecas, precoNaFaixa, type Q
 import { brl, money } from "@/lib/format";
 import { cart, useCartCount } from "@/lib/cart";
 import { CORES_PADRAO, decodeCoresProduto, formatarCorTamanhos, getCorDef } from "@/lib/colors";
+import {
+  COMPOSICAO_COTTON_PIMA,
+  DESCRICAO_COTTON_PIMA,
+  MEDIDAS_COTTON_PIMA,
+  isProdutoCottonPima,
+} from "@/lib/pima-defaults";
 import { canonical, seo } from "@/lib/seo";
 import { cn } from "@/lib/utils";
 
@@ -81,9 +87,24 @@ function ProdutoPage() {
 
   if (!p) return null;
 
+  const isPima = isProdutoCottonPima(p);
   const { composicaoLimpa, coresHabilitadas } = decodeCoresProduto(p.composicao);
   const coresDisponiveis = CORES_PADRAO.filter((c) => coresHabilitadas.includes(c.nome));
   const listaCores = coresDisponiveis.length > 0 ? coresDisponiveis : CORES_PADRAO;
+
+  // Se for Cotton Pima, garante a descrição oficial caso o banco ainda tenha o texto genérico antigo
+  const isGenericDesc =
+    !p.descricao ||
+    p.descricao.startsWith("Camiseta Pima Modelo") ||
+    p.descricao.includes("Cores sortidas, conforme disponibilidade do estoque.");
+
+  const descFinal = isPima
+    ? isGenericDesc
+      ? DESCRICAO_COTTON_PIMA
+      : p.descricao.split(/Medidas aproximadas/i)[0].trim()
+    : p.descricao;
+
+  const compFinal = isPima ? (composicaoLimpa || COMPOSICAO_COTTON_PIMA) : composicaoLimpa;
 
   const [corAtiva, setCorAtiva] = useState<string>(listaCores[0]?.nome ?? "Branca");
   const [coresQtd, setCoresQtd] = useState<Record<string, Qtd>>({});
@@ -159,22 +180,50 @@ function ProdutoPage() {
         <div className="space-y-5">
           <MediaGallery midias={p.produto_midias} nome={p.nome} />
 
-          {(p.descricao || composicaoLimpa) && (
+          {(descFinal || compFinal || isPima) && (
             <section aria-labelledby="secao-descricao" className="rounded-2xl border bg-card/60 p-4 sm:p-5 space-y-3.5">
-              {p.descricao && (
+              {descFinal && (
                 <div>
                   <h2 id="secao-descricao" className="font-sans text-sm font-semibold tracking-normal text-foreground">
                     Descrição do produto
                   </h2>
                   <p className="mt-1.5 whitespace-pre-line text-sm text-muted-foreground leading-relaxed">
-                    {p.descricao}
+                    {descFinal}
                   </p>
                 </div>
               )}
-              {composicaoLimpa && (
-                <div className={p.descricao ? "pt-3 border-t border-border/60" : ""}>
+
+              {compFinal && (
+                <div className={descFinal ? "pt-3 border-t border-border/60" : ""}>
                   <h2 className="font-sans text-sm font-semibold tracking-normal text-foreground">Composição</h2>
-                  <p className="mt-1 text-sm text-muted-foreground">{composicaoLimpa}</p>
+                  <p className="mt-1 text-sm text-muted-foreground">{compFinal}</p>
+                </div>
+              )}
+
+              {isPima && (
+                <div className={descFinal || compFinal ? "pt-3 border-t border-border/60 space-y-2" : "space-y-2"}>
+                  <div className="flex items-center justify-between">
+                    <h2 className="font-sans text-sm font-semibold tracking-normal text-foreground">
+                      Medidas aproximadas
+                    </h2>
+                    <span className="text-[11px] text-muted-foreground uppercase font-medium">
+                      Camisetas Masculinas
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                    {MEDIDAS_COTTON_PIMA.map((m) => (
+                      <div
+                        key={m.tamanho}
+                        className="rounded-xl border bg-background/70 p-2.5 text-center shadow-2xs"
+                      >
+                        <span className="inline-block text-xs font-bold text-primary bg-primary/10 rounded-md px-2 py-0.5 mb-1">
+                          Tam {m.tamanho}
+                        </span>
+                        <p className="text-xs font-semibold text-foreground">{m.largura}</p>
+                        <p className="text-[11px] text-muted-foreground">× {m.altura}</p>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </section>

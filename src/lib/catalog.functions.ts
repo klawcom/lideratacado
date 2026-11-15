@@ -134,3 +134,33 @@ export const getProdutosPorIds = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return ((rows ?? []) as unknown as ProdutoCard[]).map(normFaixas);
   });
+
+/** Atualiza no banco a descrição, composição e medidas de todos os anúncios Cotton Pima */
+export const syncDescricaoCottonPima = createServerFn({ method: "POST" }).handler(async () => {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { DESCRICAO_COMPLETA_COTTON_PIMA, COMPOSICAO_COTTON_PIMA } = await import("./pima-defaults");
+
+  const { data: pimas, error: errBusca } = await supabaseAdmin
+    .from("produtos")
+    .select("id, composicao, descricao, nome, codigo_modelo")
+    .or("categoria_id.eq.11111111-1111-1111-1111-111111111111,codigo_modelo.ilike.PIMA%,nome.ilike.%COTTON PIMA%");
+
+  if (errBusca) throw new Error(errBusca.message);
+  if (!pimas || pimas.length === 0) return { atualizados: 0 };
+
+  const updates = pimas.map((p) => {
+    const match = p.composicao?.match(/<!--cores:.*?-->/);
+    const coresTag = match ? match[0] : "";
+    const novaComposicao = `${COMPOSICAO_COTTON_PIMA}${coresTag}`;
+    return supabaseAdmin
+      .from("produtos")
+      .update({
+        descricao: DESCRICAO_COMPLETA_COTTON_PIMA,
+        composicao: novaComposicao,
+      })
+      .eq("id", p.id);
+  });
+
+  await Promise.all(updates);
+  return { atualizados: pimas.length };
+});

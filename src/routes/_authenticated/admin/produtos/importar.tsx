@@ -23,6 +23,7 @@ import {
   type Arquivo,
   type Grupo,
 } from "@/lib/bulk-import";
+import { COMPOSICAO_COTTON_PIMA, DESCRICAO_COMPLETA_COTTON_PIMA } from "@/lib/pima-defaults";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/admin/produtos/importar")({ component: Importar });
@@ -77,8 +78,8 @@ function Importar() {
   const [prefixo, setPrefixo] = useState("PIMA");
   const [inicio, setInicio] = useState(1);
   const [nomeModelo, setNomeModelo] = useState("Camiseta Pima");
-  const [composicao, setComposicao] = useState("100% algodão Pima");
-  const [descricao, setDescricao] = useState("Camiseta básica. Cores sortidas, conforme disponibilidade do estoque.");
+  const [composicao, setComposicao] = useState(COMPOSICAO_COTTON_PIMA);
+  const [descricao, setDescricao] = useState(DESCRICAO_COMPLETA_COTTON_PIMA);
   const [precos, setPrecos] = useState<string[]>(["", "", "", ""]);
   const [publicar, setPublicar] = useState(false);
   const [drag, setDrag] = useState(false);

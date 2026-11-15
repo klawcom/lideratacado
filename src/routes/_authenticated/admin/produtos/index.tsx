@@ -1,7 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
-import { CheckSquare, Eye, EyeOff, FolderInput, FolderUp, Loader2, Plus, Search, Square, Trash2, X } from "lucide-react";
+import { CheckSquare, Eye, EyeOff, FileText, FolderInput, FolderUp, Loader2, Plus, Search, Square, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { AdminPage, Empty, Loading, invalidateStore, selectClass } from "@/components/admin/ui";
 import { useCategoriasAdmin } from "@/components/admin/product-form";
 import { excluirProdutos } from "@/lib/admin-products";
+import { syncDescricaoCottonPima } from "@/lib/catalog.functions";
 import { imagemPrincipal } from "@/lib/media";
 import { menorPreco } from "@/lib/pricing";
 import { brl } from "@/lib/format";
@@ -19,6 +21,7 @@ const SEM = "__sem__";
 
 function Produtos() {
   const qc = useQueryClient();
+  const syncPima = useServerFn(syncDescricaoCottonPima);
   const [busca, setBusca] = useState("");
   const [cat, setCat] = useState("");
   const [status, setStatus] = useState<"" | "ativo" | "inativo">("");
@@ -88,6 +91,29 @@ function Produtos() {
       title="Produtos"
       actions={
         <>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={async () => {
+              if (!confirm("Aplicar a descrição, composição e medidas oficiais para todos os anúncios da categoria Cotton Pima?")) return;
+              setBusy(true);
+              try {
+                const res = await syncPima();
+                toast.success(`${res.atualizados} anúncios Cotton Pima atualizados no banco com descrição e medidas oficiais!`);
+                qc.invalidateQueries({ queryKey: ["admin"] });
+                invalidateStore(qc);
+              } catch (e) {
+                toast.error(e instanceof Error ? e.message : "Erro ao atualizar produtos.");
+              } finally {
+                setBusy(false);
+              }
+            }}
+            disabled={busy}
+            title="Padronizar descrição, composição e medidas da categoria Cotton Pima"
+          >
+            {busy ? <Loader2 className="size-4 animate-spin" /> : <FileText className="size-4" />}
+            <span className="hidden sm:inline">Padronizar Cotton Pima</span>
+          </Button>
           <Button asChild variant="outline">
             <Link to="/admin/produtos/importar">
               <FolderUp /> <span className="hidden sm:inline">Importar pasta</span>
