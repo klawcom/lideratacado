@@ -84,7 +84,7 @@ function Config() {
     if (!/^#[0-9a-fA-F]{6}$/.test(f.cor_destaque)) { toast.error("Cor inválida."); return; }
     setSaving(true);
     const { id: _id, updated_at: _u, menu_links: _m, ...rest } = f;
-    const menu_links = menu.map((l, i) => ({ ...l, label: l.label.trim() || normalizeMenuLinks([])[i]!.label }));
+    const menu_links = normalizeMenuLinks(menu.map((l) => ({ ...l, label: l.label.trim() })));
     const { error } = await supabase
       .from("configuracoes")
       .update({ ...rest, menu_links, whatsapp: wa.startsWith("55") && wa.length >= 12 ? wa : `55${wa}`, pedido_minimo: Math.max(1, Number(f.pedido_minimo) || 10) })
