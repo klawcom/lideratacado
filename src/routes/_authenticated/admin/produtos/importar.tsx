@@ -91,12 +91,12 @@ function Importar() {
   useEffect(() => {
     const c = cats?.find((x) => x.id === categoria);
     if (!c) return;
-    if (/polo/i.test(c.slug)) {
+    if (/polo/i.test(c.nome)) {
       setPrefixo("POLO");
       setNomeModelo("Camisa Polo");
       setComposicao("");
       setDescricao("Camisa polo. Cores sortidas, conforme disponibilidade do estoque.");
-    } else if (/pima/i.test(c.slug)) {
+    } else if (/pima/i.test(c.nome)) {
       setPrefixo("PIMA");
       setNomeModelo("Camiseta Pima");
       setComposicao("100% algodão Pima");
