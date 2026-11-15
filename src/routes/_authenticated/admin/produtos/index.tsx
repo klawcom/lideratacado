@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { Plus, Search } from "lucide-react";
+import { FolderUp, Plus, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
@@ -36,11 +36,18 @@ function Produtos() {
     <AdminPage
       title="Produtos"
       actions={
-        <Button asChild>
-          <Link to="/admin/produtos/novo">
-            <Plus /> Novo
-          </Link>
-        </Button>
+        <>
+          <Button asChild variant="outline">
+            <Link to="/admin/produtos/importar">
+              <FolderUp /> <span className="hidden sm:inline">Importar pasta</span>
+            </Link>
+          </Button>
+          <Button asChild>
+            <Link to="/admin/produtos/novo">
+              <Plus /> Novo
+            </Link>
+          </Button>
+        </>
       }
     >
       <div className="mb-4 grid gap-2 sm:grid-cols-[1fr_16rem]">

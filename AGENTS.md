@@ -38,3 +38,4 @@ use the editor.
 - Public catalog reads go through server functions using an anonymous client (`src/lib/public-db.server.ts`) so SSR has data; query cache is shipped to the browser with `setupRouterSsrQueryIntegration`.
 - Admin access = `user_roles` row checked by `is_admin()`/RLS in the database; the admin role is granted by the `handle_auth_user` trigger. Internal order notes live in `pedido_notas` (admin-only) so customers can never read them.
 - Panel edits call `invalidateStore()` so store queries refetch immediately.
+- Bulk product import runs in the admin panel (`/admin/produtos/importar`) with the admin's own session and RLS, never with a service key in a local script; grouping/naming/brand rules live in `src/lib/bulk-import.ts` (tested) and storage paths are deterministic so re-runs resume.
