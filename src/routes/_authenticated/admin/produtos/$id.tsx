@@ -4,6 +4,7 @@ import { ChevronLeft, ExternalLink, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { excluirProdutos } from "@/lib/admin-products";
 import { AdminPage, Loading, invalidateStore } from "@/components/admin/ui";
 import { ProductForm, type ProdutoEdit } from "@/components/admin/product-form";
 import { MediaManager } from "@/components/admin/media-manager";
@@ -25,10 +26,8 @@ function Editar() {
 
   async function excluir() {
     if (!data || !confirm(`Excluir "${data.nome}"? Pedidos antigos continuam com o nome do produto.`)) return;
-    const { data: files } = await supabase.storage.from("produtos").list(id);
-    if (files?.length) await supabase.storage.from("produtos").remove(files.map((f) => `${id}/${f.name}`));
-    const { error } = await supabase.from("produtos").delete().eq("id", id);
-    if (error) { toast.error(error.message); return; }
+    const { error } = await excluirProdutos([id]);
+    if (error) { toast.error(error); return; }
     toast.success("Produto excluído");
     qc.invalidateQueries({ queryKey: ["admin"] });
     invalidateStore(qc);
