@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Mail, MessageCircle } from "lucide-react";
 import { Logo } from "./logo";
 import { siteQuery } from "@/lib/catalog.functions";
+import { visibleMenuLinks } from "@/lib/menu-links";
 import { formatWhatsappIntl, whatsappLinkNumber } from "@/lib/format";
 
 export function SiteFooter() {
@@ -46,15 +47,7 @@ export function SiteFooter() {
         <div>
           <h2 className="mb-3 text-base font-semibold">Institucional</h2>
           <ul className="grid grid-cols-1 gap-x-4">
-            {(
-              [
-                { to: "/sobre", label: "Sobre" },
-                { to: "/como-comprar", label: "Como comprar" },
-                { to: "/faq", label: "Dúvidas frequentes" },
-                { to: "/trocas-e-devolucoes", label: "Trocas e devoluções" },
-                { to: "/privacidade", label: "Política de privacidade" },
-              ] as const
-            ).map(({ to, label }) => (
+            {visibleMenuLinks(cfg?.menu_links).map(({ to, label }) => (
               <li key={to}>
                 <Link to={to} className="inline-flex min-h-11 items-center text-muted-foreground hover:text-foreground">
                   {label}
