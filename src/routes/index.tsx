@@ -181,7 +181,7 @@ function BannerCarousel({
                     height={691}
                     fetchPriority={idx === 0 ? "high" : "auto"}
                     loading={idx === 0 ? "eager" : "lazy"}
-                    className="aspect-[4/3] w-full object-cover md:aspect-[16/7]"
+                    className="aspect-[4/3] w-full object-cover md:aspect-[16/7] contrast-[1.02] brightness-[1.01]"
                   />
                 </picture>
                 <div className="p-4 sm:p-5 bg-card flex items-center justify-between border-t border-border/40">
@@ -204,18 +204,18 @@ function BannerCarousel({
                     height={691}
                     fetchPriority={idx === 0 ? "high" : "auto"}
                     loading={idx === 0 ? "eager" : "lazy"}
-                    className="aspect-[4/3] w-full object-cover md:aspect-[16/7]"
+                    className="aspect-[4/3] w-full object-cover md:aspect-[16/7] contrast-[1.02] brightness-[1.01]"
                   />
                 </picture>
 
-                <div className="md:absolute md:inset-y-0 md:left-0 md:flex md:w-3/5 lg:w-1/2 md:items-center md:bg-gradient-to-r md:from-background/95 md:via-background/85 md:to-transparent">
-                  <div className="space-y-4 p-6 bg-card md:bg-transparent md:p-12">
+                <div className="md:absolute md:inset-y-0 md:left-6 lg:left-14 md:flex md:items-center z-10 pointer-events-none">
+                  <div className="pointer-events-auto space-y-4 p-6 bg-card md:rounded-3xl md:bg-background/85 md:dark:bg-background/90 md:backdrop-blur-md md:p-8 lg:p-10 md:shadow-xl md:border md:border-border/60 max-w-lg">
                     <p className="eyebrow drop-shadow-xs">Atacado · Pedido pelo WhatsApp</p>
-                    <h2 className="text-[1.9rem] font-extrabold leading-[1.1] text-balance text-foreground md:text-5xl">
+                    <h2 className="text-[1.85rem] font-extrabold leading-[1.12] text-balance text-foreground md:text-3xl lg:text-4xl">
                       {slide.titulo || "Camisetas básicas e polos no atacado, a partir de 10 peças"}
                     </h2>
                     {slide.subtitulo && (
-                      <p className="max-w-md text-[15px] sm:text-base font-medium text-foreground/80 dark:text-foreground/90">
+                      <p className="max-w-md text-[15px] sm:text-base font-medium text-muted-foreground">
                         {slide.subtitulo}
                       </p>
                     )}
@@ -271,11 +271,10 @@ function BannerCarousel({
                 key={dotIdx}
                 type="button"
                 onClick={() => setCurrent(dotIdx)}
-                className={`h-2.5 rounded-full transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
-                  dotIdx === current
+                className={`h-2.5 rounded-full transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${dotIdx === current
                     ? "w-7 bg-primary"
                     : "w-2.5 bg-muted-foreground/40 hover:bg-foreground/70"
-                }`}
+                  }`}
                 aria-label={`Ir para banner ${dotIdx + 1}`}
                 aria-current={dotIdx === current ? "true" : undefined}
               />
@@ -298,36 +297,36 @@ function Home() {
 
   const slides: BannerSlideData[] = (rawItems && rawItems.length > 0)
     ? rawItems.map((item) => {
-        const isFirst = item.id === 1;
-        const wideSrc = item.wide
-          ? mediaUrl(item.wide)
-          : item.mobile
-            ? mediaUrl(item.mobile)
-            : heroWide;
-        const mobileSrc = item.mobile
+      const isFirst = item.id === 1;
+      const wideSrc = item.wide
+        ? mediaUrl(item.wide)
+        : item.mobile
           ? mediaUrl(item.mobile)
-          : item.wide
-            ? mediaUrl(item.wide)
-            : heroMobile;
-        return {
-          id: item.id,
-          wideSrc,
-          mobileSrc,
-          link: item.link || (isFirst && primeira ? `/categoria/${primeira.slug}` : null),
-          titulo: isFirst ? (item.titulo || titulo) : (item.titulo || null),
-          subtitulo: isFirst ? (item.subtitulo || sub) : (item.subtitulo || null),
-        };
-      })
+          : heroWide;
+      const mobileSrc = item.mobile
+        ? mediaUrl(item.mobile)
+        : item.wide
+          ? mediaUrl(item.wide)
+          : heroMobile;
+      return {
+        id: item.id,
+        wideSrc,
+        mobileSrc,
+        link: item.link || (isFirst && primeira ? `/categoria/${primeira.slug}` : null),
+        titulo: isFirst ? (item.titulo || titulo) : (item.titulo || null),
+        subtitulo: isFirst ? (item.subtitulo || sub) : (item.subtitulo || null),
+      };
+    })
     : [
-        {
-          id: 1,
-          wideSrc: site.banners?.wide ? mediaUrl(site.banners.wide) : heroWide,
-          mobileSrc: site.banners?.mobile ? mediaUrl(site.banners.mobile) : heroMobile,
-          link: primeira ? `/categoria/${primeira.slug}` : null,
-          titulo,
-          subtitulo: sub,
-        },
-      ];
+      {
+        id: 1,
+        wideSrc: site.banners?.wide ? mediaUrl(site.banners.wide) : heroWide,
+        mobileSrc: site.banners?.mobile ? mediaUrl(site.banners.mobile) : heroMobile,
+        link: primeira ? `/categoria/${primeira.slug}` : null,
+        titulo,
+        subtitulo: sub,
+      },
+    ];
 
   return (
     <>
