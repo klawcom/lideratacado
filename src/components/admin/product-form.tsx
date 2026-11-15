@@ -12,6 +12,8 @@ import type { Tables } from "@/integrations/supabase/types";
 import { FieldLabel, Panel, invalidateStore, selectClass } from "./ui";
 import { FAIXAS } from "@/lib/pricing";
 import { money, slugify } from "@/lib/format";
+import { CORES_PADRAO, decodeCoresProduto, encodeCoresProduto } from "@/lib/colors";
+import { cn } from "@/lib/utils";
 
 export type ProdutoEdit = Tables<"produtos"> & { faixas_preco: { quantidade_minima: number; preco_peca: number }[] };
 
@@ -36,13 +38,15 @@ export function ProductForm({ produto }: { produto?: ProdutoEdit }) {
   const qc = useQueryClient();
   const navigate = useNavigate();
   const { data: cats } = useCategoriasAdmin();
+  const decodedCores = decodeCoresProduto(produto?.composicao);
+  const [composicaoTexto, setComposicaoTexto] = useState(decodedCores.composicaoLimpa);
+  const [coresHabilitadas, setCoresHabilitadas] = useState<string[]>(decodedCores.coresHabilitadas);
   const [f, setF] = useState({
     nome: produto?.nome ?? "",
     codigo_modelo: produto?.codigo_modelo ?? "",
     slug: produto?.slug ?? "",
     categoria_id: produto?.categoria_id ?? "",
     descricao: produto?.descricao ?? "",
-    composicao: produto?.composicao ?? "",
     estoque: String(produto?.estoque ?? 0),
     ordem: String(produto?.ordem ?? 0),
     ativo: produto?.ativo ?? true,
@@ -58,6 +62,20 @@ export function ProductForm({ produto }: { produto?: ProdutoEdit }) {
   const [saving, setSaving] = useState(false);
   const set = <K extends keyof typeof f>(k: K, v: (typeof f)[K]) => setF((c) => ({ ...c, [k]: v }));
 
+  function toggleCor(nome: string) {
+    setCoresHabilitadas((prev) =>
+      prev.includes(nome) ? prev.filter((c) => c !== nome) : [...prev, nome],
+    );
+  }
+
+  function selecionarTodasCores() {
+    setCoresHabilitadas(CORES_PADRAO.map((c) => c.nome));
+  }
+
+  function desmarcarTodasCores() {
+    setCoresHabilitadas([]);
+  }
+
   async function salvar(e: React.FormEvent) {
     e.preventDefault();
     const nome = f.nome.trim();
@@ -72,13 +90,14 @@ export function ProductForm({ produto }: { produto?: ProdutoEdit }) {
     }
     if (!faixas.length) { toast.error("Informe ao menos um preço por peça."); return; }
     setSaving(true);
+    const composicaoSalva = encodeCoresProduto(composicaoTexto, coresHabilitadas);
     const payload = {
       nome,
       codigo_modelo: codigo,
       slug,
       categoria_id: f.categoria_id || null,
       descricao: f.descricao,
-      composicao: f.composicao,
+      composicao: composicaoSalva,
       estoque: Math.max(0, parseInt(f.estoque, 10) || 0),
       ordem: parseInt(f.ordem, 10) || 0,
       ativo: f.ativo,
@@ -163,7 +182,7 @@ export function ProductForm({ produto }: { produto?: ProdutoEdit }) {
         </div>
         <div className="sm:col-span-2">
           <FieldLabel htmlFor="p-comp">Composição</FieldLabel>
-          <Input id="p-comp" value={f.composicao} onChange={(e) => set("composicao", e.target.value)} placeholder="Ex.: 100% algodão" />
+          <Input id="p-comp" value={composicaoTexto} onChange={(e) => setComposicaoTexto(e.target.value)} placeholder="Ex.: 100% algodão" />
         </div>
         <div className="flex flex-wrap gap-6 sm:col-span-2">
           <label className="flex min-h-11 items-center gap-3">
@@ -173,6 +192,53 @@ export function ProductForm({ produto }: { produto?: ProdutoEdit }) {
             <Switch checked={f.destaque} onCheckedChange={(v) => set("destaque", v)} /> Destaque
           </label>
         </div>
+      </Panel>
+
+      <Panel>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="font-sans text-lg font-bold tracking-normal">Cores disponíveis neste anúncio</h2>
+            <p className="text-sm text-muted-foreground">
+              Selecione as cores que o cliente poderá escolher na página deste produto.
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <Button type="button" variant="outline" size="sm" onClick={selecionarTodasCores}>
+              Selecionar todas ({CORES_PADRAO.length})
+            </Button>
+            <Button type="button" variant="ghost" size="sm" onClick={desmarcarTodasCores}>
+              Desmarcar todas
+            </Button>
+          </div>
+        </div>
+
+        <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+          {CORES_PADRAO.map((c) => {
+            const ativa = coresHabilitadas.includes(c.nome);
+            return (
+              <button
+                key={c.nome}
+                type="button"
+                onClick={() => toggleCor(c.nome)}
+                className={cn(
+                  "flex min-h-11 items-center gap-2.5 rounded-xl border p-2.5 text-left text-sm font-medium transition",
+                  ativa
+                    ? "border-primary bg-primary/5 text-foreground ring-1 ring-primary"
+                    : "border-input bg-card text-muted-foreground opacity-60 hover:opacity-100",
+                )}
+              >
+                <span
+                  className={cn("size-6 shrink-0 rounded-full", c.border && "border border-border")}
+                  style={{ backgroundColor: c.hex }}
+                />
+                <span className="truncate">{c.nome}</span>
+              </button>
+            );
+          })}
+        </div>
+        <p className="mt-3 text-xs text-muted-foreground">
+          {coresHabilitadas.length} de {CORES_PADRAO.length} cores ativas neste anúncio.
+        </p>
       </Panel>
 
       <Panel>

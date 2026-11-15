@@ -4,8 +4,14 @@ import { z } from "zod";
 import { calcularPedido } from "./pricing";
 import { linkWhatsapp, montarMensagemPedido } from "./whatsapp-message";
 import { faltamPecas, onlyDigits } from "./format";
+import { formatarCorTamanhos } from "./colors";
 
 const qtd = z.number().int().min(0).max(100000);
+
+const corQtdSchema = z.object({
+  cor: z.string().trim().min(1).max(50),
+  qtd: z.object({ p: qtd, m: qtd, g: qtd, gg: qtd }),
+});
 
 export const pedidoSchema = z.object({
   cliente: z.object({
@@ -36,6 +42,7 @@ export const pedidoSchema = z.object({
       z.object({
         produtoId: z.string().uuid(),
         qtd: z.object({ p: qtd, m: qtd, g: qtd, gg: qtd }),
+        cores: z.array(corQtdSchema).optional(),
         observacao: z.string().trim().max(300).default(""),
       }),
     )
@@ -86,7 +93,10 @@ export const criarPedido = createServerFn({ method: "POST" })
       if (cur) {
         cur.qtd = { p: cur.qtd.p + it.qtd.p, m: cur.qtd.m + it.qtd.m, g: cur.qtd.g + it.qtd.g, gg: cur.qtd.gg + it.qtd.gg };
         cur.observacao = [cur.observacao, it.observacao].filter(Boolean).join(" / ").slice(0, 300);
-      } else merged.set(it.produtoId, { ...it, qtd: { ...it.qtd } });
+        if (it.cores?.length) {
+          cur.cores = [...(cur.cores || []), ...it.cores];
+        }
+      } else merged.set(it.produtoId, { ...it, qtd: { ...it.qtd }, cores: it.cores ? [...it.cores] : undefined });
     }
     const itensIn = [...merged.values()].filter((i) => i.qtd.p + i.qtd.m + i.qtd.g + i.qtd.gg > 0);
     if (itensIn.length === 0) throw new Error("Seu pedido está vazio.");
@@ -177,33 +187,42 @@ export const criarPedido = createServerFn({ method: "POST" })
     if (pedErr) throw new Error(pedErr.message);
 
     const { error: itErr } = await db.from("pedido_itens").insert(
-      resumo.itens.map((i) => ({
-        pedido_id: pedido.id,
-        produto_id: i.produtoId,
-        produto_nome: i.nome,
-        codigo_modelo: i.codigo,
-        qtd_p: i.qtd.p,
-        qtd_m: i.qtd.m,
-        qtd_g: i.qtd.g,
-        qtd_gg: i.qtd.gg,
-        preco_unitario: i.preco,
-        valor: i.valor,
-        observacao: i.observacao,
-      })),
+      resumo.itens.map((i) => {
+        const itIn = itensIn.find((x) => x.produtoId === i.produtoId);
+        const coresTexto = itIn?.cores?.map((c) => formatarCorTamanhos(c.cor, c.qtd)).filter(Boolean).join(" | ");
+        const obsFinal = [coresTexto, i.observacao].filter(Boolean).join(" — ").slice(0, 300);
+        return {
+          pedido_id: pedido.id,
+          produto_id: i.produtoId,
+          produto_nome: i.nome,
+          codigo_modelo: i.codigo,
+          qtd_p: i.qtd.p,
+          qtd_m: i.qtd.m,
+          qtd_g: i.qtd.g,
+          qtd_gg: i.qtd.gg,
+          preco_unitario: i.preco,
+          valor: i.valor,
+          observacao: obsFinal,
+        };
+      }),
     );
     if (itErr) {
       await db.from("pedidos").delete().eq("id", pedido.id);
       throw new Error(itErr.message);
     }
 
-    const itensMsg = resumo.itens.map((i) => ({
-      nome: i.nome,
-      pecas: i.pecas,
-      preco: i.preco,
-      valor: i.valor,
-      qtd: i.qtd,
-      observacao: i.observacao,
-    }));
+    const itensMsg = resumo.itens.map((i) => {
+      const itIn = itensIn.find((x) => x.produtoId === i.produtoId);
+      return {
+        nome: i.nome,
+        pecas: i.pecas,
+        preco: i.preco,
+        valor: i.valor,
+        qtd: i.qtd,
+        cores: itIn?.cores,
+        observacao: i.observacao,
+      };
+    });
     const mensagem = montarMensagemPedido({
       numero: Number(pedido.numero),
       criadoEm: pedido.created_at,

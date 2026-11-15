@@ -1,7 +1,7 @@
 import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { ChevronLeft, Info, ShoppingBag } from "lucide-react";
+import { ChevronLeft, Info, ShoppingBag, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -13,6 +13,7 @@ import { imagemPrincipal } from "@/lib/media";
 import { FAIXAS, TAMANHOS, faixaDoTotal, menorPreco, pecas, precoNaFaixa, type Qtd } from "@/lib/pricing";
 import { brl, money } from "@/lib/format";
 import { cart, useCartCount } from "@/lib/cart";
+import { CORES_PADRAO, decodeCoresProduto, formatarCorTamanhos, getCorDef } from "@/lib/colors";
 import { canonical, seo } from "@/lib/seo";
 import { cn } from "@/lib/utils";
 
@@ -77,17 +78,51 @@ function ProdutoPage() {
   const { data: p } = useSuspenseQuery(produtoQuery(slug));
   const navigate = useNavigate();
   const noCarrinho = useCartCount();
-  const [qtd, setQtd] = useState<Qtd>(ZERO);
-  const [obs, setObs] = useState("");
+
   if (!p) return null;
 
-  const n = pecas(qtd);
+  const { composicaoLimpa, coresHabilitadas } = decodeCoresProduto(p.composicao);
+  const coresDisponiveis = CORES_PADRAO.filter((c) => coresHabilitadas.includes(c.nome));
+  const listaCores = coresDisponiveis.length > 0 ? coresDisponiveis : CORES_PADRAO;
+
+  const [corAtiva, setCorAtiva] = useState<string>(listaCores[0]?.nome ?? "Branca");
+  const [coresQtd, setCoresQtd] = useState<Record<string, Qtd>>({});
+  const [obs, setObs] = useState("");
+
+  const qtdCorAtiva = coresQtd[corAtiva] ?? ZERO;
+  const pecasCorAtiva = pecas(qtdCorAtiva);
+
+  function setQtdCor(key: keyof Qtd, val: number) {
+    setCoresQtd((prev) => ({
+      ...prev,
+      [corAtiva]: {
+        ...(prev[corAtiva] ?? ZERO),
+        [key]: val,
+      },
+    }));
+  }
+
+  const totalQtd: Qtd = Object.values(coresQtd).reduce<Qtd>(
+    (acc, q) => ({
+      p: acc.p + (q.p || 0),
+      m: acc.m + (q.m || 0),
+      g: acc.g + (q.g || 0),
+      gg: acc.gg + (q.gg || 0),
+    }),
+    { p: 0, m: 0, g: 0, gg: 0 },
+  );
+
+  const n = pecas(totalQtd);
   const faixaAtual = faixaDoTotal(noCarrinho + n);
   const precoAtual = precoNaFaixa(p.faixas_preco, faixaAtual);
   const min = menorPreco(p.faixas_preco);
 
   function adicionar() {
     if (!p || n < 1) return;
+    const itemCores = Object.entries(coresQtd)
+      .filter(([_, q]) => pecas(q) > 0)
+      .map(([cor, q]) => ({ cor, qtd: q }));
+
     cart.add({
       produtoId: p.id,
       nome: p.nome,
@@ -95,15 +130,19 @@ function ProdutoPage() {
       codigo: p.codigo_modelo,
       imagem: imagemPrincipal(p.produto_midias),
       faixas: p.faixas_preco,
-      qtd,
+      qtd: totalQtd,
+      cores: itemCores.length ? itemCores : undefined,
       observacao: obs.trim(),
     });
-    setQtd(ZERO);
+    setCoresQtd({});
     setObs("");
     toast.success(`${n} ${n === 1 ? "peça adicionada" : "peças adicionadas"} ao pedido`, {
       action: { label: "Ver pedido", onClick: () => navigate({ to: "/carrinho" }) },
     });
   }
+
+  const corDefAtiva = getCorDef(corAtiva);
+  const coresPreenchidas = Object.entries(coresQtd).filter(([_, q]) => pecas(q) > 0);
 
   return (
     <div className="container-page pb-bar pt-4 md:pt-8">
@@ -151,22 +190,116 @@ function ProdutoPage() {
             </ul>
           </section>
 
-          <section aria-labelledby="tamanhos" className="space-y-3">
-            <div className="flex items-baseline justify-between">
-              <h2 id="tamanhos" className="font-sans text-base font-bold tracking-normal">
-                Quantidade por tamanho
-              </h2>
-              <span className="text-sm text-muted-foreground">{n} peças</span>
+          {/* Seleção de cores e tamanhos */}
+          <section aria-labelledby="secao-cores" className="space-y-4">
+            <div>
+              <div className="flex items-baseline justify-between">
+                <h2 id="secao-cores" className="font-sans text-base font-bold tracking-normal">
+                  Cor: <span className="text-primary">{corDefAtiva.nome}</span>
+                </h2>
+                {pecasCorAtiva > 0 && (
+                  <span className="text-sm text-muted-foreground tabular-nums">
+                    {pecasCorAtiva} {pecasCorAtiva === 1 ? "peça selecionada" : "peças selecionadas"}
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground mt-0.5">Toque na cor para definir os tamanhos:</p>
+              {/* Botões de cor: apenas o botão da cor */}
+              <div className="mt-2.5 flex flex-wrap gap-2.5">
+                {listaCores.map((cor) => {
+                  const ativa = cor.nome === corAtiva;
+                  const count = pecas(coresQtd[cor.nome] ?? ZERO);
+                  return (
+                    <button
+                      key={cor.nome}
+                      type="button"
+                      onClick={() => setCorAtiva(cor.nome)}
+                      aria-label={`${cor.nome}${count > 0 ? ` (${count} peças)` : ""}`}
+                      aria-pressed={ativa}
+                      title={cor.nome}
+                      className={cn(
+                        "relative size-11 rounded-full transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                        cor.border && "border border-border",
+                        ativa
+                          ? "ring-3 ring-primary ring-offset-2 scale-105 shadow-sm"
+                          : "hover:scale-105 opacity-90 hover:opacity-100",
+                      )}
+                      style={{ backgroundColor: cor.hex }}
+                    >
+                      {count > 0 && (
+                        <span className="absolute -top-1 -right-1 flex min-w-5 h-5 items-center justify-center rounded-full bg-primary px-1 text-[11px] font-bold text-primary-foreground shadow-xs">
+                          {count}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-            <div className="grid gap-2.5 sm:grid-cols-2">
-              {TAMANHOS.map((t) => (
-                <QtyStepper key={t.key} label={t.label} value={qtd[t.key]} onChange={(v) => setQtd((q) => ({ ...q, [t.key]: v }))} />
-              ))}
+
+            <div className="space-y-2.5 rounded-2xl border bg-card/60 p-4">
+              <div className="flex items-baseline justify-between">
+                <h3 className="font-sans text-sm font-bold tracking-normal">
+                  Tamanhos para {corDefAtiva.nome}
+                </h3>
+                <span className="text-xs text-muted-foreground tabular-nums">{pecasCorAtiva} peças</span>
+              </div>
+              <div className="grid gap-2.5 sm:grid-cols-2">
+                {TAMANHOS.map((t) => (
+                  <QtyStepper
+                    key={t.key}
+                    label={t.label}
+                    value={qtdCorAtiva[t.key]}
+                    onChange={(v) => setQtdCor(t.key, v)}
+                  />
+                ))}
+              </div>
             </div>
+
+            {coresPreenchidas.length > 0 && (
+              <div className="rounded-2xl border bg-card p-3 space-y-2">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-semibold text-foreground">Cores escolhidas no produto:</span>
+                  <span className="text-muted-foreground tabular-nums">Total: {n} peças</span>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {coresPreenchidas.map(([corNome, q]) => (
+                    <div
+                      key={corNome}
+                      className="inline-flex items-center gap-1.5 rounded-lg border bg-muted/50 px-2.5 py-1 text-xs"
+                    >
+                      <span
+                        className="size-3 rounded-full border border-border"
+                        style={{ backgroundColor: getCorDef(corNome).hex }}
+                      />
+                      <span className="font-medium">{formatarCorTamanhos(corNome, q)}</span>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setCoresQtd((prev) => {
+                            const next = { ...prev };
+                            delete next[corNome];
+                            return next;
+                          })
+                        }
+                        className="ml-1 text-muted-foreground hover:text-destructive"
+                        title={`Remover cor ${corNome}`}
+                      >
+                        <X className="size-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="flex gap-3 rounded-2xl bg-accent p-4 text-accent-foreground">
               <Info className="mt-0.5 size-5 shrink-0" />
-              <p className="text-[15px] font-medium">Cores sortidas, conforme disponibilidade do estoque. Não é possível escolher cores.</p>
+              <p className="text-[15px] font-medium">
+                As cores selecionadas serão atendidas conforme disponibilidade do estoque. Caso alguma cor escolhida não esteja disponível, enviaremos cores sortidas.
+              </p>
             </div>
+
             <div>
               <label htmlFor="obs-item" className="mb-1.5 block font-medium">
                 Observação do item <span className="font-normal text-muted-foreground">(opcional)</span>
@@ -184,7 +317,7 @@ function ProdutoPage() {
             </div>
           </section>
 
-          {(p.descricao || p.composicao) && (
+          {(p.descricao || composicaoLimpa) && (
             <section className="space-y-4">
               {p.descricao && (
                 <div>
@@ -192,10 +325,10 @@ function ProdutoPage() {
                   <p className="mt-1 whitespace-pre-line text-muted-foreground">{p.descricao}</p>
                 </div>
               )}
-              {p.composicao && (
+              {composicaoLimpa && (
                 <div>
                   <h2 className="font-sans text-base font-bold tracking-normal">Composição</h2>
-                  <p className="mt-1 text-muted-foreground">{p.composicao}</p>
+                  <p className="mt-1 text-muted-foreground">{composicaoLimpa}</p>
                 </div>
               )}
             </section>

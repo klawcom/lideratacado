@@ -1,6 +1,11 @@
 import { useSyncExternalStore } from "react";
 import type { FaixaPreco, Qtd } from "./pricing";
 
+export type CorQtd = {
+  cor: string;
+  qtd: Qtd;
+};
+
 export type CartItem = {
   produtoId: string;
   nome: string;
@@ -9,8 +14,29 @@ export type CartItem = {
   imagem: string;
   faixas: FaixaPreco[];
   qtd: Qtd;
+  cores?: CorQtd[];
   observacao: string;
 };
+
+function mergeCores(c1?: CorQtd[], c2?: CorQtd[]): CorQtd[] | undefined {
+  if (!c1?.length && !c2?.length) return undefined;
+  const map = new Map<string, Qtd>();
+  const add = (cq: CorQtd) => {
+    const key = cq.cor.trim();
+    const existing = map.get(key) || { p: 0, m: 0, g: 0, gg: 0 };
+    map.set(key, {
+      p: existing.p + (cq.qtd.p || 0),
+      m: existing.m + (cq.qtd.m || 0),
+      g: existing.g + (cq.qtd.g || 0),
+      gg: existing.gg + (cq.qtd.gg || 0),
+    });
+  };
+  (c1 || []).forEach(add);
+  (c2 || []).forEach(add);
+  return Array.from(map.entries())
+    .map(([cor, qtd]) => ({ cor, qtd }))
+    .filter((c) => c.qtd.p + c.qtd.m + c.qtd.g + c.qtd.gg > 0);
+}
 
 const KEY = "lider-carrinho-v1";
 const EMPTY: CartItem[] = [];
@@ -80,6 +106,7 @@ export const cart = {
         g: cur.qtd.g + item.qtd.g,
         gg: cur.qtd.gg + item.qtd.gg,
       },
+      cores: mergeCores(cur.cores, item.cores),
       observacao: obs,
     };
     save(list.map((i, n) => (n === idx ? merged : i)));

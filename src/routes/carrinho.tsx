@@ -12,6 +12,7 @@ import { calcularPedido, TAMANHOS } from "@/lib/pricing";
 import { brl, faltamPecas, money } from "@/lib/format";
 import { siteQuery } from "@/lib/catalog.functions";
 import { tamanhosLinha } from "@/lib/whatsapp-message";
+import { formatarCorTamanhos } from "@/lib/colors";
 import { seo } from "@/lib/seo";
 
 export const Route = createFileRoute("/carrinho")({
@@ -80,14 +81,22 @@ function CarrinhoPage() {
           {resumo.itens.map((it) => (
             <li key={it.produtoId} className="rounded-2xl border bg-card p-3 sm:p-4">
               <div className="flex gap-3">
-                <Link to="/produto/$slug" params={{ slug: it.slug }} className="size-20 shrink-0 overflow-hidden rounded-xl bg-muted sm:size-24">
+                <Link to="/produto/$slug" params={{ slug: it.slug }} className="w-16 sm:w-20 aspect-[4/5] shrink-0 overflow-hidden rounded-xl bg-muted">
                   {it.imagem && <img src={it.imagem} alt={it.nome} loading="lazy" className="h-full w-full object-cover" />}
                 </Link>
                 <div className="min-w-0 flex-1">
                   <Link to="/produto/$slug" params={{ slug: it.slug }} className="line-clamp-2 font-semibold leading-snug">
                     {it.nome}
                   </Link>
-                  <p className="text-sm text-muted-foreground">{tamanhosLinha(it.qtd) || "Sem peças"}</p>
+                  {it.cores && it.cores.length > 0 ? (
+                    <div className="mt-1 space-y-0.5 text-xs text-muted-foreground">
+                      {it.cores.map((c) => (
+                        <p key={c.cor} className="font-mono">{formatarCorTamanhos(c.cor, c.qtd)}</p>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">{tamanhosLinha(it.qtd) || "Sem peças"}</p>
+                  )}
                   <p className="mt-1 text-sm tabular-nums">
                     {it.pecas} × R$ {money(it.preco)} = <strong>{brl(it.valor)}</strong>
                   </p>
@@ -160,15 +169,51 @@ function CarrinhoPage() {
 }
 
 function EditItem({ item, onDone }: { item: CartItem; onDone: () => void }) {
+  const [cores, setCores] = useState(item.cores || []);
   const [qtd, setQtd] = useState(item.qtd);
   const [obs, setObs] = useState(item.observacao);
+
+  const hasCores = cores.length > 0;
+
+  function updateCorQtd(corNome: string, key: "p" | "m" | "g" | "gg", val: number) {
+    const nextCores = cores.map((c) => (c.cor === corNome ? { ...c, qtd: { ...c.qtd, [key]: val } } : c));
+    setCores(nextCores);
+    setQtd({
+      p: nextCores.reduce((acc, c) => acc + (c.qtd.p || 0), 0),
+      m: nextCores.reduce((acc, c) => acc + (c.qtd.m || 0), 0),
+      g: nextCores.reduce((acc, c) => acc + (c.qtd.g || 0), 0),
+      gg: nextCores.reduce((acc, c) => acc + (c.qtd.gg || 0), 0),
+    });
+  }
+
   return (
-    <div className="mt-3 space-y-2 border-t pt-3">
-      <div className="grid gap-2 sm:grid-cols-2">
-        {TAMANHOS.map((t) => (
-          <QtyStepper key={t.key} compact label={t.label} value={qtd[t.key]} onChange={(v) => setQtd((q) => ({ ...q, [t.key]: v }))} />
-        ))}
-      </div>
+    <div className="mt-3 space-y-3 border-t pt-3">
+      {hasCores ? (
+        <div className="space-y-3">
+          {cores.map((c) => (
+            <div key={c.cor} className="rounded-xl border bg-background/50 p-2.5">
+              <p className="mb-2 text-sm font-semibold text-foreground">Cor: {c.cor}</p>
+              <div className="grid grid-cols-2 gap-2">
+                {TAMANHOS.map((t) => (
+                  <QtyStepper
+                    key={t.key}
+                    compact
+                    label={t.label}
+                    value={c.qtd[t.key]}
+                    onChange={(v) => updateCorQtd(c.cor, t.key, v)}
+                  />
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="grid gap-2 sm:grid-cols-2">
+          {TAMANHOS.map((t) => (
+            <QtyStepper key={t.key} compact label={t.label} value={qtd[t.key]} onChange={(v) => setQtd((q) => ({ ...q, [t.key]: v }))} />
+          ))}
+        </div>
+      )}
       <Textarea
         aria-label="Observação do item"
         maxLength={300}
@@ -184,8 +229,16 @@ function EditItem({ item, onDone }: { item: CartItem; onDone: () => void }) {
         <Button
           className="flex-1"
           onClick={() => {
-            if (qtd.p + qtd.m + qtd.g + qtd.gg === 0) cart.remove(item.produtoId);
-            else cart.update(item.produtoId, { qtd, observacao: obs.trim() });
+            const total = qtd.p + qtd.m + qtd.g + qtd.gg;
+            if (total === 0) cart.remove(item.produtoId);
+            else {
+              const activeCores = cores.filter((c) => c.qtd.p + c.qtd.m + c.qtd.g + c.qtd.gg > 0);
+              cart.update(item.produtoId, {
+                qtd,
+                cores: activeCores.length ? activeCores : undefined,
+                observacao: obs.trim(),
+              });
+            }
             onDone();
           }}
         >

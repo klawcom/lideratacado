@@ -153,7 +153,7 @@ function Produtos() {
             const inner = (
               <>
                 {selecting && (marcado ? <CheckSquare className="size-6 shrink-0 text-primary" /> : <Square className="size-6 shrink-0 text-muted-foreground" />)}
-                <div className="size-16 shrink-0 overflow-hidden rounded-xl bg-muted">{img && <img src={img} alt="" loading="lazy" className="h-full w-full object-cover" />}</div>
+                <div className="w-14 aspect-[4/5] shrink-0 overflow-hidden rounded-xl bg-muted">{img && <img src={img} alt="" loading="lazy" className="h-full w-full object-cover" />}</div>
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-semibold">{p.nome}</p>
                   <p className="truncate text-sm text-muted-foreground">

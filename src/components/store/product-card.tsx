@@ -9,13 +9,13 @@ export function ProductCard({ p, eager = false }: { p: P; eager?: boolean }) {
   const min = menorPreco(p.faixas_preco);
   return (
     <Link to="/produto/$slug" params={{ slug: p.slug }} className="group flex min-w-0 flex-col">
-      <div className="aspect-square overflow-hidden rounded-2xl bg-muted">
+      <div className="aspect-[4/5] overflow-hidden rounded-2xl bg-muted">
         {img && (
           <img
             src={img}
             alt={p.nome}
             width={600}
-            height={600}
+            height={750}
             loading={eager ? "eager" : "lazy"}
             decoding="async"
             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"

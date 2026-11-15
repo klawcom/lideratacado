@@ -20,7 +20,25 @@ describe("mensagem do pedido no WhatsApp", () => {
   const msg = montarMensagemPedido(base);
   it("número com 4 dígitos e data/hora", () => {
     expect(msg).toContain("🛍️ *NOVO PEDIDO #0007*");
+    expect(msg).toContain("*Cliente: Ana Souza - 12 Peças*");
     expect(msg).toContain("📅 14/11/2026 às 16:30");
+  });
+  it("formata itens com cores e tamanhos específicos", () => {
+    const comCores = montarMensagemPedido({
+      ...base,
+      itens: [
+        {
+          nome: "Camiseta Cotton Pima ARMN XCHNG",
+          pecas: 9,
+          preco: 45,
+          valor: 405,
+          qtd: { p: 1, m: 2, g: 4, gg: 2 },
+          cores: [{ cor: "Branca", qtd: { p: 1, m: 2, g: 4, gg: 2 } }],
+        },
+      ],
+    });
+    expect(comCores).toContain("branca: 1-P, 2-M, 4-G, 2-GG");
+    expect(comCores).toContain("⚠️ *Cores:* Conforme disponibilidade do estoque.");
   });
   it("omite tamanhos zerados, observação vazia e complemento vazio", () => {
     expect(msg).toContain("Tamanhos: P 5 | M 5");

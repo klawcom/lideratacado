@@ -16,6 +16,7 @@ import { siteQuery } from "@/lib/catalog.functions";
 import { criarPedido, pedidoSchema } from "@/lib/orders.functions";
 import { lerDadosEntrega, salvarDadosEntrega, salvarUltimoPedido } from "@/lib/checkout-storage";
 import { tamanhosLinha } from "@/lib/whatsapp-message";
+import { formatarCorTamanhos } from "@/lib/colors";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { seo } from "@/lib/seo";
@@ -158,7 +159,7 @@ function FinalizarPage() {
     const payload = {
       cliente: { ...f },
       observacao: obs,
-      itens: items.map((i) => ({ produtoId: i.produtoId, qtd: i.qtd, observacao: i.observacao })),
+      itens: items.map((i) => ({ produtoId: i.produtoId, qtd: i.qtd, cores: i.cores, observacao: i.observacao })),
     };
     const parsed = pedidoSchema.safeParse(payload);
     if (!parsed.success) {
@@ -303,15 +304,26 @@ function FinalizarPage() {
         <aside className="h-fit rounded-2xl border bg-card p-5 lg:sticky lg:top-24">
           <h2 className="font-sans text-lg font-bold tracking-normal">Resumo do pedido</h2>
           <ul className="mt-3 divide-y">
-            {resumo.itens.map((i) => (
-              <li key={i.produtoId} className="py-2.5 text-[15px]">
-                <p className="font-semibold">{i.nome}</p>
-                <p className="text-muted-foreground">{tamanhosLinha(i.qtd)}</p>
-                <p className="tabular-nums">
-                  {i.pecas} × {brl(i.preco)} = <strong>{brl(i.valor)}</strong>
-                </p>
-              </li>
-            ))}
+            {resumo.itens.map((i) => {
+              const it = items.find((x) => x.produtoId === i.produtoId);
+              return (
+                <li key={i.produtoId} className="py-2.5 text-[15px]">
+                  <p className="font-semibold">{i.nome}</p>
+                  {it?.cores && it.cores.length > 0 ? (
+                    <div className="my-1 space-y-0.5 text-xs text-muted-foreground">
+                      {it.cores.map((c) => (
+                        <p key={c.cor}>{formatarCorTamanhos(c.cor, c.qtd)}</p>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-muted-foreground">{tamanhosLinha(i.qtd)}</p>
+                  )}
+                  <p className="tabular-nums">
+                    {i.pecas} × {brl(i.preco)} = <strong>{brl(i.valor)}</strong>
+                  </p>
+                </li>
+              );
+            })}
           </ul>
           <dl className="mt-2 space-y-1.5 border-t pt-3">
             <div className="flex justify-between">

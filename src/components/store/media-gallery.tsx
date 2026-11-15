@@ -13,7 +13,7 @@ function Slide({ m, alt, fallbackPoster, eager }: { m: MidiaRow; alt: string; fa
         src={mediaUrl(m.url)}
         alt={alt}
         width={1200}
-        height={1200}
+        height={1500}
         loading={eager ? "eager" : "lazy"}
         decoding="async"
         className="h-full w-full object-cover"
@@ -80,7 +80,7 @@ export function MediaGallery({ midias, nome }: { midias: MidiaRow[]; nome: strin
     strip.scrollTo({ left: Math.max(0, offset - (strip.clientWidth - btn.clientWidth) / 2), behavior: "smooth" });
   }, [idx]);
 
-  if (list.length === 0) return <div className="aspect-square rounded-3xl bg-muted" />;
+  if (list.length === 0) return <div className="aspect-[4/5] rounded-3xl bg-muted" />;
 
   return (
     <div className="min-w-0">
@@ -91,10 +91,10 @@ export function MediaGallery({ midias, nome }: { midias: MidiaRow[]; nome: strin
           const el = e.currentTarget;
           setIdx(Math.round(el.scrollLeft / Math.max(1, el.clientWidth)));
         }}
-        className="no-scrollbar flex aspect-square w-full snap-x snap-mandatory overflow-x-auto overscroll-x-contain rounded-3xl bg-muted"
+        className="no-scrollbar flex aspect-[4/5] w-full snap-x snap-mandatory overflow-x-auto overscroll-x-contain rounded-3xl bg-muted"
       >
         {list.map((m, i) => (
-          <div key={m.id} className="aspect-square w-full shrink-0 snap-center">
+          <div key={m.id} className="aspect-[4/5] w-full shrink-0 snap-center">
             <Slide m={m} alt={`${nome}${list.length > 1 ? ` — mídia ${i + 1}` : ""}`} fallbackPoster={fallbackPoster} eager={i === 0} />
           </div>
         ))}
@@ -119,7 +119,7 @@ export function MediaGallery({ midias, nome }: { midias: MidiaRow[]; nome: strin
                 aria-label={`Ver mídia ${i + 1}`}
                 aria-current={i === idx}
                 className={cn(
-                  "relative aspect-square w-16 shrink-0 overflow-hidden sm:w-20 rounded-xl border-2 bg-muted transition",
+                  "relative aspect-[4/5] w-14 shrink-0 overflow-hidden sm:w-16 rounded-xl border-2 bg-muted transition",
                   i === idx ? "border-primary" : "border-transparent opacity-70",
                 )}
               >

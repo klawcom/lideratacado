@@ -222,7 +222,7 @@ export function MediaManager({ produtoId }: { produtoId: string }) {
                     dragOverIdx === i && draggingIdx !== i && "ring-2 ring-primary ring-offset-2 scale-[1.02]"
                   )}
                 >
-                  <div className="relative aspect-square bg-muted">
+                  <div className="relative aspect-[4/5] bg-muted">
                     {thumb ? (
                       <img src={thumb} alt="" loading="lazy" className="h-full w-full object-cover pointer-events-none" />
                     ) : (
