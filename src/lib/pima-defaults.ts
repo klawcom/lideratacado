@@ -84,3 +84,40 @@ export function isProdutoPolo(p: {
   if (/^POLO/i.test(p.codigo_modelo ?? "")) return true;
   return false;
 }
+
+/**
+ * Padrões de medidas e descrição para anúncios da categoria Plus Size (tamanhos G1, G2).
+ */
+export const MEDIDAS_PLUS_SIZE = [
+  { tamanho: "G1", largura: "62cm", altura: "73cm" },
+  { tamanho: "G2", largura: "66cm", altura: "76cm" },
+];
+
+export const TEXTO_MEDIDAS_PLUS_SIZE = `Medidas aproximadas
+
+CAMISAS PLUS SIZE
+G1. 62cm largura x 73cm altura
+G2. 66cm largura x 76cm altura`;
+
+export const DESCRICAO_BASE_PLUS_SIZE = `Camiseta Plus Size confeccionada em malha especial de excelente caimento e conforto. Cores variadas (sortidas). Tamanhos G1 e G2.`;
+
+export const DESCRICAO_COMPLETA_PLUS_SIZE = `${DESCRICAO_BASE_PLUS_SIZE}
+
+${TEXTO_MEDIDAS_PLUS_SIZE}`;
+
+/**
+ * Identifica se um produto pertence à categoria Plus Size (tamanhos G1 e G2).
+ */
+export function isProdutoPlusSize(p: {
+  categoria_id?: string | null;
+  codigo_modelo?: string | null;
+  nome?: string | null;
+  categorias?: { slug?: string; nome?: string } | null;
+}): boolean {
+  if (p.categorias?.slug && /plus\s*size|plus-?size|plussize/i.test(p.categorias.slug)) return true;
+  if (/plus\s*size|plussize/i.test(p.categorias?.nome ?? "")) return true;
+  if (/plus\s*size|plussize/i.test(p.nome ?? "")) return true;
+  if (/^PLUS/i.test(p.codigo_modelo ?? "")) return true;
+  if (/\b(g1|g2)\b/i.test(p.nome ?? "")) return true;
+  return false;
+}

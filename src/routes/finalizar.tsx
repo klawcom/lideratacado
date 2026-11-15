@@ -117,15 +117,15 @@ function FinalizarPage() {
         cpf: (data as any)?.cpf ? maskCpf(String((data as any).cpf)) : cur.cpf,
         ...(data
           ? {
-              whatsapp: maskPhone(data.whatsapp),
-              cep: maskCep(data.cep),
-              rua: data.rua,
-              numero: data.numero,
-              complemento: data.complemento,
-              bairro: data.bairro,
-              cidade: data.cidade,
-              estado: data.estado,
-            }
+            whatsapp: maskPhone(data.whatsapp),
+            cep: maskCep(data.cep),
+            rua: data.rua,
+            numero: data.numero,
+            complemento: data.complemento,
+            bairro: data.bairro,
+            cidade: data.cidade,
+            estado: data.estado,
+          }
           : {}),
       }));
     })();

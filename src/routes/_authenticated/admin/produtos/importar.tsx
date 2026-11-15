@@ -29,6 +29,7 @@ import {
 import {
   COMPOSICAO_COTTON_PIMA,
   DESCRICAO_COMPLETA_COTTON_PIMA,
+  DESCRICAO_COMPLETA_PLUS_SIZE,
   DESCRICAO_COMPLETA_POLO,
 } from "@/lib/pima-defaults";
 import { cn } from "@/lib/utils";
@@ -94,6 +95,7 @@ function Importar() {
   const [nomeModelo, setNomeModelo] = useState("Camiseta Pima");
   const [composicao, setComposicao] = useState(COMPOSICAO_COTTON_PIMA);
   const [descricao, setDescricao] = useState(DESCRICAO_COMPLETA_COTTON_PIMA);
+  const [estoque, setEstoque] = useState("1000");
   const [precos, setPrecos] = useState<string[]>(["", "", "", ""]);
   const [publicar, setPublicar] = useState(false);
   const [drag, setDrag] = useState(false);
@@ -112,7 +114,12 @@ function Importar() {
       catNome = c?.nome ?? "";
     }
     if (!catNome) return;
-    if (/polo/i.test(catNome)) {
+    if (/plus/i.test(catNome)) {
+      setPrefixo("PLUS");
+      setNomeModelo("Camiseta Plus Size");
+      setComposicao("");
+      setDescricao(DESCRICAO_COMPLETA_PLUS_SIZE);
+    } else if (/polo/i.test(catNome)) {
       setPrefixo("POLO");
       setNomeModelo("Camisa Polo");
       setComposicao("");
@@ -272,6 +279,7 @@ function Importar() {
     setRodando(true);
     setErros([]);
     const log = (m: string) => setErros((e) => [...e, m]);
+    const estoqueNum = Math.max(0, parseInt(estoque, 10) || 0);
     let criados = 0;
     let enviados = 0;
     try {
@@ -288,7 +296,7 @@ function Importar() {
             if (slugs.has(slug)) slug = `${slug}-${slugify(p.codigo)}`;
             const { data, error } = await supabase
               .from("produtos")
-              .insert({ nome: p.titulo, codigo_modelo: p.codigo, slug, descricao: `${p.titulo}. ${descricao}`.trim(), composicao, categoria_id: catIdFinal, ativo: false, destaque: false, ordem: p.n, estoque: 0 })
+              .insert({ nome: p.titulo, codigo_modelo: p.codigo, slug, descricao: `${p.titulo}. ${descricao}`.trim(), composicao, categoria_id: catIdFinal, ativo: false, destaque: false, ordem: p.n, estoque: estoqueNum })
               .select("id")
               .single();
             if (error) throw error;
@@ -652,6 +660,17 @@ function Importar() {
                   <Input id="imp-nome" value={nomeModelo} disabled={rodando} onChange={(e) => setNomeModelo(e.target.value)} />
                 </div>
                 <div>
+                  <FieldLabel htmlFor="imp-est">Estoque inicial por produto (peças)</FieldLabel>
+                  <Input
+                    id="imp-est"
+                    inputMode="numeric"
+                    placeholder="1000"
+                    value={estoque}
+                    disabled={rodando}
+                    onChange={(e) => setEstoque(e.target.value.replace(/\D/g, ""))}
+                  />
+                </div>
+                <div className="sm:col-span-2">
                   <FieldLabel htmlFor="imp-comp">Composição</FieldLabel>
                   <Input id="imp-comp" value={composicao} disabled={rodando} onChange={(e) => setComposicao(e.target.value)} />
                 </div>

@@ -5,16 +5,43 @@ export const FAIXAS = [10, 20, 30, 50] as const;
 export type FaixaQtd = (typeof FAIXAS)[number];
 
 export type FaixaPreco = { quantidade_minima: number; preco_peca: number };
-export type Qtd = { p: number; m: number; g: number; gg: number };
-export const TAMANHOS: { key: keyof Qtd; label: string }[] = [
+export type Qtd = {
+  p?: number;
+  m?: number;
+  g?: number;
+  gg?: number;
+  g1?: number;
+  g2?: number;
+};
+
+export type TamanhoItem = { key: keyof Qtd; label: string };
+
+export const TAMANHOS_PADRAO: TamanhoItem[] = [
   { key: "p", label: "P" },
   { key: "m", label: "M" },
   { key: "g", label: "G" },
   { key: "gg", label: "GG" },
 ];
 
+export const TAMANHOS_PLUS_SIZE: TamanhoItem[] = [
+  { key: "g1", label: "G1" },
+  { key: "g2", label: "G2" },
+];
+
+export const TAMANHOS: TamanhoItem[] = [
+  ...TAMANHOS_PADRAO,
+  ...TAMANHOS_PLUS_SIZE,
+];
+
 export function pecas(q: Qtd): number {
-  return (q.p || 0) + (q.m || 0) + (q.g || 0) + (q.gg || 0);
+  return (
+    (q.p || 0) +
+    (q.m || 0) +
+    (q.g || 0) +
+    (q.gg || 0) +
+    (q.g1 || 0) +
+    (q.g2 || 0)
+  );
 }
 
 /** Tier for a total. Below 10 pieces the base tier (10) price is shown. */

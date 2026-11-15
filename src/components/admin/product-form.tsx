@@ -47,7 +47,7 @@ export function ProductForm({ produto }: { produto?: ProdutoEdit }) {
     slug: produto?.slug ?? "",
     categoria_id: produto?.categoria_id ?? "",
     descricao: produto?.descricao ?? "",
-    estoque: String(produto?.estoque ?? 0),
+    estoque: String(produto?.estoque ?? 1000),
     ordem: String(produto?.ordem ?? 0),
     ativo: produto?.ativo ?? true,
     destaque: produto?.destaque ?? false,

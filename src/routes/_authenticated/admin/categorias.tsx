@@ -105,6 +105,7 @@ function Categorias() {
 
 function CategoriaDialog({ value, total, onClose, onSaved }: { value: Partial<Cat> | null; total: number; onClose: () => void; onSaved: () => void }) {
   const [form, setForm] = useState<Partial<Cat>>({});
+  const [estoquePadrao, setEstoquePadrao] = useState("1000");
   const [slugTouched, setSlugTouched] = useState(false);
   const [saving, setSaving] = useState(false);
   const open = value !== null;
@@ -112,6 +113,7 @@ function CategoriaDialog({ value, total, onClose, onSaved }: { value: Partial<Ca
   if (open && lastId !== (value?.id ?? "new")) {
     setLastId(value?.id ?? "new");
     setForm(value ?? {});
+    setEstoquePadrao("1000");
     setSlugTouched(!!value?.id);
   }
   if (!open && lastId !== null) setLastId(null);
@@ -123,12 +125,31 @@ function CategoriaDialog({ value, total, onClose, onSaved }: { value: Partial<Ca
     if (!nome || !slug) { toast.error("Informe o nome."); return; }
     setSaving(true);
     const payload = { nome, slug, descricao: form.descricao ?? "", ativa: form.ativa ?? true };
-    const { error } = form.id
-      ? await supabase.from("categorias").update(payload).eq("id", form.id)
-      : await supabase.from("categorias").insert({ ...payload, ordem: total + 1 });
+    let catId = form.id;
+    if (form.id) {
+      const { error } = await supabase.from("categorias").update(payload).eq("id", form.id);
+      if (error) {
+        setSaving(false);
+        toast.error(error.code === "23505" ? "Já existe uma categoria com esse nome." : error.message);
+        return;
+      }
+    } else {
+      const { data: nova, error } = await supabase.from("categorias").insert({ ...payload, ordem: total + 1 }).select("id").single();
+      if (error) {
+        setSaving(false);
+        toast.error(error.code === "23505" ? "Já existe uma categoria com esse nome." : error.message);
+        return;
+      }
+      catId = nova.id;
+    }
+
+    if (catId && estoquePadrao.trim() !== "") {
+      const numEstoque = Math.max(0, parseInt(estoquePadrao, 10) || 0);
+      await supabase.from("produtos").update({ estoque: numEstoque }).eq("categoria_id", catId);
+    }
+
     setSaving(false);
-    if (error) { toast.error(error.code === "23505" ? "Já existe uma categoria com esse nome." : error.message); return; }
-    toast.success("Categoria salva");
+    toast.success("Categoria salva com sucesso!");
     onSaved();
   }
 
@@ -161,6 +182,16 @@ function CategoriaDialog({ value, total, onClose, onSaved }: { value: Partial<Ca
           <div>
             <FieldLabel htmlFor="c-desc">Descrição</FieldLabel>
             <Textarea id="c-desc" rows={3} value={form.descricao ?? ""} onChange={(e) => setForm((f) => ({ ...f, descricao: e.target.value }))} />
+          </div>
+          <div>
+            <FieldLabel htmlFor="c-est" hint="(aplica aos produtos desta categoria)">Estoque padrão dos produtos (peças)</FieldLabel>
+            <Input
+              id="c-est"
+              inputMode="numeric"
+              placeholder="1000"
+              value={estoquePadrao}
+              onChange={(e) => setEstoquePadrao(e.target.value.replace(/\D/g, ""))}
+            />
           </div>
           <label className="flex min-h-11 items-center gap-3">
             <Switch checked={form.ativa ?? true} onCheckedChange={(v) => setForm((f) => ({ ...f, ativa: v }))} /> Ativa na loja

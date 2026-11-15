@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from "react";
-import type { FaixaPreco, Qtd } from "./pricing";
+import { pecas, type FaixaPreco, type Qtd } from "./pricing";
 
 export type CorQtd = {
   cor: string;
@@ -23,19 +23,21 @@ function mergeCores(c1?: CorQtd[], c2?: CorQtd[]): CorQtd[] | undefined {
   const map = new Map<string, Qtd>();
   const add = (cq: CorQtd) => {
     const key = cq.cor.trim();
-    const existing = map.get(key) || { p: 0, m: 0, g: 0, gg: 0 };
+    const existing = map.get(key) || { p: 0, m: 0, g: 0, gg: 0, g1: 0, g2: 0 };
     map.set(key, {
-      p: existing.p + (cq.qtd.p || 0),
-      m: existing.m + (cq.qtd.m || 0),
-      g: existing.g + (cq.qtd.g || 0),
-      gg: existing.gg + (cq.qtd.gg || 0),
+      p: (existing.p || 0) + (cq.qtd.p || 0),
+      m: (existing.m || 0) + (cq.qtd.m || 0),
+      g: (existing.g || 0) + (cq.qtd.g || 0),
+      gg: (existing.gg || 0) + (cq.qtd.gg || 0),
+      g1: (existing.g1 || 0) + (cq.qtd.g1 || 0),
+      g2: (existing.g2 || 0) + (cq.qtd.g2 || 0),
     });
   };
   (c1 || []).forEach(add);
   (c2 || []).forEach(add);
   return Array.from(map.entries())
     .map(([cor, qtd]) => ({ cor, qtd }))
-    .filter((c) => c.qtd.p + c.qtd.m + c.qtd.g + c.qtd.gg > 0);
+    .filter((c) => pecas(c.qtd) > 0);
 }
 
 const KEY = "lider-carrinho-v1";
@@ -101,10 +103,12 @@ export const cart = {
       ...cur,
       ...item,
       qtd: {
-        p: cur.qtd.p + item.qtd.p,
-        m: cur.qtd.m + item.qtd.m,
-        g: cur.qtd.g + item.qtd.g,
-        gg: cur.qtd.gg + item.qtd.gg,
+        p: (cur.qtd.p || 0) + (item.qtd.p || 0),
+        m: (cur.qtd.m || 0) + (item.qtd.m || 0),
+        g: (cur.qtd.g || 0) + (item.qtd.g || 0),
+        gg: (cur.qtd.gg || 0) + (item.qtd.gg || 0),
+        g1: (cur.qtd.g1 || 0) + (item.qtd.g1 || 0),
+        g2: (cur.qtd.g2 || 0) + (item.qtd.g2 || 0),
       },
       cores: mergeCores(cur.cores, item.cores),
       observacao: obs,
@@ -128,5 +132,5 @@ export function useCart(): CartItem[] {
 
 export function useCartCount(): number {
   const list = useCart();
-  return list.reduce((s, i) => s + i.qtd.p + i.qtd.m + i.qtd.g + i.qtd.gg, 0);
+  return list.reduce((s, i) => s + pecas(i.qtd), 0);
 }

@@ -72,7 +72,7 @@ function MeusPedidos() {
                 <ul className="mt-2 space-y-0.5 text-[15px]">
                   {p.pedido_itens.map((i, n) => (
                     <li key={n}>
-                      {i.produto_nome} <span className="text-muted-foreground">— {tamanhosLinha({ p: i.qtd_p, m: i.qtd_m, g: i.qtd_g, gg: i.qtd_gg })}</span>
+                      {i.produto_nome} <span className="text-muted-foreground">— {tamanhosLinha({ p: i.qtd_p, m: i.qtd_m, g: i.qtd_g, gg: i.qtd_gg }) || "Grade personalizada"}</span>
                     </li>
                   ))}
                 </ul>

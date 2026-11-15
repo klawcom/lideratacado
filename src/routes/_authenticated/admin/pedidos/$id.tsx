@@ -67,9 +67,9 @@ function Pedido() {
                   <p className="font-semibold">
                     {n + 1}) {i.produto_nome} <span className="font-normal text-muted-foreground">{i.codigo_modelo}</span>
                   </p>
-                  <p className="text-[15px]">Tamanhos: {tamanhosLinha({ p: i.qtd_p, m: i.qtd_m, g: i.qtd_g, gg: i.qtd_gg })}</p>
+                  <p className="text-[15px]">Tamanhos: {tamanhosLinha({ p: i.qtd_p, m: i.qtd_m, g: i.qtd_g, gg: i.qtd_gg }) || (i.observacao ? "Conforme detalhado abaixo" : "Padrão")}</p>
                   <p className="tabular-nums">
-                    {i.qtd_p + i.qtd_m + i.qtd_g + i.qtd_gg} × {brl(Number(i.preco_unitario))} = <strong>{brl(Number(i.valor))}</strong>
+                    {(i.qtd_p + i.qtd_m + i.qtd_g + i.qtd_gg) || (Number(i.preco_unitario) > 0 ? Math.round(Number(i.valor) / Number(i.preco_unitario)) : 0)} × {brl(Number(i.preco_unitario))} = <strong>{brl(Number(i.valor))}</strong>
                   </p>
                   {i.observacao && <p className="mt-1 rounded-xl bg-muted px-3 py-2 text-sm">📝 {i.observacao}</p>}
                 </li>

@@ -1,16 +1,23 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
 import { z } from "zod";
-import { calcularPedido } from "./pricing";
+import { calcularPedido, pecas, type Qtd } from "./pricing";
 import { linkWhatsapp, montarMensagemPedido } from "./whatsapp-message";
 import { faltamPecas, maskCpf, money, onlyDigits, validarCpf } from "./format";
 import { formatarCorTamanhos } from "./colors";
 
-const qtd = z.number().int().min(0).max(100000);
+const qtd = z.number().int().min(0).max(100000).default(0);
 
 const corQtdSchema = z.object({
   cor: z.string().trim().min(1).max(50),
-  qtd: z.object({ p: qtd, m: qtd, g: qtd, gg: qtd }),
+  qtd: z.object({
+    p: qtd.optional().default(0),
+    m: qtd.optional().default(0),
+    g: qtd.optional().default(0),
+    gg: qtd.optional().default(0),
+    g1: qtd.optional().default(0),
+    g2: qtd.optional().default(0),
+  }),
 });
 
 export const pedidoSchema = z.object({
@@ -50,7 +57,14 @@ export const pedidoSchema = z.object({
     .array(
       z.object({
         produtoId: z.string().uuid(),
-        qtd: z.object({ p: qtd, m: qtd, g: qtd, gg: qtd }),
+        qtd: z.object({
+          p: qtd.optional().default(0),
+          m: qtd.optional().default(0),
+          g: qtd.optional().default(0),
+          gg: qtd.optional().default(0),
+          g1: qtd.optional().default(0),
+          g2: qtd.optional().default(0),
+        }),
         cores: z.array(corQtdSchema).optional(),
         observacao: z.string().trim().max(300).default(""),
       }),
@@ -67,7 +81,7 @@ export type PedidoCriado = {
   mensagem: string;
   waUrl: string;
   resumo: {
-    itens: { nome: string; pecas: number; preco: number; valor: number; qtd: { p: number; m: number; g: number; gg: number }; observacao: string }[];
+    itens: { nome: string; pecas: number; preco: number; valor: number; qtd: Qtd; observacao: string }[];
     totalPecas: number;
     faixa: number;
     total: number;
@@ -100,14 +114,21 @@ export const criarPedido = createServerFn({ method: "POST" })
     for (const it of data.itens) {
       const cur = merged.get(it.produtoId);
       if (cur) {
-        cur.qtd = { p: cur.qtd.p + it.qtd.p, m: cur.qtd.m + it.qtd.m, g: cur.qtd.g + it.qtd.g, gg: cur.qtd.gg + it.qtd.gg };
+        cur.qtd = {
+          p: (cur.qtd.p || 0) + (it.qtd.p || 0),
+          m: (cur.qtd.m || 0) + (it.qtd.m || 0),
+          g: (cur.qtd.g || 0) + (it.qtd.g || 0),
+          gg: (cur.qtd.gg || 0) + (it.qtd.gg || 0),
+          g1: (cur.qtd.g1 || 0) + (it.qtd.g1 || 0),
+          g2: (cur.qtd.g2 || 0) + (it.qtd.g2 || 0),
+        };
         cur.observacao = [cur.observacao, it.observacao].filter(Boolean).join(" / ").slice(0, 300);
         if (it.cores?.length) {
           cur.cores = [...(cur.cores || []), ...it.cores];
         }
       } else merged.set(it.produtoId, { ...it, qtd: { ...it.qtd }, cores: it.cores ? [...it.cores] : undefined });
     }
-    const itensIn = [...merged.values()].filter((i) => i.qtd.p + i.qtd.m + i.qtd.g + i.qtd.gg > 0);
+    const itensIn = [...merged.values()].filter((i) => pecas(i.qtd) > 0);
     if (itensIn.length === 0) throw new Error("Seu pedido está vazio.");
 
     const { data: produtos, error: pErr } = await db
@@ -213,10 +234,10 @@ export const criarPedido = createServerFn({ method: "POST" })
           produto_id: i.produtoId,
           produto_nome: i.nome,
           codigo_modelo: i.codigo,
-          qtd_p: i.qtd.p,
-          qtd_m: i.qtd.m,
-          qtd_g: i.qtd.g,
-          qtd_gg: i.qtd.gg,
+          qtd_p: i.qtd.p || 0,
+          qtd_m: i.qtd.m || 0,
+          qtd_g: i.qtd.g || 0,
+          qtd_gg: i.qtd.gg || 0,
           preco_unitario: i.preco,
           valor: i.valor,
           observacao: obsFinal,

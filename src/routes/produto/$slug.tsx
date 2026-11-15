@@ -10,7 +10,7 @@ import { QtyStepper } from "@/components/store/qty-stepper";
 import { ShippingCalculator } from "@/components/store/shipping-calculator";
 import { produtoQuery, siteQuery } from "@/lib/catalog.functions";
 import { imagemPrincipal } from "@/lib/media";
-import { FAIXAS, TAMANHOS, faixaDoTotal, menorPreco, pecas, precoNaFaixa, type Qtd } from "@/lib/pricing";
+import { FAIXAS, TAMANHOS, TAMANHOS_PADRAO, TAMANHOS_PLUS_SIZE, faixaDoTotal, menorPreco, pecas, precoNaFaixa, type Qtd } from "@/lib/pricing";
 import { brl, money } from "@/lib/format";
 import { cart, useCartCount } from "@/lib/cart";
 import { CORES_PADRAO, decodeCoresProduto, formatarCorTamanhos, getCorDef } from "@/lib/colors";
@@ -18,8 +18,10 @@ import {
   COMPOSICAO_COTTON_PIMA,
   DESCRICAO_COTTON_PIMA,
   MEDIDAS_COTTON_PIMA,
+  MEDIDAS_PLUS_SIZE,
   MEDIDAS_POLO,
   isProdutoCottonPima,
+  isProdutoPlusSize,
   isProdutoPolo,
 } from "@/lib/pima-defaults";
 import { canonical, seo } from "@/lib/seo";
@@ -79,7 +81,7 @@ export const Route = createFileRoute("/produto/$slug")({
   component: ProdutoPage,
 });
 
-const ZERO: Qtd = { p: 0, m: 0, g: 0, gg: 0 };
+const ZERO: Qtd = { p: 0, m: 0, g: 0, gg: 0, g1: 0, g2: 0 };
 
 function ProdutoPage() {
   const { slug } = Route.useParams();
@@ -91,6 +93,8 @@ function ProdutoPage() {
 
   const isPima = isProdutoCottonPima(p);
   const isPolo = !isPima && isProdutoPolo(p);
+  const isPlusSize = isProdutoPlusSize(p);
+  const tamanhosDisponiveis = isPlusSize ? TAMANHOS_PLUS_SIZE : TAMANHOS_PADRAO;
   const { composicaoLimpa, coresHabilitadas } = decodeCoresProduto(p.composicao);
   const coresDisponiveis = CORES_PADRAO.filter((c) => coresHabilitadas.includes(c.nome));
   const listaCores = coresDisponiveis.length > 0 ? coresDisponiveis : CORES_PADRAO;
@@ -105,7 +109,7 @@ function ProdutoPage() {
     ? isGenericDesc
       ? DESCRICAO_COTTON_PIMA
       : p.descricao.split(/Medidas aproximadas/i)[0].trim()
-    : isPolo
+    : isPolo || isPlusSize
       ? (p.descricao ? p.descricao.split(/Medidas aproximadas/i)[0].trim() : "")
       : p.descricao;
 
@@ -130,12 +134,14 @@ function ProdutoPage() {
 
   const totalQtd: Qtd = Object.values(coresQtd).reduce<Qtd>(
     (acc, q) => ({
-      p: acc.p + (q.p || 0),
-      m: acc.m + (q.m || 0),
-      g: acc.g + (q.g || 0),
-      gg: acc.gg + (q.gg || 0),
+      p: (acc.p || 0) + (q.p || 0),
+      m: (acc.m || 0) + (q.m || 0),
+      g: (acc.g || 0) + (q.g || 0),
+      gg: (acc.gg || 0) + (q.gg || 0),
+      g1: (acc.g1 || 0) + (q.g1 || 0),
+      g2: (acc.g2 || 0) + (q.g2 || 0),
     }),
-    { p: 0, m: 0, g: 0, gg: 0 },
+    { p: 0, m: 0, g: 0, gg: 0, g1: 0, g2: 0 },
   );
 
   const n = pecas(totalQtd);
@@ -185,7 +191,7 @@ function ProdutoPage() {
         <div className="space-y-5">
           <MediaGallery midias={p.produto_midias} nome={p.nome} />
 
-          {(descFinal || compFinal || isPima || isPolo) && (
+          {(descFinal || compFinal || isPima || isPolo || isPlusSize) && (
             <section aria-labelledby="secao-descricao" className="rounded-2xl border bg-card/60 p-4 sm:p-5 space-y-3.5">
               {descFinal && (
                 <div>
@@ -205,18 +211,18 @@ function ProdutoPage() {
                 </div>
               )}
 
-              {(isPima || isPolo) && (
+              {(isPima || isPolo || isPlusSize) && (
                 <div className={descFinal || compFinal ? "pt-3 border-t border-border/60 space-y-2" : "space-y-2"}>
                   <div className="flex items-center justify-between">
                     <h2 className="font-sans text-sm font-semibold tracking-normal text-foreground">
                       Medidas aproximadas
                     </h2>
                     <span className="text-[11px] text-muted-foreground uppercase font-medium">
-                      {isPolo ? "Camisas Polos Masculinas" : "Camisetas Masculinas"}
+                      {isPlusSize ? "Camisetas Plus Size" : isPolo ? "Camisas Polos Masculinas" : "Camisetas Masculinas"}
                     </span>
                   </div>
-                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                    {(isPolo ? MEDIDAS_POLO : MEDIDAS_COTTON_PIMA).map((m) => (
+                  <div className={cn("grid gap-2", isPlusSize ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-4")}>
+                    {(isPlusSize ? MEDIDAS_PLUS_SIZE : isPolo ? MEDIDAS_POLO : MEDIDAS_COTTON_PIMA).map((m) => (
                       <div
                         key={m.tamanho}
                         className="rounded-xl border bg-background/70 p-2.5 text-center shadow-2xs"
@@ -321,13 +327,13 @@ function ProdutoPage() {
                 </h3>
                 <span className="text-xs text-muted-foreground tabular-nums">{pecasCorAtiva} peças</span>
               </div>
-              <div className="grid gap-2 sm:grid-cols-2">
-                {TAMANHOS.map((t) => (
+              <div className={cn("grid gap-2", isPlusSize ? "grid-cols-2" : "sm:grid-cols-2")}>
+                {tamanhosDisponiveis.map((t) => (
                   <QtyStepper
                     key={t.key}
                     compact
                     label={t.label}
-                    value={qtdCorAtiva[t.key]}
+                    value={qtdCorAtiva[t.key] || 0}
                     onChange={(v) => setQtdCor(t.key, v)}
                   />
                 ))}
@@ -450,8 +456,8 @@ function ProdutoPage() {
                   <Sparkles className="size-4" />
                 </span>
                 <div className="min-w-0">
-                  <p className="text-xs font-bold text-foreground truncate">{isPolo ? "Polo Premium" : "Algodão Pima"}</p>
-                  <p className="text-[11px] text-muted-foreground truncate">{isPolo ? "Piquet de alta qualidade" : "Alta qualidade"}</p>
+                  <p className="text-xs font-bold text-foreground truncate">{isPlusSize ? "Plus Size" : isPolo ? "Polo Premium" : "Algodão Pima"}</p>
+                  <p className="text-[11px] text-muted-foreground truncate">{isPlusSize ? "Corte amplo especial" : isPolo ? "Piquet de alta qualidade" : "Alta qualidade"}</p>
                 </div>
               </div>
               <div className="card-hover flex items-center gap-2.5 rounded-xl border bg-card/60 p-2.5 shadow-2xs">

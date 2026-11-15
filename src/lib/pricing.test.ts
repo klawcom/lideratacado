@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { calcularPedido, faixaDoTotal } from "./pricing";
+import {
+  TAMANHOS,
+  TAMANHOS_PADRAO,
+  TAMANHOS_PLUS_SIZE,
+  calcularPedido,
+  faixaDoTotal,
+  pecas,
+} from "./pricing";
 
 const camiseta = [
   { quantidade_minima: 10, preco_peca: 29.9 },
@@ -55,5 +62,17 @@ describe("faixas de preço pelo total do pedido", () => {
     expect(r.faixa).toBe(50);
     expect(r.total).toBe(Math.round((30 * 23.9 + 20 * 39.9) * 100) / 100);
     expect(r.proxima).toBeNull();
+  });
+
+  it("calcula peças e faixas incluindo tamanhos plus size G1 e G2", () => {
+    expect(TAMANHOS_PADRAO.map((t) => t.label)).toEqual(["P", "M", "G", "GG"]);
+    expect(TAMANHOS_PLUS_SIZE.map((t) => t.label)).toEqual(["G1", "G2"]);
+    expect(TAMANHOS.map((t) => t.label)).toEqual(["P", "M", "G", "GG", "G1", "G2"]);
+
+    expect(pecas({ g1: 6, g2: 4 })).toBe(10);
+    const r = calcularPedido([{ produtoId: "plus-1", faixas: camiseta, qtd: { g1: 6, g2: 4 } }], 10);
+    expect(r.totalPecas).toBe(10);
+    expect(r.podeFinalizar).toBe(true);
+    expect(r.faixa).toBe(10);
   });
 });

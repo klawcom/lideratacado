@@ -3,10 +3,13 @@ import {
   COMPOSICAO_COTTON_PIMA,
   DESCRICAO_COTTON_PIMA,
   MEDIDAS_COTTON_PIMA,
+  MEDIDAS_PLUS_SIZE,
   MEDIDAS_POLO,
   TEXTO_MEDIDAS_COTTON_PIMA,
+  TEXTO_MEDIDAS_PLUS_SIZE,
   TEXTO_MEDIDAS_POLO,
   isProdutoCottonPima,
+  isProdutoPlusSize,
   isProdutoPolo,
 } from "./pima-defaults";
 
@@ -65,5 +68,27 @@ describe("padrões da categoria Polo", () => {
     expect(isProdutoPolo({ nome: "Camisa Polo Modelo 01" })).toBe(true);
 
     expect(isProdutoPolo({ codigo_modelo: "PIMA-01", nome: "Camiseta Cotton Pima" })).toBe(false);
+  });
+});
+
+describe("padrões da categoria Plus Size", () => {
+  it("contém as medidas de G1 e G2", () => {
+    expect(MEDIDAS_PLUS_SIZE).toHaveLength(2);
+    expect(MEDIDAS_PLUS_SIZE[0]).toEqual({ tamanho: "G1", largura: "62cm", altura: "73cm" });
+    expect(MEDIDAS_PLUS_SIZE[1]).toEqual({ tamanho: "G2", largura: "66cm", altura: "76cm" });
+
+    expect(TEXTO_MEDIDAS_PLUS_SIZE).toContain("CAMISAS PLUS SIZE");
+    expect(TEXTO_MEDIDAS_PLUS_SIZE).toContain("G1. 62cm largura x 73cm altura");
+    expect(TEXTO_MEDIDAS_PLUS_SIZE).toContain("G2. 66cm largura x 76cm altura");
+  });
+
+  it("identifica produtos Plus Size por categoria, modelo ou nome", () => {
+    expect(isProdutoPlusSize({ categorias: { slug: "camisetas-plus-size" } })).toBe(true);
+    expect(isProdutoPlusSize({ categorias: { nome: "Camisetas Plus Size" } })).toBe(true);
+    expect(isProdutoPlusSize({ codigo_modelo: "PLUS-01" })).toBe(true);
+    expect(isProdutoPlusSize({ nome: "Camiseta Plus Size Modelo 01" })).toBe(true);
+    expect(isProdutoPlusSize({ nome: "Camiseta G1 e G2" })).toBe(true);
+
+    expect(isProdutoPlusSize({ codigo_modelo: "PIMA-01", nome: "Camiseta Cotton Pima" })).toBe(false);
   });
 });

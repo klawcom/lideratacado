@@ -8,7 +8,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { QtyStepper } from "@/components/store/qty-stepper";
 import { StickyBar } from "@/components/store/sticky-bar";
 import { cart, useCart, type CartItem } from "@/lib/cart";
-import { calcularPedido, TAMANHOS } from "@/lib/pricing";
+import {
+  calcularPedido,
+  pecas,
+  TAMANHOS,
+  TAMANHOS_PADRAO,
+  TAMANHOS_PLUS_SIZE,
+  type Qtd,
+} from "@/lib/pricing";
 import { brl, faltamPecas, money } from "@/lib/format";
 import { siteQuery } from "@/lib/catalog.functions";
 import { tamanhosLinha } from "@/lib/whatsapp-message";
@@ -180,8 +187,16 @@ function EditItem({ item, onDone }: { item: CartItem; onDone: () => void }) {
   const [obs, setObs] = useState(item.observacao);
 
   const hasCores = cores.length > 0;
+  const isPlusSize =
+    Boolean((item.qtd.g1 && item.qtd.g1 > 0) || (item.qtd.g2 && item.qtd.g2 > 0)) ||
+    Boolean(item.cores && item.cores.some((c) => (c.qtd.g1 && c.qtd.g1 > 0) || (c.qtd.g2 && c.qtd.g2 > 0))) ||
+    /plus\s*size|plussize|^plus/i.test(item.nome || "") ||
+    /plus\s*size|plussize|^plus/i.test(item.codigo || "") ||
+    /plus\s*size|plussize|^plus/i.test(item.slug || "");
 
-  function updateCorQtd(corNome: string, key: "p" | "m" | "g" | "gg", val: number) {
+  const tamanhosItem = isPlusSize ? TAMANHOS_PLUS_SIZE : TAMANHOS_PADRAO;
+
+  function updateCorQtd(corNome: string, key: keyof Qtd, val: number) {
     const nextCores = cores.map((c) => (c.cor === corNome ? { ...c, qtd: { ...c.qtd, [key]: val } } : c));
     setCores(nextCores);
     setQtd({
@@ -189,6 +204,8 @@ function EditItem({ item, onDone }: { item: CartItem; onDone: () => void }) {
       m: nextCores.reduce((acc, c) => acc + (c.qtd.m || 0), 0),
       g: nextCores.reduce((acc, c) => acc + (c.qtd.g || 0), 0),
       gg: nextCores.reduce((acc, c) => acc + (c.qtd.gg || 0), 0),
+      g1: nextCores.reduce((acc, c) => acc + (c.qtd.g1 || 0), 0),
+      g2: nextCores.reduce((acc, c) => acc + (c.qtd.g2 || 0), 0),
     });
   }
 
@@ -200,12 +217,12 @@ function EditItem({ item, onDone }: { item: CartItem; onDone: () => void }) {
             <div key={c.cor} className="rounded-xl border bg-background/50 p-2.5">
               <p className="mb-2 text-sm font-semibold text-foreground">Cor: {c.cor}</p>
               <div className="grid grid-cols-2 gap-2">
-                {TAMANHOS.map((t) => (
+                {tamanhosItem.map((t) => (
                   <QtyStepper
                     key={t.key}
                     compact
                     label={t.label}
-                    value={c.qtd[t.key]}
+                    value={c.qtd[t.key] || 0}
                     onChange={(v) => updateCorQtd(c.cor, t.key, v)}
                   />
                 ))}
@@ -215,8 +232,8 @@ function EditItem({ item, onDone }: { item: CartItem; onDone: () => void }) {
         </div>
       ) : (
         <div className="grid gap-2 sm:grid-cols-2">
-          {TAMANHOS.map((t) => (
-            <QtyStepper key={t.key} compact label={t.label} value={qtd[t.key]} onChange={(v) => setQtd((q) => ({ ...q, [t.key]: v }))} />
+          {tamanhosItem.map((t) => (
+            <QtyStepper key={t.key} compact label={t.label} value={qtd[t.key] || 0} onChange={(v) => setQtd((q) => ({ ...q, [t.key]: v }))} />
           ))}
         </div>
       )}
@@ -235,10 +252,10 @@ function EditItem({ item, onDone }: { item: CartItem; onDone: () => void }) {
         <Button
           className="flex-1"
           onClick={() => {
-            const total = qtd.p + qtd.m + qtd.g + qtd.gg;
+            const total = pecas(qtd);
             if (total === 0) cart.remove(item.produtoId);
             else {
-              const activeCores = cores.filter((c) => c.qtd.p + c.qtd.m + c.qtd.g + c.qtd.gg > 0);
+              const activeCores = cores.filter((c) => pecas(c.qtd) > 0);
               cart.update(item.produtoId, {
                 qtd,
                 cores: activeCores.length ? activeCores : undefined,

@@ -40,6 +40,36 @@ describe("mensagem do pedido no WhatsApp", () => {
     expect(comCores).toContain("branca: 1-P, 2-M, 4-G, 2-GG");
     expect(comCores).toContain("⚠️ *Cores:* Conforme disponibilidade do estoque.");
   });
+  it("formata itens plus size com tamanhos G1 e G2", () => {
+    const comPlusSize = montarMensagemPedido({
+      ...base,
+      itens: [
+        {
+          nome: "Camiseta Plus Size Básica",
+          pecas: 5,
+          preco: 49.9,
+          valor: 249.5,
+          qtd: { g1: 3, g2: 2 },
+          cores: [{ cor: "Preta", qtd: { g1: 3, g2: 2 } }],
+        },
+      ],
+    });
+    expect(comPlusSize).toContain("preta: 3-G1, 2-G2");
+
+    const semCores = montarMensagemPedido({
+      ...base,
+      itens: [
+        {
+          nome: "Camiseta Plus Size Básica",
+          pecas: 5,
+          preco: 49.9,
+          valor: 249.5,
+          qtd: { g1: 3, g2: 2 },
+        },
+      ],
+    });
+    expect(semCores).toContain("Tamanhos: G1 3 | G2 2");
+  });
   it("omite tamanhos zerados, observação vazia e complemento vazio", () => {
     expect(msg).toContain("Tamanhos: P 5 | M 5");
     expect(msg).toContain("Tamanhos: G 2");
