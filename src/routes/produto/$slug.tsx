@@ -108,9 +108,9 @@ function ProdutoPage() {
   const descFinal = isPima
     ? isGenericDesc
       ? DESCRICAO_COTTON_PIMA
-      : p.descricao.split(/Medidas aproximadas/i)[0].trim()
+      : (p.descricao.split(/Medidas aproximadas/i)[0] ?? "").trim()
     : isPolo || isPlusSize
-      ? (p.descricao ? p.descricao.split(/Medidas aproximadas/i)[0].trim() : "")
+      ? (p.descricao ? (p.descricao.split(/Medidas aproximadas/i)[0] ?? "").trim() : "")
       : p.descricao;
 
   const compFinal = isPima ? (composicaoLimpa || COMPOSICAO_COTTON_PIMA) : composicaoLimpa;

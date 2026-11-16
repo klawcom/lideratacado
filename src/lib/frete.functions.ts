@@ -27,8 +27,8 @@ export type SimularFreteInput = z.input<typeof simularFreteSchema>;
 export const simularFrete = createServerFn({ method: "POST" })
   .validator((d: SimularFreteInput) => simularFreteSchema.parse(d))
   .handler(async ({ data }): Promise<SimulacaoFreteResultado> => {
-    let token = process.env.SUPERFRETE_TOKEN ?? "";
-    let cepOrigem = onlyDigits(process.env.SUPERFRETE_CEP_ORIGEM ?? "78464222") || "78464222";
+    let token = process.env["SUPERFRETE_TOKEN"] ?? "";
+    let cepOrigem = onlyDigits(process.env["SUPERFRETE_CEP_ORIGEM"] ?? "78464222") || "78464222";
 
     // Se o token não estiver nas variáveis de ambiente, tenta ler da tabela de configurações
     if (!token) {
@@ -41,7 +41,7 @@ export const simularFrete = createServerFn({ method: "POST" })
           .maybeSingle();
 
         if (config?.menu_links && typeof config.menu_links === "object" && !Array.isArray(config.menu_links)) {
-          const sf = (config.menu_links as Record<string, unknown>).superfrete as
+          const sf = (config.menu_links as Record<string, unknown>)["superfrete"] as
             | { token?: string; cep_origem?: string }
             | undefined;
           if (sf?.token) token = sf.token;

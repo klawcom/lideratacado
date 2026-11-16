@@ -19,8 +19,8 @@ export type FreteOpcao = {
   transportadora: string;
   preco: number;
   prazoDias: number;
-  desconto?: string;
-  icone?: string;
+  desconto?: string | undefined;
+  icone?: string | undefined;
 };
 
 export type SimulacaoFreteResultado = {
@@ -30,7 +30,7 @@ export type SimulacaoFreteResultado = {
   pesoKg: number;
   totalPecas: number;
   opcoes: FreteOpcao[];
-  mensagem?: string;
+  mensagem?: string | undefined;
 };
 
 /**

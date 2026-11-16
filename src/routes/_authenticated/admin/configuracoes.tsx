@@ -148,15 +148,15 @@ function Config() {
       setMenu(normalizeMenuLinks(data.menu_links));
       if (data.menu_links && typeof data.menu_links === "object" && !Array.isArray(data.menu_links)) {
         const sf = data.menu_links as Record<string, unknown>;
-        const superfrete = sf.superfrete as { token?: string; cep_origem?: string } | undefined;
+        const superfrete = sf["superfrete"] as { token?: string; cep_origem?: string } | undefined;
         if (superfrete?.token) setTokenSuperFrete(superfrete.token);
         if (superfrete?.cep_origem) setCepOrigemSuperFrete(maskCep(superfrete.cep_origem));
 
-        if (Array.isArray(sf.banners)) {
+        if (Array.isArray(sf["banners"])) {
           const links: Record<1 | 2 | 3, string> = { 1: "", 2: "", 3: "" };
           const titulos: Record<1 | 2 | 3, string> = { 1: "", 2: "", 3: "" };
           const subs: Record<1 | 2 | 3, string> = { 1: "", 2: "", 3: "" };
-          for (const b of sf.banners as Array<{ id?: number; link?: string; titulo?: string; subtitulo?: string }>) {
+          for (const b of sf["banners"] as Array<{ id?: number; link?: string; titulo?: string; subtitulo?: string }>) {
             if (b?.id === 1 || b?.id === 2 || b?.id === 3) {
               links[b.id] = b.link || "";
               titulos[b.id] = b.titulo || "";

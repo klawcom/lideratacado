@@ -14,7 +14,7 @@ export type CartItem = {
   imagem: string;
   faixas: FaixaPreco[];
   qtd: Qtd;
-  cores?: CorQtd[];
+  cores?: CorQtd[] | undefined;
   observacao: string;
 };
 
