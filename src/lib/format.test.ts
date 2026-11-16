@@ -1,4 +1,4 @@
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it } from "vitest";
 import { maskCpf, validarCpf } from "./format";
 
 describe("validação e máscara de CPF", () => {

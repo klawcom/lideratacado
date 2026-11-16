@@ -8,7 +8,7 @@ export type MensagemItem = {
   preco: number;
   valor: number;
   qtd: Qtd;
-  cores?: { cor: string; qtd: Qtd }[];
+  cores?: { cor: string; qtd: Qtd }[] | undefined;
   observacao?: string;
 };
 

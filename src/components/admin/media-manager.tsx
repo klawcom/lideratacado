@@ -203,15 +203,21 @@ export function MediaManager({ produtoId }: { produtoId: string }) {
     } else if (destino === -1) {
       novaLista = [...list];
       for (let i = 1; i < novaLista.length; i++) {
-        if (selectedIds.has(novaLista[i].id) && !selectedIds.has(novaLista[i - 1].id)) {
-          [novaLista[i], novaLista[i - 1]] = [novaLista[i - 1], novaLista[i]];
+        const a = novaLista[i]!;
+        const b = novaLista[i - 1]!;
+        if (selectedIds.has(a.id) && !selectedIds.has(b.id)) {
+          novaLista[i] = b;
+          novaLista[i - 1] = a;
         }
       }
     } else {
       novaLista = [...list];
       for (let i = novaLista.length - 2; i >= 0; i--) {
-        if (selectedIds.has(novaLista[i].id) && !selectedIds.has(novaLista[i + 1].id)) {
-          [novaLista[i], novaLista[i + 1]] = [novaLista[i + 1], novaLista[i]];
+        const a = novaLista[i]!;
+        const b = novaLista[i + 1]!;
+        if (selectedIds.has(a.id) && !selectedIds.has(b.id)) {
+          novaLista[i] = b;
+          novaLista[i + 1] = a;
         }
       }
     }
@@ -262,8 +268,9 @@ export function MediaManager({ produtoId }: { produtoId: string }) {
     }
 
     const restantes = midias.filter((m) => !selectedIds.has(m.id));
-    if (restantes.length > 0 && selecionadas.some((m) => m.principal)) {
-      await supabase.from("produto_midias").update({ principal: true }).eq("id", restantes[0].id);
+    const novaPrincipal = restantes[0];
+    if (novaPrincipal && selecionadas.some((m) => m.principal)) {
+      await supabase.from("produto_midias").update({ principal: true }).eq("id", novaPrincipal.id);
     }
 
     await Promise.all(

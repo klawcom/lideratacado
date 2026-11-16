@@ -15,8 +15,8 @@ export function normalizeMenuLinks(raw: unknown): MenuLink[] {
   let saved: unknown[] = [];
   if (Array.isArray(raw)) {
     saved = raw;
-  } else if (raw && typeof raw === "object" && "links" in raw && Array.isArray((raw as Record<string, unknown>).links)) {
-    saved = (raw as Record<string, unknown>).links as unknown[];
+  } else if (raw && typeof raw === "object" && "links" in raw && Array.isArray((raw as Record<string, unknown>)["links"])) {
+    saved = (raw as Record<string, unknown>)["links"] as unknown[];
   }
   const out: MenuLink[] = [];
   for (const item of saved) {

@@ -32,7 +32,7 @@ export function ShippingCalculator({
 
   useEffect(() => {
     // Carrega último CEP usado pelo cliente
-    const salvo = localStorage.getItem(CEP_STORAGE_KEY) || lerDadosEntrega()?.cep;
+    const salvo = localStorage.getItem(CEP_STORAGE_KEY) || lerDadosEntrega()?.["cep"];
     if (salvo) {
       setCep(maskCep(salvo));
     }
