@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { MediaGallery } from "@/components/store/media-gallery";
 import { QtyStepper } from "@/components/store/qty-stepper";
 import { ShippingCalculator } from "@/components/store/shipping-calculator";
+import { StickyBar } from "@/components/store/sticky-bar";
 import { produtoQuery, siteQuery } from "@/lib/catalog.functions";
 import { imagemPrincipal } from "@/lib/media";
 import { FAIXAS, TAMANHOS, TAMANHOS_PADRAO, TAMANHOS_PLUS_SIZE, faixaDoTotal, menorPreco, pecas, precoNaFaixa, type Qtd } from "@/lib/pricing";
@@ -82,6 +83,70 @@ export const Route = createFileRoute("/produto/$slug")({
 });
 
 const ZERO: Qtd = { p: 0, m: 0, g: 0, gg: 0, g1: 0, g2: 0 };
+
+function DetalhesProduto({
+  descFinal,
+  compFinal,
+  isPima,
+  isPolo,
+  isPlusSize,
+}: {
+  descFinal?: string | null;
+  compFinal?: string | null;
+  isPima: boolean;
+  isPolo: boolean;
+  isPlusSize: boolean;
+}) {
+  if (!descFinal && !compFinal && !isPima && !isPolo && !isPlusSize) return null;
+  return (
+    <section aria-labelledby="secao-descricao" className="rounded-2xl border bg-card/60 p-4 sm:p-5 space-y-3.5 max-w-full">
+      {descFinal && (
+        <div>
+          <h2 id="secao-descricao" className="font-sans text-sm font-semibold tracking-normal text-foreground">
+            Descrição do produto
+          </h2>
+          <p className="mt-1.5 whitespace-pre-line text-sm text-muted-foreground leading-relaxed break-words">
+            {descFinal}
+          </p>
+        </div>
+      )}
+
+      {compFinal && (
+        <div className={descFinal ? "pt-3 border-t border-border/60" : ""}>
+          <h2 className="font-sans text-sm font-semibold tracking-normal text-foreground">Composição</h2>
+          <p className="mt-1 text-sm text-muted-foreground break-words">{compFinal}</p>
+        </div>
+      )}
+
+      {(isPima || isPolo || isPlusSize) && (
+        <div className={descFinal || compFinal ? "pt-3 border-t border-border/60 space-y-2" : "space-y-2"}>
+          <div className="flex flex-wrap items-center justify-between gap-1">
+            <h2 className="font-sans text-sm font-semibold tracking-normal text-foreground">
+              Medidas aproximadas
+            </h2>
+            <span className="text-[11px] text-muted-foreground uppercase font-medium">
+              {isPlusSize ? "Camisetas Plus Size" : isPolo ? "Camisas Polos Masculinas" : "Camisetas Masculinas"}
+            </span>
+          </div>
+          <div className={cn("grid gap-2", isPlusSize ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-4")}>
+            {(isPlusSize ? MEDIDAS_PLUS_SIZE : isPolo ? MEDIDAS_POLO : MEDIDAS_COTTON_PIMA).map((m) => (
+              <div
+                key={m.tamanho}
+                className="rounded-xl border bg-background/70 p-2 text-center shadow-2xs min-w-0"
+              >
+                <span className="inline-block text-xs font-bold text-primary bg-primary/10 rounded-md px-2 py-0.5 mb-1">
+                  Tam {m.tamanho}
+                </span>
+                <p className="text-xs font-semibold text-foreground truncate">{m.largura}</p>
+                <p className="text-[11px] text-muted-foreground truncate">× {m.altura}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
 
 function ProdutoPage() {
   const { slug } = Route.useParams();
@@ -177,7 +242,7 @@ function ProdutoPage() {
   const coresPreenchidas = Object.entries(coresQtd).filter(([_, q]) => pecas(q) > 0);
 
   return (
-    <div className="container-page pb-12 pt-4 md:pt-6">
+    <div className="container-page pb-bar pt-3 sm:pt-4 md:pt-6 max-w-full overflow-x-hidden min-w-0">
       {p.categorias && (
         <Link
           to="/categoria/$slug"
@@ -187,62 +252,37 @@ function ProdutoPage() {
           <ChevronLeft className="size-4" /> {p.categorias.nome}
         </Link>
       )}
+
+      {/* Cabeçalho mobile: antes da galeria para contextualizar imediatamente */}
+      <div className="mb-3 block md:hidden min-w-0">
+        <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Modelo {p.codigo_modelo}</p>
+        <h1 className="mt-0.5 text-xl font-bold tracking-tight text-foreground">{p.nome}</h1>
+        {min !== null && (
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            a partir de <strong className="font-semibold text-foreground">R$ {money(min)}</strong> por peça
+          </p>
+        )}
+      </div>
+
       <div className="grid gap-6 md:grid-cols-2 md:gap-10">
-        <div className="space-y-5">
+        <div className="min-w-0 space-y-5">
           <MediaGallery midias={p.produto_midias} nome={p.nome} />
 
-          {(descFinal || compFinal || isPima || isPolo || isPlusSize) && (
-            <section aria-labelledby="secao-descricao" className="rounded-2xl border bg-card/60 p-4 sm:p-5 space-y-3.5">
-              {descFinal && (
-                <div>
-                  <h2 id="secao-descricao" className="font-sans text-sm font-semibold tracking-normal text-foreground">
-                    Descrição do produto
-                  </h2>
-                  <p className="mt-1.5 whitespace-pre-line text-sm text-muted-foreground leading-relaxed">
-                    {descFinal}
-                  </p>
-                </div>
-              )}
-
-              {compFinal && (
-                <div className={descFinal ? "pt-3 border-t border-border/60" : ""}>
-                  <h2 className="font-sans text-sm font-semibold tracking-normal text-foreground">Composição</h2>
-                  <p className="mt-1 text-sm text-muted-foreground">{compFinal}</p>
-                </div>
-              )}
-
-              {(isPima || isPolo || isPlusSize) && (
-                <div className={descFinal || compFinal ? "pt-3 border-t border-border/60 space-y-2" : "space-y-2"}>
-                  <div className="flex items-center justify-between">
-                    <h2 className="font-sans text-sm font-semibold tracking-normal text-foreground">
-                      Medidas aproximadas
-                    </h2>
-                    <span className="text-[11px] text-muted-foreground uppercase font-medium">
-                      {isPlusSize ? "Camisetas Plus Size" : isPolo ? "Camisas Polos Masculinas" : "Camisetas Masculinas"}
-                    </span>
-                  </div>
-                  <div className={cn("grid gap-2", isPlusSize ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-4")}>
-                    {(isPlusSize ? MEDIDAS_PLUS_SIZE : isPolo ? MEDIDAS_POLO : MEDIDAS_COTTON_PIMA).map((m) => (
-                      <div
-                        key={m.tamanho}
-                        className="rounded-xl border bg-background/70 p-2.5 text-center shadow-2xs"
-                      >
-                        <span className="inline-block text-xs font-bold text-primary bg-primary/10 rounded-md px-2 py-0.5 mb-1">
-                          Tam {m.tamanho}
-                        </span>
-                        <p className="text-xs font-semibold text-foreground">{m.largura}</p>
-                        <p className="text-[11px] text-muted-foreground">× {m.altura}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </section>
-          )}
+          {/* Na versão desktop, a descrição fica na coluna esquerda abaixo da galeria */}
+          <div className="hidden md:block">
+            <DetalhesProduto
+              descFinal={descFinal}
+              compFinal={compFinal}
+              isPima={isPima}
+              isPolo={isPolo}
+              isPlusSize={isPlusSize}
+            />
+          </div>
         </div>
 
         <div className="min-w-0 space-y-5">
-          <div>
+          {/* Cabeçalho desktop */}
+          <div className="hidden md:block">
             <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Modelo {p.codigo_modelo}</p>
             <h1 className="mt-1 text-xl sm:text-2xl font-bold tracking-tight text-foreground">{p.nome}</h1>
             {min !== null && (
@@ -470,9 +510,41 @@ function ProdutoPage() {
                 </div>
               </div>
             </div>
+
+            {/* Detalhes do produto (Descrição, Composição e Medidas) no mobile após as opções de compra */}
+            <div className="block md:hidden pt-2">
+              <DetalhesProduto
+                descFinal={descFinal}
+                compFinal={compFinal}
+                isPima={isPima}
+                isPolo={isPolo}
+                isPlusSize={isPlusSize}
+              />
+            </div>
           </section>
         </div>
       </div>
+
+      {/* Barra de ação fixa inferior para dispositivos móveis (mobile-first) */}
+      <StickyBar>
+        <div className="min-w-0 flex-1 leading-tight">
+          <p className="text-base sm:text-lg font-bold tabular-nums">
+            {n > 0 ? brl(precoAtual * n) : (min !== null ? `A partir de ${brl(min)}` : "Selecione as peças")}
+          </p>
+          <p className="truncate text-xs text-muted-foreground">
+            {n > 0 ? `${n} ${n === 1 ? "peça selecionada" : "peças selecionadas"} (R$ ${money(precoAtual)}/un)` : "Escolha cor e tamanhos acima"}
+          </p>
+        </div>
+        <Button
+          size="lg"
+          onClick={adicionar}
+          disabled={n < 1}
+          className="shrink-0 font-semibold h-11 px-4 sm:px-6 shadow-sm"
+        >
+          <ShoppingBag className="mr-1.5 size-4" />
+          {n > 0 ? `Adicionar (${n})` : "Adicionar"}
+        </Button>
+      </StickyBar>
     </div>
   );
 }

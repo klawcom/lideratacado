@@ -9,15 +9,17 @@ function Slide({ m, alt, fallbackPoster, eager }: { m: MidiaRow; alt: string; fa
   const yt = youtubeId(m.video_externo);
   if (m.tipo === "foto" && m.url) {
     return (
-      <img
-        src={mediaUrl(m.url)}
-        alt={alt}
-        width={1200}
-        height={1500}
-        loading={eager ? "eager" : "lazy"}
-        decoding="async"
-        className="h-full w-full object-cover"
-      />
+      <div className="flex h-full w-full items-center justify-center p-2 sm:p-3">
+        <img
+          src={mediaUrl(m.url)}
+          alt={alt}
+          width={1200}
+          height={1500}
+          loading={eager ? "eager" : "lazy"}
+          decoding="async"
+          className="h-full w-full object-contain"
+        />
+      </div>
     );
   }
   if (yt) {
@@ -43,7 +45,7 @@ function Slide({ m, alt, fallbackPoster, eager }: { m: MidiaRow; alt: string; fa
   if (m.tipo === "video" && m.url) {
     return (
       <video
-        className="h-full w-full bg-muted object-cover"
+        className="h-full w-full bg-muted object-contain"
         src={mediaUrl(m.url)}
         poster={m.capa_url ? mediaUrl(m.capa_url) : fallbackPoster || undefined}
         preload="none"
@@ -80,33 +82,33 @@ export function MediaGallery({ midias, nome }: { midias: MidiaRow[]; nome: strin
     strip.scrollTo({ left: Math.max(0, offset - (strip.clientWidth - btn.clientWidth) / 2), behavior: "smooth" });
   }, [idx]);
 
-  if (list.length === 0) return <div className="aspect-[4/5] rounded-3xl bg-muted" />;
+  if (list.length === 0) return <div className="aspect-square sm:aspect-[4/5] rounded-2xl sm:rounded-3xl bg-muted" />;
 
   return (
-    <div className="min-w-0">
-      <div className="relative">
-      <div
-        ref={track}
-        onScroll={(e) => {
-          const el = e.currentTarget;
-          setIdx(Math.round(el.scrollLeft / Math.max(1, el.clientWidth)));
-        }}
-        className="no-scrollbar flex aspect-[4/5] w-full snap-x snap-mandatory overflow-x-auto overscroll-x-contain rounded-3xl bg-muted"
-      >
-        {list.map((m, i) => (
-          <div key={m.id} className="aspect-[4/5] w-full shrink-0 snap-center">
-            <Slide m={m} alt={`${nome}${list.length > 1 ? ` — mídia ${i + 1}` : ""}`} fallbackPoster={fallbackPoster} eager={i === 0} />
-          </div>
-        ))}
+    <div className="min-w-0 max-w-full">
+      <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl border border-border/60 bg-muted/20">
+        <div
+          ref={track}
+          onScroll={(e) => {
+            const el = e.currentTarget;
+            setIdx(Math.round(el.scrollLeft / Math.max(1, el.clientWidth)));
+          }}
+          className="no-scrollbar flex aspect-square sm:aspect-[4/5] w-full snap-x snap-mandatory overflow-x-auto overscroll-x-contain"
+        >
+          {list.map((m, i) => (
+            <div key={m.id} className="aspect-square sm:aspect-[4/5] w-full shrink-0 snap-center flex items-center justify-center">
+              <Slide m={m} alt={`${nome}${list.length > 1 ? ` — mídia ${i + 1}` : ""}`} fallbackPoster={fallbackPoster} eager={i === 0} />
+            </div>
+          ))}
+        </div>
+        {list.length > 1 && (
+          <span className="pointer-events-none absolute bottom-3 right-3 rounded-full bg-background/90 px-2.5 py-0.5 text-xs font-semibold tabular-nums shadow-soft" aria-live="polite">
+            {idx + 1} de {list.length}
+          </span>
+        )}
       </div>
       {list.length > 1 && (
-        <span className="pointer-events-none absolute bottom-3 right-3 rounded-full bg-background/90 px-3 py-1 text-sm font-semibold tabular-nums shadow-soft" aria-live="polite">
-          {idx + 1} de {list.length}
-        </span>
-      )}
-      </div>
-      {list.length > 1 && (
-        <div ref={thumbs} className="no-scrollbar mt-3 flex gap-2 overflow-x-auto overscroll-x-contain pb-1">
+        <div ref={thumbs} className="no-scrollbar mt-2.5 flex gap-2 overflow-x-auto overscroll-x-contain pb-1 max-w-full">
           {list.map((m, i) => {
             const yt = youtubeId(m.video_externo);
             const thumb =
@@ -119,8 +121,8 @@ export function MediaGallery({ midias, nome }: { midias: MidiaRow[]; nome: strin
                 aria-label={`Ver mídia ${i + 1}`}
                 aria-current={i === idx}
                 className={cn(
-                  "relative aspect-[4/5] w-14 shrink-0 overflow-hidden sm:w-16 rounded-xl border-2 bg-muted transition",
-                  i === idx ? "border-primary" : "border-transparent opacity-70",
+                  "relative aspect-square w-12 sm:w-16 shrink-0 overflow-hidden rounded-xl border-2 bg-muted transition",
+                  i === idx ? "border-primary ring-2 ring-primary/20 scale-105" : "border-border/60 opacity-70 hover:opacity-100",
                 )}
               >
                 {thumb && <img src={thumb} alt="" loading="lazy" className="h-full w-full object-cover" />}
