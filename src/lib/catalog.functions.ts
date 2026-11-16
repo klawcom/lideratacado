@@ -65,8 +65,8 @@ export const getSiteData = createServerFn({ method: "GET" }).handler(async () =>
     const fileNames = new Set(bannerFiles?.map((b) => b.name) ?? []);
 
     const rawMenu = config?.menu_links as Record<string, unknown> | null;
-    const bannersMeta = Array.isArray(rawMenu?.banners)
-      ? (rawMenu?.banners as Array<{ id?: number; link?: string; titulo?: string; subtitulo?: string }>)
+    const bannersMeta = Array.isArray(rawMenu?.["banners"])
+      ? (rawMenu?.["banners"] as Array<{ id?: number; link?: string; titulo?: string; subtitulo?: string }>)
       : [];
 
     const meta1 = bannersMeta.find((m) => m?.id === 1);
@@ -256,7 +256,7 @@ export const syncDescricaoPolos = createServerFn({ method: "POST" }).handler(asy
     if (!descAtual.trim()) {
       novaDesc = DESCRICAO_COMPLETA_POLO;
     } else if (/Medidas aproximadas/i.test(descAtual)) {
-      const base = descAtual.split(/Medidas aproximadas/i)[0].trim();
+      const base = (descAtual.split(/Medidas aproximadas/i)[0] ?? "").trim();
       novaDesc = base ? `${base}\n\n${TEXTO_MEDIDAS_POLO}` : DESCRICAO_COMPLETA_POLO;
     } else {
       novaDesc = `${descAtual.trim()}\n\n${TEXTO_MEDIDAS_POLO}`;

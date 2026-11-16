@@ -92,7 +92,7 @@ function BannerCarousel({
   primeira,
 }: {
   slides: BannerSlideData[];
-  primeira?: { slug: string; nome: string };
+  primeira?: { slug: string; nome: string } | undefined;
 }) {
   const [current, setCurrent] = useState(0);
   const [isPaused, setIsPaused] = useState(false);

@@ -121,7 +121,7 @@ function Precos() {
 
     const catObj = categorias.find((c) => c.id === selectedCatId);
     const catNome = catObj?.nome ?? "Categoria";
-    const formattedPrecos = Object.fromEntries(FAIXAS.map((q) => [q, money(parsed[q])]));
+    const formattedPrecos = Object.fromEntries(FAIXAS.map((q) => [q, money(parsed[q] ?? 0)]));
 
     setRows((rs) =>
       rs.map((r) => (r.categoriaId === selectedCatId ? { ...r, precos: { ...r.precos, ...formattedPrecos } } : r))
@@ -140,7 +140,7 @@ function Precos() {
         FAIXAS.map((q) => ({
           produto_id: r.id,
           quantidade_minima: q,
-          preco_peca: parsed[q],
+          preco_peca: parsed[q] ?? 0,
         }))
       );
       const { error } = await supabase

@@ -152,9 +152,10 @@ function FinalizarPage() {
       if (res.sucesso && res.opcoes.length > 0) {
         setOpcoesFrete(res.opcoes);
         setFreteEscolhido((cur) => {
-          if (!cur) return res.opcoes[0];
+          const primeiraOpcao = res.opcoes[0] ?? null;
+          if (!cur) return primeiraOpcao;
           const found = res.opcoes.find((o) => o.id === cur.id || o.nome === cur.nome);
-          return found ?? res.opcoes[0];
+          return found ?? primeiraOpcao;
         });
       } else {
         setOpcoesFrete([]);

@@ -28,7 +28,7 @@ export function useCategoriasAdmin() {
   return useQuery({
     queryKey: ["admin", "categorias-lista"],
     queryFn: async () => {
-      const { data } = await supabase.from("categorias").select("id, nome").order("ordem");
+      const { data } = await supabase.from("categorias").select("id, nome, slug").order("ordem");
       return data ?? [];
     },
   });
