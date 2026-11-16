@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { LayoutDashboard, LogOut, Mail, Menu, MessageCircle, Package, ShoppingBag, User } from "lucide-react";
+import { LayoutDashboard, LogOut, Menu, Package, ShoppingBag, User } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -10,15 +10,11 @@ import { useCartCount } from "@/lib/cart";
 import { siteQuery } from "@/lib/catalog.functions";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
-import { visibleMenuLinks } from "@/lib/menu-links";
-import { formatWhatsappIntl, whatsappLinkNumber } from "@/lib/format";
-
 
 export function SiteHeader() {
   const count = useCartCount();
   const { data } = useQuery(siteQuery());
   const { user, isAdmin } = useAuth();
-  const links = visibleMenuLinks(data?.config?.menu_links);
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const qc = useQueryClient();
@@ -94,12 +90,6 @@ export function SiteHeader() {
                     {c.nome}
                   </Link>
                 ))}
-                {links.length > 0 && <p className="eyebrow px-3 pb-1 pt-5">Atendimento</p>}
-                {links.map((l) => (
-                  <Link key={l.to} to={l.to} className="flex min-h-12 items-center rounded-xl px-3 font-medium hover:bg-accent">
-                    {l.label}
-                  </Link>
-                ))}
                 <p className="eyebrow px-3 pb-1 pt-5">Conta</p>
                 {user ? (
                   <>
@@ -118,27 +108,8 @@ export function SiteHeader() {
                   </Link>
                 )}
               </nav>
-              {(data?.config?.whatsapp || data?.config?.email_contato) && (
-                <div className="mt-2 border-t pt-4 px-4 space-y-2">
-                  <p className="eyebrow pb-1">Atendimento</p>
-                  {data.config.whatsapp && (
-                    <Button asChild size="sm" className="w-full bg-[#14532D] hover:bg-[#0F3F24] text-white justify-start gap-2">
-                      <a href={`https://wa.me/${whatsappLinkNumber(data.config.whatsapp)}`} target="_blank" rel="noopener noreferrer">
-                        <MessageCircle className="size-4" /> WhatsApp
-                      </a>
-                    </Button>
-                  )}
-                  {data.config.email_contato && (
-                    <Button asChild variant="outline" size="sm" className="w-full justify-start gap-2">
-                      <a href={`mailto:${data.config.email_contato}`}>
-                        <Mail className="size-4" /> {data.config.email_contato}
-                      </a>
-                    </Button>
-                  )}
-                </div>
-              )}
               {user && (
-                <div className="px-4 pb-6">
+                <div className="border-t pt-4 px-4 pb-6">
                   <p className="mb-2 truncate text-sm text-muted-foreground">{user.email}</p>
                   <Button variant="outline" className="w-full" onClick={sair}>
                     <LogOut /> Sair
