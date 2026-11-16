@@ -33,6 +33,10 @@ export type MensagemPedido = {
     cidade: string;
     estado: string;
     cep: string;
+    isDropshipping?: boolean;
+    destinatario?: string;
+    cpfDestinatario?: string;
+    whatsappDestinatario?: string;
   };
   observacao?: string;
 };
@@ -87,19 +91,45 @@ export function montarMensagemPedido(p: MensagemPedido): string {
   }
   L.push(`⚠️ *Cores:* Conforme disponibilidade do estoque. Caso alguma cor escolhida não esteja disponível, enviaremos cores sortidas.`);
   L.push(SEP);
-  L.push(`*CLIENTE*`);
-  L.push(`👤 ${p.cliente.nome}`);
-  if (p.cliente.cpf) {
-    L.push(`📄 CPF: ${maskCpf(p.cliente.cpf)}`);
+  if (p.entrega.isDropshipping) {
+    L.push(`📦 *MODALIDADE: DROPSHIPPING*`);
+    L.push(`*CLIENTE (REVENDEDOR)*`);
+    L.push(`👤 ${p.cliente.nome}`);
+    if (p.cliente.cpf) {
+      L.push(`📄 CPF: ${maskCpf(p.cliente.cpf)}`);
+    }
+    L.push(`📧 ${p.cliente.email}`);
+    L.push(`📱 ${formatWhatsappIntl(p.cliente.whatsapp)}`);
+    L.push(`*ENTREGA (DESTINATÁRIO FINAL)*`);
+    if (p.entrega.destinatario) {
+      L.push(`👤 Destinatário: ${p.entrega.destinatario}`);
+    }
+    if (p.entrega.cpfDestinatario) {
+      L.push(`📄 CPF Destinatário: ${maskCpf(p.entrega.cpfDestinatario)}`);
+    }
+    if (p.entrega.whatsappDestinatario) {
+      L.push(`📱 WhatsApp Destinatário: ${formatWhatsappIntl(p.entrega.whatsappDestinatario)}`);
+    }
+    const comp = p.entrega.complemento?.trim();
+    L.push(`📍 ${p.entrega.rua}, ${p.entrega.numero}${comp ? ` ${comp}` : ""}`);
+    L.push(p.entrega.bairro);
+    L.push(`${p.entrega.cidade}/${p.entrega.estado.toUpperCase()}`);
+    L.push(`CEP ${maskCep(p.entrega.cep)}`);
+  } else {
+    L.push(`*CLIENTE*`);
+    L.push(`👤 ${p.cliente.nome}`);
+    if (p.cliente.cpf) {
+      L.push(`📄 CPF: ${maskCpf(p.cliente.cpf)}`);
+    }
+    L.push(`📧 ${p.cliente.email}`);
+    L.push(`📱 ${formatWhatsappIntl(p.cliente.whatsapp)}`);
+    L.push(`*ENTREGA*`);
+    const comp = p.entrega.complemento?.trim();
+    L.push(`📍 ${p.entrega.rua}, ${p.entrega.numero}${comp ? ` ${comp}` : ""}`);
+    L.push(p.entrega.bairro);
+    L.push(`${p.entrega.cidade}/${p.entrega.estado.toUpperCase()}`);
+    L.push(`CEP ${maskCep(p.entrega.cep)}`);
   }
-  L.push(`📧 ${p.cliente.email}`);
-  L.push(`📱 ${formatWhatsappIntl(p.cliente.whatsapp)}`);
-  L.push(`*ENTREGA*`);
-  const comp = p.entrega.complemento?.trim();
-  L.push(`📍 ${p.entrega.rua}, ${p.entrega.numero}${comp ? ` ${comp}` : ""}`);
-  L.push(p.entrega.bairro);
-  L.push(`${p.entrega.cidade}/${p.entrega.estado.toUpperCase()}`);
-  L.push(`CEP ${maskCep(p.entrega.cep)}`);
   if (p.observacao?.trim()) {
     L.push(`📝 *Observação do pedido:*`);
     L.push(p.observacao.trim());

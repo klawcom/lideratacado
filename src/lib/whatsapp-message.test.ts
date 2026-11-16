@@ -104,6 +104,33 @@ describe("mensagem do pedido no WhatsApp", () => {
     expect(comFrete).toContain("📄 CPF: 123.456.789-09");
     expect(comFrete).toContain("Aguardo a confirmação e as formas de pagamento. Obrigado!");
   });
+  it("formata entrega no modelo dropshipping com revendedor e destinatário", () => {
+    const comDrop = montarMensagemPedido({
+      ...base,
+      entrega: {
+        rua: "Av. Paulista",
+        numero: "1500",
+        complemento: "Apto 42",
+        bairro: "Bela Vista",
+        cidade: "São Paulo",
+        estado: "SP",
+        cep: "01310100",
+        isDropshipping: true,
+        destinatario: "Carlos Silva",
+        cpfDestinatario: "11122233344",
+        whatsappDestinatario: "11988887777",
+      },
+    });
+    expect(comDrop).toContain("📦 *MODALIDADE: DROPSHIPPING*");
+    expect(comDrop).toContain("*CLIENTE (REVENDEDOR)*");
+    expect(comDrop).toContain("👤 Ana Souza");
+    expect(comDrop).toContain("*ENTREGA (DESTINATÁRIO FINAL)*");
+    expect(comDrop).toContain("👤 Destinatário: Carlos Silva");
+    expect(comDrop).toContain("📄 CPF Destinatário: 111.222.333-44");
+    expect(comDrop).toContain("📱 WhatsApp Destinatário: +55 (11) 98888-7777");
+    expect(comDrop).toContain("📍 Av. Paulista, 1500 Apto 42");
+    expect(comDrop).toContain("CEP 01310-100");
+  });
   it("link wa.me mantém emojis e quebras de linha codificados", () => {
     const url = linkWhatsapp("5566996444461", msg);
     expect(url.startsWith("https://wa.me/5566996444461?text=")).toBe(true);

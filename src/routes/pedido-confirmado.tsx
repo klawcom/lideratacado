@@ -1,10 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { CheckCircle2, MessageCircle } from "lucide-react";
+import { CheckCircle2, FileDown, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { lerUltimoPedido } from "@/lib/checkout-storage";
 import type { PedidoCriado } from "@/lib/orders.functions";
 import { padNumero } from "@/lib/format";
+import { gerarPedidoPdf } from "@/lib/order-pdf";
 import { seo } from "@/lib/seo";
 
 export const Route = createFileRoute("/pedido-confirmado")({
@@ -20,6 +21,56 @@ export const Route = createFileRoute("/pedido-confirmado")({
 function Confirmado() {
   const [p, setP] = useState<PedidoCriado | null | undefined>(undefined);
   useEffect(() => setP(lerUltimoPedido()), []);
+
+  function baixarPdf() {
+    if (!p) return;
+    if (p.cliente && p.entrega) {
+      gerarPedidoPdf({
+        numero: p.numero,
+        criadoEm: p.criadoEm,
+        statusLabel: "Registrado",
+        cliente: p.cliente,
+        entrega: p.entrega,
+        itens: p.resumo.itens.map((it) => ({
+          nome: it.nome,
+          codigo: it.codigo,
+          pecas: it.pecas,
+          preco: it.preco,
+          valor: it.valor,
+          detalhes: it.observacao,
+        })),
+        resumo: {
+          totalPecas: p.resumo.totalPecas,
+          faixa: p.resumo.faixa,
+          total: p.resumo.total,
+        },
+        frete: p.frete,
+        observacao: p.observacao,
+      });
+    } else {
+      gerarPedidoPdf({
+        numero: p.numero,
+        criadoEm: p.criadoEm,
+        statusLabel: "Registrado",
+        cliente: { nome: "Cliente", email: "", whatsapp: "" },
+        entrega: { rua: "", numero: "", bairro: "", cidade: "", estado: "", cep: "" },
+        itens:
+          p.resumo?.itens?.map((it) => ({
+            nome: it.nome,
+            codigo: it.codigo,
+            pecas: it.pecas,
+            preco: it.preco,
+            valor: it.valor,
+          })) ?? [],
+        resumo: {
+          totalPecas: p.resumo?.totalPecas ?? 0,
+          faixa: p.resumo?.faixa ?? 10,
+          total: p.resumo?.total ?? 0,
+        },
+        observacao: p.mensagem,
+      });
+    }
+  }
 
   if (p === undefined) return <div className="min-h-[50vh]" />;
   if (!p) {
@@ -47,7 +98,10 @@ function Confirmado() {
               <MessageCircle /> Abrir WhatsApp
             </a>
           </Button>
-          <Button asChild size="lg" variant="outline">
+          <Button size="lg" variant="outline" onClick={baixarPdf} className="gap-2">
+            <FileDown className="size-4" /> Baixar Pedido (PDF)
+          </Button>
+          <Button asChild size="lg" variant="ghost">
             <Link to="/">Voltar à loja</Link>
           </Button>
         </div>

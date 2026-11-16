@@ -3,7 +3,7 @@ import { getRequest } from "@tanstack/react-start/server";
 import { z } from "zod";
 import { calcularPedido, pecas, type Qtd } from "./pricing";
 import { linkWhatsapp, montarMensagemPedido } from "./whatsapp-message";
-import { faltamPecas, maskCpf, money, onlyDigits, validarCpf } from "./format";
+import { faltamPecas, formatWhatsappIntl, maskCpf, money, onlyDigits, validarCpf } from "./format";
 import { formatarCorTamanhos } from "./colors";
 
 const qtd = z.number().int().min(0).max(100000).default(0);
@@ -52,6 +52,27 @@ export const pedidoSchema = z.object({
     preco: z.number().min(0),
     prazo: z.string().trim().min(1),
   }),
+  dropshipping: z
+    .object({
+      destinatarioNome: z.string().trim().min(2, "Informe o nome do destinatário").max(120),
+      destinatarioCpf: z.string().transform(onlyDigits).optional(),
+      destinatarioWhatsapp: z.string().transform(onlyDigits).optional(),
+      cep: z
+        .string()
+        .transform(onlyDigits)
+        .refine((v) => v.length === 8, "CEP do destinatário inválido"),
+      rua: z.string().trim().min(2, "Informe a rua de entrega").max(200),
+      numero: z.string().trim().min(1, "Informe o número").max(20),
+      complemento: z.string().trim().max(100).default(""),
+      bairro: z.string().trim().min(2, "Informe o bairro").max(120),
+      cidade: z.string().trim().min(2, "Informe a cidade").max(120),
+      estado: z
+        .string()
+        .trim()
+        .toUpperCase()
+        .regex(/^[A-Z]{2}$/, "UF inválida"),
+    })
+    .optional(),
   observacao: z.string().trim().max(500).default(""),
   itens: z
     .array(
@@ -80,8 +101,28 @@ export type PedidoCriado = {
   criadoEm: string;
   mensagem: string;
   waUrl: string;
+  cliente: { nome: string; email: string; whatsapp: string; cpf?: string };
+  entrega: {
+    rua: string;
+    numero: string;
+    complemento?: string;
+    bairro: string;
+    cidade: string;
+    estado: string;
+    cep: string;
+    isDropshipping?: boolean;
+    destinatario?: string;
+    cpfDestinatario?: string;
+    whatsappDestinatario?: string;
+  };
+  frete?: {
+    servico: string;
+    preco: number;
+    prazo: string;
+  };
+  observacao?: string;
   resumo: {
-    itens: { nome: string; pecas: number; preco: number; valor: number; qtd: Qtd; observacao: string }[];
+    itens: { nome: string; codigo?: string; pecas: number; preco: number; valor: number; qtd: Qtd; observacao: string }[];
     totalPecas: number;
     faixa: number;
     total: number;
@@ -198,7 +239,30 @@ export const criarPedido = createServerFn({ method: "POST" })
     const freteObs = data.frete
       ? `Frete: ${data.frete.servico} (R$ ${money(data.frete.preco)} - ${data.frete.prazo})`
       : "";
-    const observacaoFinal = [cpfObs, freteObs, data.observacao].filter(Boolean).join(" | ").slice(0, 500);
+    const dropObs = data.dropshipping
+      ? `[DROPSHIPPING] Destinatário: ${data.dropshipping.destinatarioNome}${data.dropshipping.destinatarioCpf ? ` (CPF: ${maskCpf(data.dropshipping.destinatarioCpf)})` : ""}${data.dropshipping.destinatarioWhatsapp ? ` (Tel: ${formatWhatsappIntl(data.dropshipping.destinatarioWhatsapp)})` : ""}`
+      : "";
+    const observacaoFinal = [dropObs, cpfObs, freteObs, data.observacao].filter(Boolean).join(" | ").slice(0, 500);
+
+    const entregaDestino = data.dropshipping
+      ? {
+          rua: data.dropshipping.rua,
+          numero: data.dropshipping.numero,
+          complemento: data.dropshipping.complemento || "",
+          bairro: data.dropshipping.bairro,
+          cidade: data.dropshipping.cidade,
+          estado: data.dropshipping.estado,
+          cep: data.dropshipping.cep,
+        }
+      : {
+          rua: c.rua,
+          numero: c.numero,
+          complemento: c.complemento || "",
+          bairro: c.bairro,
+          cidade: c.cidade,
+          estado: c.estado,
+          cep: c.cep,
+        };
 
     const { data: pedido, error: pedErr } = await db
       .from("pedidos")
@@ -212,13 +276,13 @@ export const criarPedido = createServerFn({ method: "POST" })
         cliente_nome: c.nome,
         cliente_email: c.email,
         cliente_whatsapp: c.whatsapp,
-        rua: c.rua,
-        numero_endereco: c.numero,
-        complemento: c.complemento,
-        bairro: c.bairro,
-        cidade: c.cidade,
-        estado: c.estado,
-        cep: c.cep,
+        rua: entregaDestino.rua,
+        numero_endereco: entregaDestino.numero,
+        complemento: entregaDestino.complemento,
+        bairro: entregaDestino.bairro,
+        cidade: entregaDestino.cidade,
+        estado: entregaDestino.estado,
+        cep: entregaDestino.cep,
       })
       .select("id, numero, created_at")
       .single();
@@ -261,6 +325,31 @@ export const criarPedido = createServerFn({ method: "POST" })
         observacao: i.observacao,
       };
     });
+
+    const entregaMsg = data.dropshipping
+      ? {
+          rua: data.dropshipping.rua,
+          numero: data.dropshipping.numero,
+          complemento: data.dropshipping.complemento,
+          bairro: data.dropshipping.bairro,
+          cidade: data.dropshipping.cidade,
+          estado: data.dropshipping.estado,
+          cep: data.dropshipping.cep,
+          isDropshipping: true,
+          destinatario: data.dropshipping.destinatarioNome,
+          cpfDestinatario: data.dropshipping.destinatarioCpf,
+          whatsappDestinatario: data.dropshipping.destinatarioWhatsapp,
+        }
+      : {
+          rua: c.rua,
+          numero: c.numero,
+          complemento: c.complemento,
+          bairro: c.bairro,
+          cidade: c.cidade,
+          estado: c.estado,
+          cep: c.cep,
+        };
+
     const mensagem = montarMensagemPedido({
       numero: Number(pedido.numero),
       criadoEm: pedido.created_at,
@@ -270,7 +359,7 @@ export const criarPedido = createServerFn({ method: "POST" })
       total: totalComFrete,
       frete: data.frete,
       cliente: { nome: c.nome, email: c.email, whatsapp: c.whatsapp, cpf: c.cpf },
-      entrega: { rua: c.rua, numero: c.numero, complemento: c.complemento, bairro: c.bairro, cidade: c.cidade, estado: c.estado, cep: c.cep },
+      entrega: entregaMsg,
       observacao: data.observacao,
     });
 
@@ -279,6 +368,30 @@ export const criarPedido = createServerFn({ method: "POST" })
       criadoEm: pedido.created_at,
       mensagem,
       waUrl: linkWhatsapp(config?.whatsapp ?? "5566996444461", mensagem),
-      resumo: { itens: itensMsg, totalPecas: resumo.totalPecas, faixa: resumo.faixa, total: totalComFrete },
+      cliente: { nome: c.nome, email: c.email, whatsapp: c.whatsapp, cpf: c.cpf },
+      entrega: entregaMsg,
+      frete: data.frete,
+      observacao: data.observacao,
+      resumo: {
+        itens: itensMsg.map((it, idx) => ({ ...it, codigo: resumo.itens[idx]?.codigo })),
+        totalPecas: resumo.totalPecas,
+        faixa: resumo.faixa,
+        total: totalComFrete,
+      },
     };
+  });
+
+export const excluirPedidosFn = createServerFn({ method: "POST" })
+  .validator((ids: string[]) => z.array(z.string().uuid()).min(1).parse(ids))
+  .handler(async ({ data: ids }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const db = supabaseAdmin;
+    // 1. Delete associated notes
+    await db.from("pedido_notas").delete().in("pedido_id", ids);
+    // 2. Delete associated items
+    await db.from("pedido_itens").delete().in("pedido_id", ids);
+    // 3. Delete orders
+    const { error } = await db.from("pedidos").delete().in("id", ids);
+    if (error) throw new Error(error.message);
+    return { success: true, count: ids.length };
   });
