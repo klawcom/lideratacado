@@ -46,7 +46,7 @@ const FAQS_HOME = [
   {
     pergunta: "Posso escolher as cores e os tamanhos livremente (grade livre)?",
     resposta:
-      "Sim! Você tem total liberdade na grade. Escolha quantas peças desejar de cada tamanho (P ao GG e Plus Size G1/G2) e selecione as cores de sua preferência. Em caso de indisponibilidade de alguma cor, entraremos em contato para aprovação prévia — nunca realizamos trocas sem consentimento.",
+      "Sim! Você tem total liberdade na escolha de modelos e tamanhos (P ao GG e Plus Size G1/G2). Em relação às cores, atendemos as preferências escolhidas conforme a disponibilidade de estoque. Por trabalharmos com atacado de alto giro direto de fábrica, não conseguimos garantir 100% de todas as cores; caso alguma cor escolhida esteja esgotada no momento da separação, enviaremos peças em cores sortidas de mesma qualidade e modelo.",
   },
   {
     pergunta: "Como funciona o frete e o prazo de entrega para meu estado?",

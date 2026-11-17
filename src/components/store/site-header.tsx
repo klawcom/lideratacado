@@ -27,7 +27,7 @@ export function SiteHeader() {
   }
 
   return (
-    <header className="sticky top-0 z-40 border-b bg-background/90 backdrop-blur supports-[backdrop-filter]:bg-background/75">
+    <header className="fixed top-0 inset-x-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 shadow-xs">
       <div className="container-page flex h-16 items-center gap-2">
         <Link to="/" className="flex min-w-0 items-center gap-3" aria-label="Líder Atacado, página inicial">
           <Logo size={44} />

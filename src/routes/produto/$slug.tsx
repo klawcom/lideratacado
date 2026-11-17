@@ -1,14 +1,12 @@
 import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { ChevronLeft, ChevronRight, Headphones, Info, MessageCircle, ShoppingBag, Sparkles, Truck, X } from "lucide-react";
+import { AlertCircle, ChevronLeft, ChevronRight, Headphones, MessageCircle, ShoppingBag, Sparkles, Truck, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { MediaGallery } from "@/components/store/media-gallery";
 import { QtyStepper } from "@/components/store/qty-stepper";
 import { ShippingCalculator } from "@/components/store/shipping-calculator";
-import { StickyBar } from "@/components/store/sticky-bar";
 import { produtoQuery, siteQuery } from "@/lib/catalog.functions";
 import { imagemPrincipal } from "@/lib/media";
 import { FAIXAS, TAMANHOS, TAMANHOS_PADRAO, TAMANHOS_PLUS_SIZE, faixaDoTotal, menorPreco, pecas, precoNaFaixa, type Qtd } from "@/lib/pricing";
@@ -215,7 +213,6 @@ function ProdutoPage() {
 
   const [corAtiva, setCorAtiva] = useState<string>(listaCores[0]?.nome ?? "Branca");
   const [coresQtd, setCoresQtd] = useState<Record<string, Qtd>>({});
-  const [obs, setObs] = useState("");
 
   const qtdCorAtiva = coresQtd[corAtiva] ?? ZERO;
   const pecasCorAtiva = pecas(qtdCorAtiva);
@@ -282,7 +279,6 @@ function ProdutoPage() {
       faixas: p.faixas_preco,
       qtd: totalQtd,
       cores: itemCores.length ? itemCores : undefined,
-      observacao: obs.trim(),
     });
 
     analytics.addToCart({
@@ -295,7 +291,6 @@ function ProdutoPage() {
     });
 
     setCoresQtd({});
-    setObs("");
     toast.success(`${n} ${n === 1 ? "peça adicionada" : "peças adicionadas"} ao pedido`, {
       action: { label: "Ver pedido", onClick: () => navigate({ to: "/carrinho" }) },
     });
@@ -305,7 +300,7 @@ function ProdutoPage() {
   const coresPreenchidas = Object.entries(coresQtd).filter(([_, q]) => pecas(q) > 0);
 
   return (
-    <div className="container-page pb-bar pt-3 sm:pt-4 md:pt-6 max-w-full overflow-x-hidden min-w-0">
+    <div className="container-page pt-3 sm:pt-4 md:pt-6 max-w-full overflow-x-hidden min-w-0">
       {/* Navegação estrutural / Breadcrumb */}
       <nav aria-label="Navegação estrutural" className="mb-3 flex items-center gap-1.5 text-xs text-muted-foreground flex-wrap">
         <Link to="/" className="inline-flex min-h-11 items-center hover:text-foreground">
@@ -390,6 +385,21 @@ function ProdutoPage() {
               })}
             </ul>
           </section>
+
+          {/* Aviso em destaque absoluto sobre regras de cores no atacado */}
+          <div className="rounded-2xl border-2 border-amber-500/60 bg-amber-500/10 p-3.5 sm:p-4 text-amber-950 dark:text-amber-200 shadow-xs">
+            <div className="flex items-start gap-2.5">
+              <AlertCircle className="mt-0.5 size-5 shrink-0 text-amber-600 dark:text-amber-400" />
+              <div className="space-y-1 text-xs sm:text-sm">
+                <p className="font-bold uppercase tracking-wide text-amber-800 dark:text-amber-300">
+                  ⚠️ Aviso Importante — Regra de Cores no Atacado
+                </p>
+                <p className="leading-relaxed">
+                  Trabalhamos com venda em atacado de alto giro direto de fábrica. Atendemos as cores escolhidas conforme a disponibilidade imediata de estoque. Caso alguma cor selecionada não esteja disponível no momento da separação, enviaremos peças em <strong>cores sortidas</strong> de mesma qualidade e modelo.
+                </p>
+              </div>
+            </div>
+          </div>
 
           {/* Seleção de cores e tamanhos */}
           <section aria-labelledby="secao-cores" className="space-y-3.5">
@@ -499,29 +509,7 @@ function ProdutoPage() {
               </div>
             )}
 
-            <div className="flex gap-2.5 rounded-2xl bg-accent p-3 text-accent-foreground text-xs sm:text-sm">
-              <Info className="mt-0.5 size-4 shrink-0" />
-              <p className="font-medium leading-relaxed">
-                As cores selecionadas são separadas conforme disponibilidade de estoque. Não realizamos substituições de cores sem o seu consentimento prévio.
-              </p>
-            </div>
 
-            <div>
-              <label htmlFor="obs-item" className="mb-1 block text-xs font-medium text-foreground">
-                Observação do item <span className="font-normal text-muted-foreground">(opcional)</span>
-              </label>
-              <Textarea
-                id="obs-item"
-                maxLength={300}
-                rows={2}
-                value={obs}
-                onChange={(e) => setObs(e.target.value.slice(0, 300))}
-                placeholder="Ex.: preferência de tons claros, se houver"
-                enterKeyHint="done"
-                className="text-sm"
-              />
-              <p className="mt-1 text-right text-xs text-muted-foreground">{obs.length}/300</p>
-            </div>
 
             {/* Adicionar ao pedido colocado diretamente na página */}
             <div className="rounded-2xl border bg-card p-4 space-y-3 shadow-xs">
@@ -607,26 +595,6 @@ function ProdutoPage() {
         </div>
       </div>
 
-      {/* Barra de ação fixa inferior para dispositivos móveis (mobile-first) */}
-      <StickyBar>
-        <div className="min-w-0 flex-1 leading-tight">
-          <p className="text-base sm:text-lg font-bold tabular-nums">
-            {n > 0 ? brl(precoAtual * n) : (min !== null ? `A partir de ${brl(min)}` : "Selecione as peças")}
-          </p>
-          <p className="truncate text-xs text-muted-foreground">
-            {n > 0 ? `${n} ${n === 1 ? "peça selecionada" : "peças selecionadas"} (R$ ${money(precoAtual)}/un)` : "Escolha cor e tamanhos acima"}
-          </p>
-        </div>
-        <Button
-          size="lg"
-          onClick={adicionar}
-          disabled={n < 1}
-          className="shrink-0 font-semibold h-11 px-4 sm:px-6 shadow-sm"
-        >
-          <ShoppingBag className="mr-1.5 size-4" />
-          {n > 0 ? `Adicionar (${n})` : "Adicionar"}
-        </Button>
-      </StickyBar>
     </div>
   );
 }

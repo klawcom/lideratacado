@@ -73,7 +73,7 @@ Quanto mais peças você adiciona ao pedido, menor o preço unitário de cada pe
 - A partir de 50 peças: Melhor preço de atacado de fábrica.
 
 #### Posso escolher cores e tamanhos específicos?
-Sim! Trabalhamos com **grade livre**. Você escolhe exatamente os tamanhos e cores que deseja. Caso alguma cor escolhida esteja temporariamente esgotada, nossa equipe entrará em contato antes de despachar para confirmar substituições — não realizamos trocas automáticas sem seu consentimento.
+Sim! Trabalhamos com **grade livre** para modelos e tamanhos. Em relação às cores, atendemos as preferências escolhidas conforme a disponibilidade imediata do estoque. Por trabalharmos com atacado de alto giro direto de fábrica, caso alguma cor específica esteja esgotada no momento da separação, enviaremos peças em **cores sortidas** de mesma qualidade e modelo.
 
 #### Como é calculado o frete?
 O frete é calculado com base no peso e CEP de destino via integração oficial com os Correios (PAC e SEDEX). Você pode simular o frete diretamente na página do produto ou no carrinho.

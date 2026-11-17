@@ -243,10 +243,7 @@ export const criarPedido = createServerFn({ method: "POST" })
     const dropObs = data.dropshipping
       ? `[DROPSHIPPING] Destinatário: ${data.dropshipping.destinatarioNome}${data.dropshipping.destinatarioCpf ? ` (CPF: ${maskCpf(data.dropshipping.destinatarioCpf)})` : ""}${data.dropshipping.destinatarioWhatsapp ? ` (Tel: ${formatWhatsappIntl(data.dropshipping.destinatarioWhatsapp)})` : ""}`
       : "";
-    const corConsentObs =
-      data.substituicaoCores === "sortidas"
-        ? "[Cores: Cliente autorizou substituição]"
-        : "[Cores: Não substituir sem confirmar com cliente]";
+    const corConsentObs = "[Cores: Conforme estoque / sortidas na falta]";
     const observacaoFinal = [dropObs, corConsentObs, cpfObs, freteObs, data.observacao].filter(Boolean).join(" | ").slice(0, 500);
 
     const entregaDestino = data.dropshipping

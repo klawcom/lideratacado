@@ -25,11 +25,7 @@ export function SiteFooter() {
     <footer className="mt-16 border-t bg-card/40">
       <div className="container-page py-8">
         <div className="flex flex-col items-center justify-between gap-6 text-center text-sm text-muted-foreground md:flex-row md:text-left">
-          <div className="space-y-1">
-            <p className="font-semibold text-foreground">Líder Atacado</p>
-            <p className="text-xs text-muted-foreground">
-              Camisetas básicas e camisas polo no atacado direto de fábrica a partir de 10 peças.
-            </p>
+          <div>
             <p className="text-xs text-muted-foreground">
               © {new Date().getFullYear()} Líder Atacado. Todos os direitos reservados.
             </p>

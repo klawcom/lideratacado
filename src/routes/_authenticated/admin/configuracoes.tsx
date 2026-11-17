@@ -50,6 +50,8 @@ function Config() {
   const [menu, setMenu] = useState<MenuLink[]>([]);
   const [tokenSuperFrete, setTokenSuperFrete] = useState("");
   const [cepOrigemSuperFrete, setCepOrigemSuperFrete] = useState("78464-222");
+  const [limiteCategoriasHome, setLimiteCategoriasHome] = useState<number>(0);
+  const [limiteProdutosHome, setLimiteProdutosHome] = useState<number>(8);
   const logoRef = useRef<HTMLInputElement>(null);
   const wideBannerRef = useRef<HTMLInputElement>(null);
   const mobileBannerRef = useRef<HTMLInputElement>(null);
@@ -152,6 +154,12 @@ function Config() {
         if (superfrete?.token) setTokenSuperFrete(superfrete.token);
         if (superfrete?.cep_origem) setCepOrigemSuperFrete(maskCep(superfrete.cep_origem));
 
+        const homeLimits = sf["home_limits"] as { categorias?: number; produtos_por_categoria?: number } | undefined;
+        if (homeLimits) {
+          if (typeof homeLimits.categorias === "number") setLimiteCategoriasHome(homeLimits.categorias);
+          if (typeof homeLimits.produtos_por_categoria === "number") setLimiteProdutosHome(homeLimits.produtos_por_categoria);
+        }
+
         if (Array.isArray(sf["banners"])) {
           const links: Record<1 | 2 | 3, string> = { 1: "", 2: "", 3: "" };
           const titulos: Record<1 | 2 | 3, string> = { 1: "", 2: "", 3: "" };
@@ -220,6 +228,10 @@ function Config() {
         cep_origem: onlyDigits(cepOrigemSuperFrete),
       },
       banners: bannersMeta,
+      home_limits: {
+        categorias: Math.max(0, Number(limiteCategoriasHome) || 0),
+        produtos_por_categoria: Math.max(0, Number(limiteProdutosHome) || 0),
+      },
     };
     const { error } = await supabase
       .from("configuracoes")
@@ -617,6 +629,57 @@ function Config() {
               }
             }}
           />
+        </Panel>
+
+        <Panel className="space-y-4">
+          <div>
+            <h2 className="font-sans text-lg font-bold tracking-normal">Vitrine da Página Inicial</h2>
+            <p className="text-sm text-muted-foreground">
+              Defina a quantidade de categorias e produtos exibidos na página inicial da loja.
+            </p>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <FieldLabel htmlFor="cfg-lim-cat" hint="(0 para exibir todas)">
+                Quantidade de categorias na home
+              </FieldLabel>
+              <Input
+                id="cfg-lim-cat"
+                type="number"
+                min={0}
+                max={50}
+                value={limiteCategoriasHome}
+                onChange={(e) => setLimiteCategoriasHome(Math.max(0, parseInt(e.target.value, 10) || 0))}
+                placeholder="0 = todas as categorias"
+              />
+              <p className="mt-1 text-xs text-muted-foreground">
+                {limiteCategoriasHome === 0
+                  ? "Exibindo todas as categorias ativas no catálogo."
+                  : `Exibindo no máximo as ${limiteCategoriasHome} primeiras categorias.`}
+              </p>
+            </div>
+
+            <div>
+              <FieldLabel htmlFor="cfg-lim-prod" hint="(0 para exibir todos da categoria)">
+                Quantidade de produtos por categoria na home
+              </FieldLabel>
+              <Input
+                id="cfg-lim-prod"
+                type="number"
+                min={0}
+                max={100}
+                value={limiteProdutosHome}
+                onChange={(e) => setLimiteProdutosHome(Math.max(0, parseInt(e.target.value, 10) || 0))}
+                placeholder="Padrão: 8 (ou 0 para todos)"
+              />
+              <p className="mt-1 text-xs text-muted-foreground">
+                {limiteProdutosHome === 0
+                  ? "Exibindo todos os produtos de cada categoria na home."
+                  : `Exibindo no máximo ${limiteProdutosHome} produtos por categoria na home.`}
+              </p>
+            </div>
+          </div>
         </Panel>
 
         <Panel className="space-y-3">

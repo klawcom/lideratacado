@@ -144,16 +144,42 @@ export const siteQuery = () =>
 export const getHome = createServerFn({ method: "GET" }).handler(async () => {
   const { publicDb } = await import("./public-db.server");
   const db = publicDb();
-  const { data, error } = await db
-    .from("categorias")
-    .select(`id, nome, slug, descricao, ordem, produtos(${CARD_SELECT})`)
-    .order("ordem")
-    .order("nome");
-  if (error) throw new Error(error.message);
-  return (data ?? []).map((c) => ({
-    ...c,
-    produtos: sortCards(c.produtos as unknown as ProdutoCard[]).slice(0, 8).map(normFaixas),
-  }));
+  const [{ data: cats, error: errCats }, { data: cfg }] = await Promise.all([
+    db
+      .from("categorias")
+      .select(`id, nome, slug, descricao, ordem, produtos(${CARD_SELECT})`)
+      .order("ordem")
+      .order("nome"),
+    db.from("configuracoes").select("menu_links").eq("id", 1).maybeSingle(),
+  ]);
+  if (errCats) throw new Error(errCats.message);
+
+  let limiteCategorias = 0; // 0 = todas
+  let limiteProdutos = 8; // default 8
+
+  if (cfg?.menu_links && typeof cfg.menu_links === "object" && !Array.isArray(cfg.menu_links)) {
+    const hl = (cfg.menu_links as Record<string, any>)["home_limits"];
+    if (hl && typeof hl === "object") {
+      if (typeof hl.categorias === "number") limiteCategorias = Math.max(0, hl.categorias);
+      if (typeof hl.produtos_por_categoria === "number") limiteProdutos = Math.max(0, hl.produtos_por_categoria);
+    }
+  }
+
+  let finalCats = cats ?? [];
+  if (limiteCategorias > 0) {
+    finalCats = finalCats.slice(0, limiteCategorias);
+  }
+
+  return finalCats.map((c) => {
+    let prods = sortCards(c.produtos as unknown as ProdutoCard[]);
+    if (limiteProdutos > 0) {
+      prods = prods.slice(0, limiteProdutos);
+    }
+    return {
+      ...c,
+      produtos: prods.map(normFaixas),
+    };
+  });
 });
 
 export const homeQuery = () => queryOptions({ queryKey: ["home"], queryFn: () => getHome() });

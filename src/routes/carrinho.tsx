@@ -6,7 +6,6 @@ import { ArrowRight, Pencil, ShoppingBag, Trash2, TrendingDown } from "lucide-re
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { QtyStepper } from "@/components/store/qty-stepper";
-import { StickyBar } from "@/components/store/sticky-bar";
 import { ProgressDiscount } from "@/components/store/progress-discount";
 import { cart, useCart, type CartItem } from "@/lib/cart";
 import {
@@ -61,7 +60,7 @@ function CarrinhoPage() {
   }
 
   return (
-    <div className="container-page pb-bar pt-6 md:pt-10">
+    <div className="container-page pt-6 md:pt-10">
       <h1 className="text-3xl font-extrabold">Seu pedido</h1>
       <p className="mt-1 text-lg">
         <strong className="tabular-nums">{resumo.totalPecas}</strong> peças no pedido
@@ -162,46 +161,45 @@ function CarrinhoPage() {
               <dd className="font-bold tabular-nums">{brl(resumo.total)}</dd>
             </div>
           </dl>
-          <p className="mt-2 text-sm text-muted-foreground">Frete e pagamento a combinar pelo WhatsApp.</p>
-          <Button variant="link" asChild className="mt-2 px-0">
-            <Link to="/">Continuar escolhendo</Link>
-          </Button>
-
           <ShippingCalculator
             itens={resumo.itens.map((i) => ({ nome: i.nome, pecas: i.pecas }))}
             className="mt-4"
           />
+
+          <Button
+            size="lg"
+            className="mt-5 w-full text-base font-semibold h-12 shadow-sm"
+            disabled={!resumo.podeFinalizar || indisponiveis.length > 0}
+            onClick={() => {
+              analytics.beginCheckout({
+                total: resumo.total,
+                totalPecas: resumo.totalPecas,
+                itens: resumo.itens.map((i) => ({
+                  id: i.produtoId,
+                  nome: i.nome,
+                  pecas: i.pecas,
+                  valor: i.valor,
+                })),
+              });
+              navigate({ to: "/finalizar" });
+            }}
+          >
+            Finalizar pedido <ArrowRight className="ml-2 size-5" />
+          </Button>
+
+          {resumo.faltamMinimo > 0 && (
+            <p className="mt-2 text-center text-xs text-muted-foreground">
+              {faltamPecas(resumo.faltamMinimo)} para atingir o pedido mínimo
+            </p>
+          )}
+
+          <div className="mt-2 text-center">
+            <Button variant="link" asChild className="px-0 text-sm">
+              <Link to="/">Continuar escolhendo</Link>
+            </Button>
+          </div>
         </aside>
       </div>
-
-      <StickyBar>
-        <div className="min-w-0 flex-1 leading-tight">
-          <p className="text-lg font-bold tabular-nums">{brl(resumo.total)}</p>
-          <p className="truncate text-sm text-muted-foreground">
-            {resumo.faltamMinimo > 0 ? faltamPecas(resumo.faltamMinimo) : `${resumo.totalPecas} peças`}
-          </p>
-        </div>
-        <Button
-          size="lg"
-          className="shrink-0"
-          disabled={!resumo.podeFinalizar || indisponiveis.length > 0}
-          onClick={() => {
-            analytics.beginCheckout({
-              total: resumo.total,
-              totalPecas: resumo.totalPecas,
-              itens: resumo.itens.map((i) => ({
-                id: i.produtoId,
-                nome: i.nome,
-                pecas: i.pecas,
-                valor: i.valor,
-              })),
-            });
-            navigate({ to: "/finalizar" });
-          }}
-        >
-          Finalizar pedido <ArrowRight />
-        </Button>
-      </StickyBar>
     </div>
   );
 }

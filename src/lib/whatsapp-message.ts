@@ -90,11 +90,7 @@ export function montarMensagemPedido(p: MensagemPedido): string {
     L.push(`*Total dos produtos: R$ ${money(p.total)}*`);
     L.push(`Frete e pagamento: a combinar`);
   }
-  if (p.substituicaoCores === "sortidas") {
-    L.push(`⚠️ *Cores:* Conforme disponibilidade do estoque. Cliente autorizou envio de cores sortidas em caso de indisponibilidade.`);
-  } else {
-    L.push(`⚠️ *Cores:* Conforme disponibilidade do estoque. Caso falte alguma cor, confirmar com o cliente antes do envio (sem substituição automática).`);
-  }
+  L.push(`⚠️ *Cores:* Conforme disponibilidade do estoque. Caso falte alguma cor na separação, envio em cores sortidas (regra de atacado).`);
   L.push(SEP);
   if (p.entrega.isDropshipping) {
     L.push(`📦 *MODALIDADE: DROPSHIPPING*`);

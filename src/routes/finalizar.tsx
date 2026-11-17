@@ -7,7 +7,6 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { StickyBar } from "@/components/store/sticky-bar";
 import { cart, useCart } from "@/lib/cart";
 import { useSyncCart } from "@/lib/use-sync-cart";
 import { calcularPedido, pecas } from "@/lib/pricing";
@@ -116,7 +115,6 @@ function FinalizarPage() {
 
   const [f, setF] = useState<Form>(VAZIO);
   const [obs, setObs] = useState("");
-  const [substituicaoCores, setSubstituicaoCores] = useState<"contato" | "sortidas">("contato");
   const [erros, setErros] = useState<Partial<Record<keyof Form, string>>>({});
   const [isDropshipping, setIsDropshipping] = useState(false);
   const [dest, setDest] = useState<DestinatarioForm>(VAZIO_DEST);
@@ -344,7 +342,7 @@ function FinalizarPage() {
             estado: dest.estado.trim().toUpperCase(),
           }
         : undefined,
-      substituicaoCores,
+      substituicaoCores: "sortidas",
       observacao: obs,
       itens: items.map((i) => ({ produtoId: i.produtoId, qtd: i.qtd, cores: i.cores, observacao: i.observacao })),
     };
@@ -419,7 +417,7 @@ function FinalizarPage() {
   const invD = (k: keyof DestinatarioForm) => ({ "aria-invalid": !!errosDest[k], "aria-describedby": errosDest[k] ? `f-dest-${k}-erro` : undefined });
 
   return (
-    <div className="container-page pb-bar pt-4 md:pt-8">
+    <div className="container-page pt-4 md:pt-8">
       <Link to="/carrinho" className="-ml-2 inline-flex min-h-11 items-center gap-1 rounded-lg px-2 text-muted-foreground hover:text-foreground">
         <ChevronLeft className="size-5" /> Voltar ao pedido
       </Link>
@@ -816,60 +814,27 @@ function FinalizarPage() {
             )}
           </fieldset>
 
-          <fieldset className="rounded-2xl border bg-card p-4 sm:p-5 space-y-3 shadow-2xs">
-            <legend className="font-display text-base sm:text-lg font-bold text-foreground">
-              🎨 Preferência de cores em caso de indisponibilidade
-            </legend>
-            <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-              Separamos seu pedido rigorosamente conforme as cores selecionadas. Como deseja que nossa equipe proceda caso alguma cor tenha se esgotado?
-            </p>
-            <div className="space-y-2.5 pt-1">
-              <label className="flex cursor-pointer items-start gap-3 rounded-xl border p-3 hover:bg-muted/40 has-[:checked]:border-primary has-[:checked]:bg-primary/5 transition select-none">
-                <input
-                  type="radio"
-                  name="substituicaoCores"
-                  value="contato"
-                  checked={substituicaoCores === "contato"}
-                  onChange={() => setSubstituicaoCores("contato")}
-                  className="mt-1 size-4 text-primary focus:ring-primary"
-                />
-                <div className="space-y-0.5">
-                  <p className="text-sm font-semibold text-foreground">
-                    Entrar em contato antes de enviar (Recomendado)
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Nossa equipe avisará pelo WhatsApp para você escolher as cores alternativas. Não faremos trocas sem seu consentimento.
-                  </p>
-                </div>
-              </label>
-
-              <label className="flex cursor-pointer items-start gap-3 rounded-xl border p-3 hover:bg-muted/40 has-[:checked]:border-primary has-[:checked]:bg-primary/5 transition select-none">
-                <input
-                  type="radio"
-                  name="substituicaoCores"
-                  value="sortidas"
-                  checked={substituicaoCores === "sortidas"}
-                  onChange={() => setSubstituicaoCores("sortidas")}
-                  className="mt-1 size-4 text-primary focus:ring-primary"
-                />
-                <div className="space-y-0.5">
-                  <p className="text-sm font-semibold text-foreground">
-                    Autorizo substituir por cores semelhantes / sortidas
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Envie cores neutras ou sortidas de qualidade equivalente para agilizar o despacho imediato.
-                  </p>
-                </div>
-              </label>
-            </div>
-          </fieldset>
-
           <div>
             <label htmlFor="f-obs" className="mb-1.5 block font-display text-lg font-bold">
               Observação geral do pedido <span className="font-sans text-base font-normal text-muted-foreground">(opcional)</span>
             </label>
             <Textarea id="f-obs" maxLength={500} rows={4} value={obs} onChange={(e) => setObs(e.target.value.slice(0, 500))} placeholder="Ex.: horário para entrega, transportadora de preferência" />
             <p className="mt-1 text-right text-sm text-muted-foreground">{obs.length}/500</p>
+          </div>
+
+          <div className="pt-2">
+            <Button
+              type="submit"
+              size="lg"
+              className="w-full h-12 text-base font-semibold shadow-sm"
+              disabled={enviando}
+            >
+              {enviando ? <Loader2 className="mr-2 size-5 animate-spin" /> : <MessageCircle className="mr-2 size-5" />}
+              {enviando ? "Enviando pedido..." : "Enviar pedido via WhatsApp"}
+            </Button>
+            <p className="mt-2 text-center text-xs text-muted-foreground">
+              Seu pedido será registrado com segurança e nossa equipe confirmará no WhatsApp.
+            </p>
           </div>
         </form>
 
@@ -945,23 +910,19 @@ function FinalizarPage() {
               ⚠️ Escolha o frete acima para concluir
             </p>
           )}
+
+          <Button
+            type="submit"
+            form="form-pedido"
+            size="lg"
+            className="mt-5 w-full h-12 text-base font-semibold shadow-sm"
+            disabled={enviando}
+          >
+            {enviando ? <Loader2 className="mr-2 size-5 animate-spin" /> : <MessageCircle className="mr-2 size-5" />}
+            {enviando ? "Enviando pedido..." : "Enviar pedido"}
+          </Button>
         </aside>
       </div>
-
-      <StickyBar>
-        <div className="min-w-0 flex-1 leading-tight">
-          <p className="text-lg font-bold tabular-nums">
-            {brl(resumo.total + (freteEscolhido?.preco ?? 0))}
-          </p>
-          <p className="truncate text-xs sm:text-sm text-muted-foreground">
-            {resumo.totalPecas} peças {freteEscolhido ? `· Frete: ${brl(freteEscolhido.preco)}` : "· Frete pendente"}
-          </p>
-        </div>
-        <Button type="submit" form="form-pedido" size="lg" className="shrink-0 font-semibold" disabled={enviando}>
-          {enviando ? <Loader2 className="animate-spin" /> : <MessageCircle />}
-          {enviando ? "Enviando..." : "Enviar pedido"}
-        </Button>
-      </StickyBar>
     </div>
   );
 }
