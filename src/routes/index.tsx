@@ -664,8 +664,8 @@ function Home() {
               <Button
                 asChild
                 size="lg"
-                variant="outline"
-                className="border-white/30 text-foreground bg-white/95 hover:bg-white font-bold h-12 px-6 shadow-md"
+                variant="ink"
+                className="font-bold h-12 px-6 shadow-soft"
                 onClick={() => analytics.clickWhatsApp("footer")}
               >
                 <a
@@ -673,7 +673,7 @@ function Home() {
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  <MessageCircle className="mr-1.5 size-5 text-emerald-600" />
+                  <MessageCircle className="mr-1.5 size-5" />
                   Falar no WhatsApp
                 </a>
               </Button>
