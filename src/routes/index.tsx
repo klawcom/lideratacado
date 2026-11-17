@@ -1,14 +1,64 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { ArrowRight, ChevronLeft, ChevronRight, Headphones, Layers, MessageCircle, Sparkles, Truck } from "lucide-react";
+import {
+  ArrowRight,
+  CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
+  Headphones,
+  HelpCircle,
+  Layers,
+  MessageCircle,
+  Percent,
+  ShieldCheck,
+  Sparkles,
+  Tag,
+  Truck,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ProductGrid } from "@/components/store/product-card";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { homeQuery, siteQuery } from "@/lib/catalog.functions";
-import { seo, canonical } from "@/lib/seo";
+import { seo, canonical, resolveOrigin } from "@/lib/seo";
 import { mediaUrl } from "@/lib/media";
+import { whatsappLinkNumber } from "@/lib/format";
+import { analytics } from "@/lib/analytics";
 import heroWide from "@/assets/hero-wide.webp";
 import heroMobile from "@/assets/hero-mobile.webp";
+
+const FAQS_HOME = [
+  {
+    pergunta: "Qual é a quantidade mínima para comprar no atacado?",
+    resposta:
+      "O pedido mínimo é de apenas 10 peças no total. Você não precisa comprar 10 peças do mesmo modelo: pode mesclar modelos (camisetas básicas, polos piquet, plus size), cores e tamanhos variados no mesmo pedido.",
+  },
+  {
+    pergunta: "Como funcionam os descontos progressivos por quantidade?",
+    resposta:
+      "Trabalhamos com faixas progressivas: 10+, 20+, 30+ e 50+ peças. Conforme o número total de peças no seu carrinho aumenta, o preço unitário de cada peça é recalculado automaticamente para a faixa mais vantajosa, barateando todo o seu pedido.",
+  },
+  {
+    pergunta: "Posso escolher as cores e os tamanhos livremente (grade livre)?",
+    resposta:
+      "Sim! Você tem total liberdade na grade. Escolha quantas peças desejar de cada tamanho (P ao GG e Plus Size G1/G2) e selecione as cores de sua preferência. Em caso de indisponibilidade de alguma cor, entraremos em contato para aprovação prévia — nunca realizamos trocas sem consentimento.",
+  },
+  {
+    pergunta: "Como funciona o frete e o prazo de entrega para meu estado?",
+    resposta:
+      "Despachamos para todo o Brasil via Correios (modalidades PAC e SEDEX). Você pode calcular o valor do frete e o prazo estimado digitando seu CEP diretamente na página do produto ou durante a finalização do pedido.",
+  },
+  {
+    pergunta: "Como finalizo o pedido e realizo o pagamento?",
+    resposta:
+      "Você monta seu carrinho no site e, ao clicar em 'Enviar pedido', sua solicitação é transmitida formatada diretamente para o nosso WhatsApp oficial. Nossa equipe confere as peças, confirma o frete e combina a forma de pagamento (PIX ou cartão de crédito).",
+  },
+];
 
 export const Route = createFileRoute("/")({
   loader: async ({ context }) => {
@@ -16,17 +66,56 @@ export const Route = createFileRoute("/")({
       context.queryClient.ensureQueryData(siteQuery()),
       context.queryClient.ensureQueryData(homeQuery()),
     ]);
-    return { origin: site.origin };
+    return { origin: site.origin, banners: site.banners };
   },
-  head: ({ loaderData }) => ({
-    meta: seo({
-      title: "Líder Atacado — Camisetas básicas e polos no atacado",
-      description: "Camisetas básicas de algodão Pima e camisas polo piquet no atacado, a partir de 10 peças. Monte seu pedido por tamanho e finalize pelo WhatsApp.",
-      origin: loaderData?.origin,
-      path: "/",
-    }),
-    links: canonical(loaderData?.origin, "/"),
-  }),
+  head: ({ loaderData }) => {
+    const origin = resolveOrigin(loaderData?.origin);
+    const faqJsonLd = {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      mainEntity: FAQS_HOME.map((f) => ({
+        "@type": "Question",
+        name: f.pergunta,
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: f.resposta,
+        },
+      })),
+    };
+
+    return {
+      meta: seo({
+        title: "Líder Atacado — Camisetas Básicas e Polos no Atacado Direto de Fábrica",
+        description:
+          "Camisetas básicas de algodão Pima peruano e camisas polo no atacado a partir de 10 peças. Descontos progressivos até 50+ peças, frete Correios e pedido pelo WhatsApp.",
+        origin,
+        path: "/",
+      }),
+      links: [
+        ...canonical(origin, "/"),
+        {
+          rel: "preload",
+          as: "image",
+          href: heroWide,
+          media: "(min-width: 768px)",
+          fetchPriority: "high" as const,
+        },
+        {
+          rel: "preload",
+          as: "image",
+          href: heroMobile,
+          media: "(max-width: 767px)",
+          fetchPriority: "high" as const,
+        },
+      ],
+      scripts: [
+        {
+          type: "application/ld+json",
+          children: JSON.stringify(faqJsonLd),
+        },
+      ],
+    };
+  },
   component: Home,
 });
 
@@ -34,46 +123,76 @@ const VANTAGENS = [
   {
     icon: Truck,
     titulo: "Frete Correios PAC e SEDEX",
-    sub: "Envio rápido para todo o Brasil",
+    sub: "Envio rápido com rastreamento para todo o Brasil",
     gradient: "from-sky-500 to-blue-600",
   },
   {
     icon: Layers,
     titulo: "Atacado a partir de 10 peças",
-    sub: "Descontos progressivos até 50+ un.",
+    sub: "Grade livre: misture modelos, cores e tamanhos",
     gradient: "from-emerald-500 to-teal-600",
+  },
+  {
+    icon: Percent,
+    titulo: "Descontos progressivos reais",
+    sub: "Faixas especiais para 10+, 20+, 30+ e 50+ peças",
+    gradient: "from-amber-500 to-orange-600",
   },
   {
     icon: Sparkles,
     titulo: "100% Algodão Pima Peruano",
-    sub: "Toque macio com elastano e durabilidade",
+    sub: "Malha nobre de toque macio, elastano e durabilidade",
     gradient: "from-violet-500 to-purple-600",
   },
+];
+
+const FAIXAS_COMERCIAIS = [
   {
-    icon: Headphones,
-    titulo: "Atendimento Humanizado 24h",
-    sub: "Suporte dedicado e ágil para seu pedido",
-    gradient: "from-amber-500 to-orange-600",
+    faixa: "10 a 19 peças",
+    destaque: "Pedido mínimo",
+    beneficio: "Preço de atacado inicial direto de fábrica",
+    tag: "Ideal para começar ou testar",
+  },
+  {
+    faixa: "20 a 29 peças",
+    destaque: "Mais vendido",
+    beneficio: "Desconto automático em todas as peças do pedido",
+    tag: "Excelente giro para lojas",
+  },
+  {
+    faixa: "30 a 49 peças",
+    destaque: "Margem extra",
+    beneficio: "Preço unitário ainda menor para aumentar seu lucro",
+    tag: "Para revendedores ativos",
+  },
+  {
+    faixa: "50+ peças",
+    destaque: "Melhor preço",
+    beneficio: "Menor preço unitário de atacado em todo o catálogo",
+    tag: "Maior rentabilidade de revenda",
   },
 ];
 
 const PASSOS = [
   {
     icon: Sparkles,
-    titulo: "Escolha as peças e cores",
-    texto: "Selecione seus modelos favoritos, defina as cores e quantidades por tamanho (P ao GG). Pedido mínimo de 10 peças no atacado.",
+    titulo: "Escolha as peças, modelos e cores",
+    texto:
+      "Selecione seus modelos favoritos, defina as cores e quantidades por tamanho (P ao GG e Plus Size). Mínimo de 10 peças no total.",
     gradient: "from-emerald-500 to-teal-600",
   },
   {
     icon: Truck,
-    titulo: "Calcule o frete Correios",
-    texto: "Simulação de frete PAC ou SEDEX com prazos reais e etiqueta de postagem com seu CPF para envio rápido e seguro.",
+    titulo: "Calcule o frete Correios em tempo real",
+    texto:
+      "Simulação de frete PAC ou SEDEX com prazos reais e etiqueta de postagem com seu CPF para envio rápido e seguro.",
     gradient: "from-sky-500 to-blue-600",
   },
   {
     icon: MessageCircle,
     titulo: "Finalize direto no WhatsApp",
-    texto: "Seu pedido é enviado formatado com todos os itens, cores e frete escolhido para atendimento ágil da nossa equipe.",
+    texto:
+      "Seu pedido é enviado formatado com todos os itens, cores e frete escolhido para atendimento ágil da nossa equipe.",
     gradient: "from-violet-500 to-purple-600",
   },
 ];
@@ -98,6 +217,7 @@ function BannerCarousel({
   const [isPaused, setIsPaused] = useState(false);
   const touchStartX = useRef<number | null>(null);
   const touchDeltaX = useRef<number>(0);
+
   const count = slides.length;
 
   const next = useCallback(() => {
@@ -176,7 +296,11 @@ function BannerCarousel({
                   <source media="(min-width: 768px)" srcSet={slide.wideSrc} />
                   <img
                     src={slide.mobileSrc}
-                    alt="Banner promocional Líder Atacado"
+                    alt={
+                      slide.titulo
+                        ? `${slide.titulo} - Líder Atacado`
+                        : "Líder Atacado — Camisetas básicas e polos no atacado direto de fábrica"
+                    }
                     width={900}
                     height={691}
                     fetchPriority={idx === 0 ? "high" : "auto"}
@@ -186,10 +310,10 @@ function BannerCarousel({
                 </picture>
                 <div className="p-4 sm:p-5 bg-card flex items-center justify-between border-t border-border/40">
                   <span className="font-sans text-sm font-semibold text-foreground">
-                    Líder Atacado · Direto de Fábrica
+                    Líder Atacado · Direto de Fábrica a partir de 10 peças
                   </span>
                   <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary">
-                    Conferir catálogo <ArrowRight className="size-3.5" />
+                    Montar pedido <ArrowRight className="size-3.5" />
                   </span>
                 </div>
               </a>
@@ -199,7 +323,11 @@ function BannerCarousel({
                   <source media="(min-width: 768px)" srcSet={slide.wideSrc} />
                   <img
                     src={slide.mobileSrc}
-                    alt={slide.titulo || "Pilhas de camisetas básicas e camisas polo lisas em cores neutras"}
+                    alt={
+                      slide.titulo
+                        ? `${slide.titulo} - Líder Atacado`
+                        : "Pilhas de camisetas básicas em algodão Pima e camisas polo lisas no atacado"
+                    }
                     width={900}
                     height={691}
                     fetchPriority={idx === 0 ? "high" : "auto"}
@@ -209,35 +337,52 @@ function BannerCarousel({
                 </picture>
 
                 <div className="md:absolute md:inset-y-0 md:left-6 lg:left-14 md:flex md:items-center z-10 pointer-events-none">
-                  <div className="pointer-events-auto space-y-4 p-6 bg-card md:rounded-3xl md:bg-background/85 md:dark:bg-background/90 md:backdrop-blur-md md:p-8 lg:p-10 md:shadow-xl md:border md:border-border/60 max-w-lg">
-                    <p className="eyebrow drop-shadow-xs">Atacado · Pedido pelo WhatsApp</p>
-                    <h2 className="text-[1.85rem] font-extrabold leading-[1.12] text-balance text-foreground md:text-3xl lg:text-4xl">
-                      {slide.titulo || "Camisetas básicas e polos no atacado, a partir de 10 peças"}
-                    </h2>
+                  <div className="pointer-events-auto space-y-4 p-6 bg-card md:rounded-3xl md:bg-background/90 md:dark:bg-background/95 md:backdrop-blur-md md:p-8 lg:p-10 md:shadow-xl md:border md:border-border/60 max-w-lg">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="eyebrow drop-shadow-xs">Direto de Fábrica</span>
+                      <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-bold text-primary">
+                        Mínimo 10 peças
+                      </span>
+                    </div>
+
+                    {/* H1 semântico na primeira lâmina hero e H2 nas seguintes */}
+                    {idx === 0 ? (
+                      <h1 className="text-[1.85rem] font-extrabold leading-[1.12] text-balance text-foreground md:text-3xl lg:text-4xl">
+                        {slide.titulo || "Camisetas básicas e polos no atacado, a partir de 10 peças"}
+                      </h1>
+                    ) : (
+                      <h2 className="text-[1.85rem] font-extrabold leading-[1.12] text-balance text-foreground md:text-3xl lg:text-4xl">
+                        {slide.titulo || "Camisetas básicas e polos no atacado, a partir de 10 peças"}
+                      </h2>
+                    )}
+
                     {slide.subtitulo && (
-                      <p className="max-w-md text-[15px] sm:text-base font-medium text-muted-foreground">
+                      <p className="max-w-md text-[15px] sm:text-base font-medium text-muted-foreground leading-relaxed">
                         {slide.subtitulo}
                       </p>
                     )}
-                    {slide.link ? (
-                      <Button asChild size="lg" className="w-full sm:w-auto shadow-sm">
-                        {slide.link.startsWith("http") ? (
-                          <a href={slide.link} target="_blank" rel="noopener noreferrer">
-                            Ver produtos <ArrowRight />
-                          </a>
-                        ) : (
-                          <a href={slide.link}>
-                            Ver produtos <ArrowRight />
-                          </a>
-                        )}
-                      </Button>
-                    ) : primeira ? (
-                      <Button asChild size="lg" className="w-full sm:w-auto shadow-sm">
-                        <Link to="/categoria/$slug" params={{ slug: primeira.slug }}>
-                          Ver produtos <ArrowRight />
-                        </Link>
-                      </Button>
-                    ) : null}
+
+                    <div className="flex flex-wrap gap-2.5 pt-1">
+                      {slide.link ? (
+                        <Button asChild size="lg" className="w-full sm:w-auto shadow-sm font-semibold">
+                          {slide.link.startsWith("http") ? (
+                            <a href={slide.link} target="_blank" rel="noopener noreferrer">
+                              Montar pedido no atacado <ArrowRight className="ml-1 size-4" />
+                            </a>
+                          ) : (
+                            <a href={slide.link}>
+                              Montar pedido no atacado <ArrowRight className="ml-1 size-4" />
+                            </a>
+                          )}
+                        </Button>
+                      ) : primeira ? (
+                        <Button asChild size="lg" className="w-full sm:w-auto shadow-sm font-semibold">
+                          <Link to="/categoria/$slug" params={{ slug: primeira.slug }}>
+                            Montar pedido no atacado <ArrowRight className="ml-1 size-4" />
+                          </Link>
+                        </Button>
+                      ) : null}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -271,10 +416,11 @@ function BannerCarousel({
                 key={dotIdx}
                 type="button"
                 onClick={() => setCurrent(dotIdx)}
-                className={`h-2.5 rounded-full transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${dotIdx === current
+                className={`h-2.5 rounded-full transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+                  dotIdx === current
                     ? "w-7 bg-primary"
                     : "w-2.5 bg-muted-foreground/40 hover:bg-foreground/70"
-                  }`}
+                }`}
                 aria-label={`Ir para banner ${dotIdx + 1}`}
                 aria-current={dotIdx === current ? "true" : undefined}
               />
@@ -292,48 +438,61 @@ function Home() {
   const titulo = site.config?.home_titulo || "Camisetas básicas e polos no atacado, a partir de 10 peças";
   const sub = site.config?.home_subtitulo;
   const primeira = categorias[0];
+  const whatsappNumber = site.config?.whatsapp || "5547991364084";
 
-  const rawItems = (site.banners as { items?: Array<{ id: number; wide: string | null; mobile: string | null; link?: string | null; titulo?: string | null; subtitulo?: string | null }> })?.items;
+  const rawItems = (
+    site.banners as {
+      items?: Array<{
+        id: number;
+        wide: string | null;
+        mobile: string | null;
+        link?: string | null;
+        titulo?: string | null;
+        subtitulo?: string | null;
+      }>;
+    }
+  )?.items;
 
-  const slides: BannerSlideData[] = (rawItems && rawItems.length > 0)
-    ? rawItems.map((item) => {
-      const isFirst = item.id === 1;
-      const wideSrc = item.wide
-        ? mediaUrl(item.wide)
-        : item.mobile
-          ? mediaUrl(item.mobile)
-          : heroWide;
-      const mobileSrc = item.mobile
-        ? mediaUrl(item.mobile)
-        : item.wide
-          ? mediaUrl(item.wide)
-          : heroMobile;
-      return {
-        id: item.id,
-        wideSrc,
-        mobileSrc,
-        link: item.link || (isFirst && primeira ? `/categoria/${primeira.slug}` : null),
-        titulo: isFirst ? (item.titulo || titulo) : (item.titulo || null),
-        subtitulo: isFirst ? (item.subtitulo || sub) : (item.subtitulo || null),
-      };
-    })
-    : [
-      {
-        id: 1,
-        wideSrc: site.banners?.wide ? mediaUrl(site.banners.wide) : heroWide,
-        mobileSrc: site.banners?.mobile ? mediaUrl(site.banners.mobile) : heroMobile,
-        link: primeira ? `/categoria/${primeira.slug}` : null,
-        titulo,
-        subtitulo: sub,
-      },
-    ];
+  const slides: BannerSlideData[] =
+    rawItems && rawItems.length > 0
+      ? rawItems.map((item) => {
+          const isFirst = item.id === 1;
+          const wideSrc = item.wide
+            ? mediaUrl(item.wide)
+            : item.mobile
+              ? mediaUrl(item.mobile)
+              : heroWide;
+          const mobileSrc = item.mobile
+            ? mediaUrl(item.mobile)
+            : item.wide
+              ? mediaUrl(item.wide)
+              : heroMobile;
+          return {
+            id: item.id,
+            wideSrc,
+            mobileSrc,
+            link: item.link || (isFirst && primeira ? `/categoria/${primeira.slug}` : null),
+            titulo: isFirst ? item.titulo || titulo : item.titulo || null,
+            subtitulo: isFirst ? item.subtitulo || sub : item.subtitulo || null,
+          };
+        })
+      : [
+          {
+            id: 1,
+            wideSrc: site.banners?.wide ? mediaUrl(site.banners.wide) : heroWide,
+            mobileSrc: site.banners?.mobile ? mediaUrl(site.banners.mobile) : heroMobile,
+            link: primeira ? `/categoria/${primeira.slug}` : null,
+            titulo,
+            subtitulo: sub,
+          },
+        ];
 
   return (
     <>
       <section className="container-page pt-4 md:pt-8">
         <BannerCarousel slides={slides} primeira={primeira} />
 
-        {/* Barra de benefícios e destaques coloridos */}
+        {/* Barra de benefícios comerciais e diferenciais */}
         <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {VANTAGENS.map((v) => (
             <div
@@ -354,6 +513,45 @@ function Home() {
         </div>
       </section>
 
+      {/* Seção Destaque de Descontos Progressivos */}
+      <section className="container-page mt-14 md:mt-20" aria-labelledby="tabela-descontos">
+        <div className="rounded-3xl border border-primary/20 bg-gradient-to-br from-card via-card to-primary/5 p-6 md:p-10 shadow-soft">
+          <div className="max-w-2xl">
+            <p className="eyebrow">Descontos automáticos no atacado</p>
+            <h2 id="tabela-descontos" className="mt-1 text-2xl font-extrabold md:text-3xl text-foreground">
+              Como funcionam os Descontos Progressivos
+            </h2>
+            <p className="mt-2 text-sm sm:text-base text-muted-foreground leading-relaxed">
+              Grade 100% livre! Você pode somar modelos diferentes, cores e tamanhos variados. Conforme a quantidade total cresce no pedido, o preço unitário de cada peça cai automaticamente:
+            </p>
+          </div>
+
+          <div className="mt-6 grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-4">
+            {FAIXAS_COMERCIAIS.map((f, i) => (
+              <div
+                key={f.faixa}
+                className="rounded-2xl border bg-background/80 p-4 shadow-2xs space-y-2 hover:border-primary/40 transition"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="font-sans text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                    Faixa {i + 1}
+                  </span>
+                  <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-bold text-primary">
+                    {f.destaque}
+                  </span>
+                </div>
+                <p className="text-lg font-extrabold text-foreground">{f.faixa}</p>
+                <p className="text-xs text-muted-foreground leading-snug">{f.beneficio}</p>
+                <div className="pt-1 border-t border-border/50 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                  <CheckCircle2 className="size-3.5 shrink-0" /> {f.tag}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Vitrine de produtos organizada por categorias */}
       {categorias.map((c) => (
         <section key={c.id} className="container-page mt-14 md:mt-20" aria-labelledby={`cat-${c.id}`}>
           <div className="mb-6 flex items-end justify-between gap-4">
@@ -361,40 +559,126 @@ function Home() {
               <h2 id={`cat-${c.id}`} className="text-2xl font-bold md:text-3xl text-foreground">
                 {c.nome}
               </h2>
-              {c.descricao && <p className="mt-1 text-sm sm:text-base text-muted-foreground">{c.descricao}</p>}
+              {c.descricao && (
+                <p className="mt-1 text-sm sm:text-base text-muted-foreground leading-relaxed">{c.descricao}</p>
+              )}
             </div>
           </div>
           <ProductGrid produtos={c.produtos} />
           <div className="mt-8 flex justify-center">
-            <Button asChild variant="outline" className="w-full sm:w-auto shadow-2xs">
+            <Button asChild variant="outline" className="w-full sm:w-auto shadow-2xs font-semibold">
               <Link to="/categoria/$slug" params={{ slug: c.slug }}>
-                Ver todos <ArrowRight />
+                Ver todos os modelos de {c.nome.toLowerCase()} <ArrowRight className="ml-1 size-4" />
               </Link>
             </Button>
           </div>
         </section>
       ))}
 
+      {/* Como Comprar em 3 passos */}
       <section className="container-page mt-16 md:mt-24" aria-labelledby="como-comprar">
         <div className="rounded-3xl border bg-card p-6 md:p-10 shadow-soft">
           <p className="eyebrow">Simples e rápido</p>
           <h2 id="como-comprar" className="mt-2 text-2xl font-bold md:text-3xl text-foreground">
-            Como comprar
+            Como comprar no atacado
           </h2>
           <ol className="mt-8 grid gap-6 md:grid-cols-3">
             {PASSOS.map((p, i) => (
-              <li key={p.titulo} className="card-hover flex gap-4 rounded-2xl border border-border/60 bg-muted/30 p-4 transition-all">
-                <span className={`grid size-12 shrink-0 place-items-center rounded-2xl bg-gradient-to-br ${p.gradient} text-white shadow-xs`}>
+              <li
+                key={p.titulo}
+                className="card-hover flex gap-4 rounded-2xl border border-border/60 bg-muted/30 p-4 transition-all"
+              >
+                <span
+                  className={`grid size-12 shrink-0 place-items-center rounded-2xl bg-gradient-to-br ${p.gradient} text-white shadow-xs`}
+                >
                   <p.icon className="size-6" />
                 </span>
                 <div>
-                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Passo {i + 1}</p>
-                  <h3 className="mt-0.5 font-sans text-base sm:text-lg font-bold tracking-normal text-foreground">{p.titulo}</h3>
+                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                    Passo {i + 1}
+                  </p>
+                  <h3 className="mt-0.5 font-sans text-base sm:text-lg font-bold tracking-normal text-foreground">
+                    {p.titulo}
+                  </h3>
                   <p className="mt-1 text-sm text-muted-foreground leading-relaxed">{p.texto}</p>
                 </div>
               </li>
             ))}
           </ol>
+        </div>
+      </section>
+
+      {/* Perguntas Frequentes (FAQ) com Accordion */}
+      <section className="container-page mt-16 md:mt-24" aria-labelledby="faq-home">
+        <div className="rounded-3xl border bg-card p-6 md:p-10 shadow-soft">
+          <div className="flex items-center gap-2">
+            <HelpCircle className="size-5 text-primary" />
+            <p className="eyebrow">Tire suas dúvidas</p>
+          </div>
+          <h2 id="faq-home" className="mt-2 text-2xl font-bold md:text-3xl text-foreground">
+            Perguntas Frequentes sobre o Atacado
+          </h2>
+          <p className="mt-1 text-sm sm:text-base text-muted-foreground">
+            Respostas claras para as principais dúvidas de lojistas e revendedores.
+          </p>
+
+          <div className="mt-6">
+            <Accordion type="single" collapsible className="w-full">
+              {FAQS_HOME.map((faq, idx) => (
+                <AccordionItem key={faq.pergunta} value={`faq-${idx}`}>
+                  <AccordionTrigger className="text-left font-sans font-bold text-base text-foreground hover:no-underline">
+                    {faq.pergunta}
+                  </AccordionTrigger>
+                  <AccordionContent className="text-sm text-muted-foreground leading-relaxed pt-1">
+                    {faq.resposta}
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
+          </div>
+        </div>
+      </section>
+
+      {/* Chamada Comercial Pré-Rodapé (Pre-footer CRO Banner) */}
+      <section className="container-page mt-16 md:mt-24 mb-6">
+        <div className="relative overflow-hidden rounded-3xl border-2 border-primary/30 bg-gradient-to-r from-emerald-950 via-slate-900 to-emerald-900 p-8 sm:p-12 text-white shadow-xl">
+          <div className="relative z-10 max-w-2xl space-y-4">
+            <div className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold backdrop-blur-md">
+              <ShieldCheck className="size-4 text-emerald-400" />
+              <span>Garantia de Qualidade · Direto de Fábrica</span>
+            </div>
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight leading-tight text-white">
+              Pronto para abastecer sua loja com peças premium no atacado?
+            </h2>
+            <p className="text-sm sm:text-base text-slate-300 leading-relaxed">
+              Monte seu pedido a partir de 10 peças variadas. Tenha acesso a descontos progressivos, cálculo de frete Correios em tempo real e atendimento rápido pelo WhatsApp.
+            </p>
+            <div className="flex flex-wrap gap-3 pt-2">
+              {primeira && (
+                <Button asChild size="lg" className="bg-primary hover:bg-primary/90 text-white font-bold h-12 px-6 shadow-md">
+                  <Link to="/categoria/$slug" params={{ slug: primeira.slug }}>
+                    Ver catálogo de produtos <ArrowRight className="ml-1 size-4" />
+                  </Link>
+                </Button>
+              )}
+              <Button
+                asChild
+                size="lg"
+                variant="outline"
+                className="border-white/30 text-foreground bg-white/95 hover:bg-white font-bold h-12 px-6 shadow-md"
+                onClick={() => analytics.clickWhatsApp("footer")}
+              >
+                <a
+                  href={`https://wa.me/${whatsappLinkNumber(whatsappNumber)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <MessageCircle className="mr-1.5 size-5 text-emerald-600" />
+                  Falar no WhatsApp
+                </a>
+              </Button>
+            </div>
+          </div>
         </div>
       </section>
     </>

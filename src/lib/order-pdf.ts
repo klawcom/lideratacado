@@ -8,29 +8,29 @@ export type PedidoPDFData = {
     nome: string;
     email: string;
     whatsapp: string;
-    cpf?: string;
+    cpf?: string | undefined;
   };
   entrega: {
     rua: string;
     numero: string;
-    complemento?: string;
+    complemento?: string | undefined;
     bairro: string;
     cidade: string;
     estado: string;
     cep: string;
-    isDropshipping?: boolean;
-    destinatario?: string;
-    cpfDestinatario?: string;
-    whatsappDestinatario?: string;
+    isDropshipping?: boolean | undefined;
+    destinatario?: string | undefined;
+    cpfDestinatario?: string | undefined;
+    whatsappDestinatario?: string | undefined;
   };
   itens: {
     nome: string;
-    codigo?: string;
+    codigo?: string | undefined;
     pecas: number;
     preco: number;
     valor: number;
-    detalhes?: string;
-    observacao?: string;
+    detalhes?: string | undefined;
+    observacao?: string | undefined;
   }[];
   resumo: {
     totalPecas: number;
@@ -41,9 +41,9 @@ export type PedidoPDFData = {
     servico: string;
     preco: number;
     prazo: string;
-  };
-  observacao?: string;
-  notasInternas?: string;
+  } | undefined;
+  observacao?: string | undefined;
+  notasInternas?: string | undefined;
 };
 
 export function gerarHtmlPedidoPdf(p: PedidoPDFData): string {

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { QtyStepper } from "@/components/store/qty-stepper";
 import { StickyBar } from "@/components/store/sticky-bar";
+import { ProgressDiscount } from "@/components/store/progress-discount";
 import { cart, useCart, type CartItem } from "@/lib/cart";
 import {
   calcularPedido,
@@ -22,6 +23,7 @@ import { tamanhosLinha } from "@/lib/whatsapp-message";
 import { formatarCorTamanhos } from "@/lib/colors";
 import { ShippingCalculator } from "@/components/store/shipping-calculator";
 import { seo } from "@/lib/seo";
+import { analytics } from "@/lib/analytics";
 
 export const Route = createFileRoute("/carrinho")({
   head: () => ({
@@ -65,24 +67,21 @@ function CarrinhoPage() {
         <strong className="tabular-nums">{resumo.totalPecas}</strong> peças no pedido
       </p>
 
-      <div className="mt-4 space-y-2">
-        {resumo.faltamMinimo > 0 && (
-          <p className="rounded-2xl bg-destructive/10 p-4 font-medium text-destructive">
-            {faltamPecas(resumo.faltamMinimo)} para o pedido mínimo de {minimo} peças.
-          </p>
-        )}
-        {resumo.proxima && resumo.faltamMinimo === 0 && (
-          <p className="flex gap-2 rounded-2xl bg-accent p-4 font-medium text-accent-foreground">
-            <TrendingDown className="mt-0.5 size-5 shrink-0" />
-            {faltamPecas(resumo.proxima.faltam)} para a faixa de {resumo.proxima.faixa} peças, com preço menor em todos os itens.
-          </p>
-        )}
-        {indisponiveis.length > 0 && (
+      <ProgressDiscount
+        totalPecas={resumo.totalPecas}
+        pedidoMinimo={minimo}
+        faixaAtual={resumo.faixa}
+        proxima={resumo.proxima}
+        className="mt-4"
+      />
+
+      {indisponiveis.length > 0 && (
+        <div className="mt-3">
           <p className="rounded-2xl bg-destructive/10 p-4 font-medium text-destructive">
             {indisponiveis.map((i) => i.nome).join(", ")} não {indisponiveis.length > 1 ? "estão" : "está"} mais disponível. Remova para continuar.
           </p>
-        )}
-      </div>
+        </div>
+      )}
 
       <div className="mt-6 grid gap-8 lg:grid-cols-[1fr_22rem]">
         <ul className="space-y-3">
@@ -124,7 +123,21 @@ function CarrinhoPage() {
                   <Button variant="outline" size="sm" className="flex-1" onClick={() => setEditando(it.produtoId)}>
                     <Pencil /> Editar
                   </Button>
-                  <Button variant="ghost" size="sm" className="flex-1 text-destructive hover:text-destructive" onClick={() => cart.remove(it.produtoId)}>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="flex-1 text-destructive hover:text-destructive"
+                    onClick={() => {
+                      analytics.removeFromCart({
+                        id: it.produtoId,
+                        nome: it.nome,
+                        precoUnitario: it.preco,
+                        pecasTotal: it.pecas,
+                        valorTotal: it.valor,
+                      });
+                      cart.remove(it.produtoId);
+                    }}
+                  >
                     <Trash2 /> Remover
                   </Button>
                 </div>
@@ -172,7 +185,19 @@ function CarrinhoPage() {
           size="lg"
           className="shrink-0"
           disabled={!resumo.podeFinalizar || indisponiveis.length > 0}
-          onClick={() => navigate({ to: "/finalizar" })}
+          onClick={() => {
+            analytics.beginCheckout({
+              total: resumo.total,
+              totalPecas: resumo.totalPecas,
+              itens: resumo.itens.map((i) => ({
+                id: i.produtoId,
+                nome: i.nome,
+                pecas: i.pecas,
+                valor: i.valor,
+              })),
+            });
+            navigate({ to: "/finalizar" });
+          }}
         >
           Finalizar pedido <ArrowRight />
         </Button>

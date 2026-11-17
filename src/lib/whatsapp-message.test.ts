@@ -39,6 +39,13 @@ describe("mensagem do pedido no WhatsApp", () => {
     });
     expect(comCores).toContain("branca: 1-P, 2-M, 4-G, 2-GG");
     expect(comCores).toContain("⚠️ *Cores:* Conforme disponibilidade do estoque.");
+    expect(comCores).toContain("confirmar com o cliente antes do envio");
+
+    const comSortidas = montarMensagemPedido({
+      ...base,
+      substituicaoCores: "sortidas",
+    });
+    expect(comSortidas).toContain("Cliente autorizou envio de cores sortidas");
   });
   it("formata itens plus size com tamanhos G1 e G2", () => {
     const comPlusSize = montarMensagemPedido({

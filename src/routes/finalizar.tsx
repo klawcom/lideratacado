@@ -22,6 +22,7 @@ import { formatarCorTamanhos } from "@/lib/colors";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { seo } from "@/lib/seo";
+import { analytics } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/finalizar")({
@@ -115,6 +116,7 @@ function FinalizarPage() {
 
   const [f, setF] = useState<Form>(VAZIO);
   const [obs, setObs] = useState("");
+  const [substituicaoCores, setSubstituicaoCores] = useState<"contato" | "sortidas">("contato");
   const [erros, setErros] = useState<Partial<Record<keyof Form, string>>>({});
   const [isDropshipping, setIsDropshipping] = useState(false);
   const [dest, setDest] = useState<DestinatarioForm>(VAZIO_DEST);
@@ -342,6 +344,7 @@ function FinalizarPage() {
             estado: dest.estado.trim().toUpperCase(),
           }
         : undefined,
+      substituicaoCores,
       observacao: obs,
       itens: items.map((i) => ({ produtoId: i.produtoId, qtd: i.qtd, cores: i.cores, observacao: i.observacao })),
     };
@@ -371,6 +374,22 @@ function FinalizarPage() {
     setEnviando(true);
     try {
       const res = await enviar({ data: payload });
+      analytics.clickWhatsApp("finalizar", {
+        numero: res.numero,
+        totalPecas: resumo.totalPecas,
+        total: resumo.total + (freteEscolhido?.preco ?? 0),
+      });
+      analytics.purchase({
+        numero: res.numero,
+        total: resumo.total + (freteEscolhido?.preco ?? 0),
+        frete: freteEscolhido?.preco ?? 0,
+        totalPecas: resumo.totalPecas,
+        itens: resumo.itens.map((i) => ({
+          nome: i.nome,
+          pecas: i.pecas,
+          valor: i.valor,
+        })),
+      });
       salvarDadosEntrega({ ...f });
       salvarUltimoPedido(res);
       cart.clear();
@@ -795,6 +814,54 @@ function FinalizarPage() {
                 <span>{erroFreteValidacao}</span>
               </div>
             )}
+          </fieldset>
+
+          <fieldset className="rounded-2xl border bg-card p-4 sm:p-5 space-y-3 shadow-2xs">
+            <legend className="font-display text-base sm:text-lg font-bold text-foreground">
+              🎨 Preferência de cores em caso de indisponibilidade
+            </legend>
+            <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+              Separamos seu pedido rigorosamente conforme as cores selecionadas. Como deseja que nossa equipe proceda caso alguma cor tenha se esgotado?
+            </p>
+            <div className="space-y-2.5 pt-1">
+              <label className="flex cursor-pointer items-start gap-3 rounded-xl border p-3 hover:bg-muted/40 has-[:checked]:border-primary has-[:checked]:bg-primary/5 transition select-none">
+                <input
+                  type="radio"
+                  name="substituicaoCores"
+                  value="contato"
+                  checked={substituicaoCores === "contato"}
+                  onChange={() => setSubstituicaoCores("contato")}
+                  className="mt-1 size-4 text-primary focus:ring-primary"
+                />
+                <div className="space-y-0.5">
+                  <p className="text-sm font-semibold text-foreground">
+                    Entrar em contato antes de enviar (Recomendado)
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Nossa equipe avisará pelo WhatsApp para você escolher as cores alternativas. Não faremos trocas sem seu consentimento.
+                  </p>
+                </div>
+              </label>
+
+              <label className="flex cursor-pointer items-start gap-3 rounded-xl border p-3 hover:bg-muted/40 has-[:checked]:border-primary has-[:checked]:bg-primary/5 transition select-none">
+                <input
+                  type="radio"
+                  name="substituicaoCores"
+                  value="sortidas"
+                  checked={substituicaoCores === "sortidas"}
+                  onChange={() => setSubstituicaoCores("sortidas")}
+                  className="mt-1 size-4 text-primary focus:ring-primary"
+                />
+                <div className="space-y-0.5">
+                  <p className="text-sm font-semibold text-foreground">
+                    Autorizo substituir por cores semelhantes / sortidas
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Envie cores neutras ou sortidas de qualidade equivalente para agilizar o despacho imediato.
+                  </p>
+                </div>
+              </label>
+            </div>
           </fieldset>
 
           <div>

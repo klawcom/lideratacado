@@ -23,22 +23,23 @@ export type MensagemPedido = {
     servico: string;
     preco: number;
     prazo: string;
-  };
-  cliente: { nome: string; email: string; whatsapp: string; cpf?: string };
+  } | undefined;
+  cliente: { nome: string; email: string; whatsapp: string; cpf?: string | undefined };
   entrega: {
     rua: string;
     numero: string;
-    complemento?: string;
+    complemento?: string | undefined;
     bairro: string;
     cidade: string;
     estado: string;
     cep: string;
-    isDropshipping?: boolean;
-    destinatario?: string;
-    cpfDestinatario?: string;
-    whatsappDestinatario?: string;
+    isDropshipping?: boolean | undefined;
+    destinatario?: string | undefined;
+    cpfDestinatario?: string | undefined;
+    whatsappDestinatario?: string | undefined;
   };
-  observacao?: string;
+  substituicaoCores?: "contato" | "sortidas" | undefined;
+  observacao?: string | undefined;
 };
 
 const SEP = "━━━━━━━━━━━━━━";
@@ -89,7 +90,11 @@ export function montarMensagemPedido(p: MensagemPedido): string {
     L.push(`*Total dos produtos: R$ ${money(p.total)}*`);
     L.push(`Frete e pagamento: a combinar`);
   }
-  L.push(`⚠️ *Cores:* Conforme disponibilidade do estoque. Caso alguma cor escolhida não esteja disponível, enviaremos cores sortidas.`);
+  if (p.substituicaoCores === "sortidas") {
+    L.push(`⚠️ *Cores:* Conforme disponibilidade do estoque. Cliente autorizou envio de cores sortidas em caso de indisponibilidade.`);
+  } else {
+    L.push(`⚠️ *Cores:* Conforme disponibilidade do estoque. Caso falte alguma cor, confirmar com o cliente antes do envio (sem substituição automática).`);
+  }
   L.push(SEP);
   if (p.entrega.isDropshipping) {
     L.push(`📦 *MODALIDADE: DROPSHIPPING*`);

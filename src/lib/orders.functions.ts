@@ -73,6 +73,7 @@ export const pedidoSchema = z.object({
         .regex(/^[A-Z]{2}$/, "UF inválida"),
     })
     .optional(),
+  substituicaoCores: z.enum(["contato", "sortidas"]).optional().default("contato"),
   observacao: z.string().trim().max(500).default(""),
   itens: z
     .array(
@@ -101,28 +102,28 @@ export type PedidoCriado = {
   criadoEm: string;
   mensagem: string;
   waUrl: string;
-  cliente: { nome: string; email: string; whatsapp: string; cpf?: string };
+  cliente: { nome: string; email: string; whatsapp: string; cpf?: string | undefined };
   entrega: {
     rua: string;
     numero: string;
-    complemento?: string;
+    complemento?: string | undefined;
     bairro: string;
     cidade: string;
     estado: string;
     cep: string;
-    isDropshipping?: boolean;
-    destinatario?: string;
-    cpfDestinatario?: string;
-    whatsappDestinatario?: string;
+    isDropshipping?: boolean | undefined;
+    destinatario?: string | undefined;
+    cpfDestinatario?: string | undefined;
+    whatsappDestinatario?: string | undefined;
   };
   frete?: {
     servico: string;
     preco: number;
     prazo: string;
-  };
-  observacao?: string;
+  } | undefined;
+  observacao?: string | undefined;
   resumo: {
-    itens: { nome: string; codigo?: string; pecas: number; preco: number; valor: number; qtd: Qtd; observacao: string }[];
+    itens: { nome: string; codigo?: string | undefined; pecas: number; preco: number; valor: number; qtd?: Qtd | undefined; observacao?: string | undefined }[];
     totalPecas: number;
     faixa: number;
     total: number;
@@ -242,7 +243,11 @@ export const criarPedido = createServerFn({ method: "POST" })
     const dropObs = data.dropshipping
       ? `[DROPSHIPPING] Destinatário: ${data.dropshipping.destinatarioNome}${data.dropshipping.destinatarioCpf ? ` (CPF: ${maskCpf(data.dropshipping.destinatarioCpf)})` : ""}${data.dropshipping.destinatarioWhatsapp ? ` (Tel: ${formatWhatsappIntl(data.dropshipping.destinatarioWhatsapp)})` : ""}`
       : "";
-    const observacaoFinal = [dropObs, cpfObs, freteObs, data.observacao].filter(Boolean).join(" | ").slice(0, 500);
+    const corConsentObs =
+      data.substituicaoCores === "sortidas"
+        ? "[Cores: Cliente autorizou substituição]"
+        : "[Cores: Não substituir sem confirmar com cliente]";
+    const observacaoFinal = [dropObs, corConsentObs, cpfObs, freteObs, data.observacao].filter(Boolean).join(" | ").slice(0, 500);
 
     const entregaDestino = data.dropshipping
       ? {
@@ -360,6 +365,7 @@ export const criarPedido = createServerFn({ method: "POST" })
       frete: data.frete,
       cliente: { nome: c.nome, email: c.email, whatsapp: c.whatsapp, cpf: c.cpf },
       entrega: entregaMsg,
+      substituicaoCores: data.substituicaoCores,
       observacao: data.observacao,
     });
 

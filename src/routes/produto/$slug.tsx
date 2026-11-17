@@ -1,7 +1,7 @@
 import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { useState } from "react";
-import { ChevronLeft, Headphones, Info, MessageCircle, ShoppingBag, Sparkles, Truck, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ChevronLeft, ChevronRight, Headphones, Info, MessageCircle, ShoppingBag, Sparkles, Truck, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -25,7 +25,8 @@ import {
   isProdutoPlusSize,
   isProdutoPolo,
 } from "@/lib/pima-defaults";
-import { canonical, seo } from "@/lib/seo";
+import { canonical, resolveOrigin, schemaBreadcrumbs, seo } from "@/lib/seo";
+import { analytics } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/produto/$slug")({
@@ -44,14 +45,30 @@ export const Route = createFileRoute("/produto/$slug")({
       imagem: imagemPrincipal(p.produto_midias),
       min: precos.length ? Math.min(...precos) : null,
       max: precos.length ? Math.max(...precos) : null,
+      faixasCount: precos.length,
       estoque: p.estoque,
+      categoria: p.categorias ? { nome: p.categorias.nome, slug: p.categorias.slug } : null,
     };
   },
   head: ({ loaderData: d, params }) => {
     const path = `/produto/${params.slug}`;
-    const img = d?.imagem && d.origin ? (d.imagem.startsWith("http") ? d.imagem : `${d.origin}${d.imagem}`) : undefined;
-    const desc = `${d?.nome ?? "Produto"} no atacado${d?.min ? ` a partir de R$ ${money(d.min)} por peça` : ""}. ${d?.descricao ?? ""}`.trim();
-    const jsonLd = d
+    const baseOrigin = resolveOrigin(d?.origin);
+    const img = d?.imagem
+      ? d.imagem.startsWith("http")
+        ? d.imagem
+        : `${baseOrigin}${d.imagem.startsWith("/") ? d.imagem : `/${d.imagem}`}`
+      : undefined;
+
+    const desc = `${d?.nome ?? "Produto"} no atacado direto de fábrica${d?.min ? ` a partir de R$ ${money(d.min)}/peça (mínimo 10 peças)` : ""}. Grade livre de cores e tamanhos com envio para todo o Brasil. Peça pelo WhatsApp.`;
+
+    const crumbs = [
+      { name: "Início", path: "/" },
+      ...(d?.categoria ? [{ name: d.categoria.nome, path: `/categoria/${d.categoria.slug}` }] : []),
+      { name: d?.nome ?? "Produto", path },
+    ];
+    const breadcrumbsJson = schemaBreadcrumbs(crumbs, baseOrigin);
+
+    const productJson = d
       ? {
           "@context": "https://schema.org",
           "@type": "Product",
@@ -60,6 +77,7 @@ export const Route = createFileRoute("/produto/$slug")({
           description: d.descricao || d.nome,
           image: img ? [img] : undefined,
           brand: { "@type": "Brand", name: "Líder Atacado" },
+          itemCondition: "https://schema.org/NewCondition",
           offers:
             d.min !== null
               ? {
@@ -67,16 +85,31 @@ export const Route = createFileRoute("/produto/$slug")({
                   priceCurrency: "BRL",
                   lowPrice: d.min,
                   highPrice: d.max,
+                  offerCount: d.faixasCount || 4,
                   availability: d.estoque > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
-                  url: d.origin ? `${d.origin}${path}` : undefined,
+                  url: `${baseOrigin}${path}`,
                 }
               : undefined,
         }
       : null;
+
+    const scripts: Array<Record<string, any>> = [];
+    if (productJson) {
+      scripts.push({ type: "application/ld+json", children: JSON.stringify(productJson) });
+    }
+    scripts.push({ type: "application/ld+json", children: JSON.stringify(breadcrumbsJson) });
+
     return {
-      meta: seo({ title: `${d?.nome ?? "Produto"} | Líder Atacado`, description: desc.slice(0, 160), origin: d?.origin, path, image: img, type: "product" }),
-      links: canonical(d?.origin, path),
-      scripts: jsonLd ? [{ type: "application/ld+json", children: JSON.stringify(jsonLd) }] : [],
+      meta: seo({
+        title: `${d?.nome ?? "Produto"} no Atacado a partir de 10 peças | Líder Atacado`,
+        description: desc.slice(0, 160),
+        origin: baseOrigin,
+        path,
+        image: img,
+        type: "product",
+      }),
+      links: canonical(baseOrigin, path),
+      scripts,
     };
   },
   component: ProdutoPage,
@@ -187,16 +220,6 @@ function ProdutoPage() {
   const qtdCorAtiva = coresQtd[corAtiva] ?? ZERO;
   const pecasCorAtiva = pecas(qtdCorAtiva);
 
-  function setQtdCor(key: keyof Qtd, val: number) {
-    setCoresQtd((prev) => ({
-      ...prev,
-      [corAtiva]: {
-        ...(prev[corAtiva] ?? ZERO),
-        [key]: val,
-      },
-    }));
-  }
-
   const totalQtd: Qtd = Object.values(coresQtd).reduce<Qtd>(
     (acc, q) => ({
       p: (acc.p || 0) + (q.p || 0),
@@ -213,6 +236,36 @@ function ProdutoPage() {
   const faixaAtual = faixaDoTotal(noCarrinho + n);
   const precoAtual = precoNaFaixa(p.faixas_preco, faixaAtual);
   const min = menorPreco(p.faixas_preco);
+
+  useEffect(() => {
+    if (p) {
+      analytics.viewItem({
+        id: p.id,
+        nome: p.nome,
+        categoria: p.categorias?.nome,
+        precoMin: min,
+      });
+    }
+  }, [p?.id, min]);
+
+  function setQtdCor(key: keyof Qtd, val: number) {
+    setCoresQtd((prev) => ({
+      ...prev,
+      [corAtiva]: {
+        ...(prev[corAtiva] ?? ZERO),
+        [key]: val,
+      },
+    }));
+    if (val > 0 && p) {
+      analytics.selectVariant({
+        id: p.id,
+        nome: p.nome,
+        cor: corAtiva,
+        tamanho: key.toUpperCase(),
+        quantidade: val,
+      });
+    }
+  }
 
   function adicionar() {
     if (!p || n < 1) return;
@@ -231,6 +284,16 @@ function ProdutoPage() {
       cores: itemCores.length ? itemCores : undefined,
       observacao: obs.trim(),
     });
+
+    analytics.addToCart({
+      id: p.id,
+      nome: p.nome,
+      precoUnitario: precoAtual,
+      pecasTotal: n,
+      valorTotal: precoAtual * n,
+      cores: itemCores.map((c) => ({ cor: c.cor, pecas: pecas(c.qtd) })),
+    });
+
     setCoresQtd({});
     setObs("");
     toast.success(`${n} ${n === 1 ? "peça adicionada" : "peças adicionadas"} ao pedido`, {
@@ -243,17 +306,30 @@ function ProdutoPage() {
 
   return (
     <div className="container-page pb-bar pt-3 sm:pt-4 md:pt-6 max-w-full overflow-x-hidden min-w-0">
-      {p.categorias && (
-        <Link
-          to="/categoria/$slug"
-          params={{ slug: p.categorias.slug }}
-          className="-ml-1 mb-2 inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs text-muted-foreground hover:text-foreground"
-        >
-          <ChevronLeft className="size-4" /> {p.categorias.nome}
+      {/* Navegação estrutural / Breadcrumb */}
+      <nav aria-label="Navegação estrutural" className="mb-3 flex items-center gap-1.5 text-xs text-muted-foreground flex-wrap">
+        <Link to="/" className="inline-flex min-h-11 items-center hover:text-foreground">
+          Início
         </Link>
-      )}
+        <ChevronRight className="size-3 text-muted-foreground/60" aria-hidden />
+        {p.categorias ? (
+          <>
+            <Link
+              to="/categoria/$slug"
+              params={{ slug: p.categorias.slug }}
+              className="inline-flex min-h-11 items-center hover:text-foreground"
+            >
+              {p.categorias.nome}
+            </Link>
+            <ChevronRight className="size-3 text-muted-foreground/60" aria-hidden />
+          </>
+        ) : null}
+        <span className="font-semibold text-foreground truncate max-w-[220px]" aria-current="page">
+          {p.nome}
+        </span>
+      </nav>
 
-      {/* Cabeçalho mobile: antes da galeria para contextualizar imediatamente */}
+      {/* Cabeçalho mobile: com a única tag H1 da página */}
       <div className="mb-3 block md:hidden min-w-0">
         <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Modelo {p.codigo_modelo}</p>
         <h1 className="mt-0.5 text-xl font-bold tracking-tight text-foreground">{p.nome}</h1>
@@ -281,10 +357,12 @@ function ProdutoPage() {
         </div>
 
         <div className="min-w-0 space-y-5">
-          {/* Cabeçalho desktop */}
+          {/* Cabeçalho desktop (título visualmente idêntico, evitando duplicidade semântica de H1) */}
           <div className="hidden md:block">
             <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Modelo {p.codigo_modelo}</p>
-            <h1 className="mt-1 text-xl sm:text-2xl font-bold tracking-tight text-foreground">{p.nome}</h1>
+            <div className="mt-1 font-display text-xl sm:text-2xl font-bold tracking-tight text-foreground">
+              {p.nome}
+            </div>
             {min !== null && (
               <p className="mt-1 text-sm text-muted-foreground">
                 a partir de <strong className="font-semibold text-foreground">R$ {money(min)}</strong> por peça
@@ -327,8 +405,8 @@ function ProdutoPage() {
                 )}
               </div>
               <p className="text-xs text-muted-foreground mt-0.5">Toque na cor para definir os tamanhos:</p>
-              {/* Botões de cor reduzidos */}
-              <div className="mt-2 flex flex-wrap gap-2">
+              {/* Botões de cor com área de toque mínima de 44px para acessibilidade */}
+              <div className="mt-2 flex flex-wrap gap-1 sm:gap-1.5">
                 {listaCores.map((cor) => {
                   const ativa = cor.nome === corAtiva;
                   const count = pecas(coresQtd[cor.nome] ?? ZERO);
@@ -340,20 +418,24 @@ function ProdutoPage() {
                       aria-label={`${cor.nome}${count > 0 ? ` (${count} peças)` : ""}`}
                       aria-pressed={ativa}
                       title={cor.nome}
-                      className={cn(
-                        "relative size-7 sm:size-8 rounded-full transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-                        cor.border && "border border-border/70",
-                        ativa
-                          ? "ring-2 ring-primary ring-offset-2 scale-110 shadow-xs"
-                          : "hover:scale-105 opacity-85 hover:opacity-100",
-                      )}
-                      style={{ backgroundColor: cor.hex }}
+                      className="group relative flex size-11 items-center justify-center rounded-full transition-transform active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                     >
-                      {count > 0 && (
-                        <span className="absolute -top-1 -right-1 flex size-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground shadow-xs">
-                          {count}
-                        </span>
-                      )}
+                      <span
+                        className={cn(
+                          "relative size-7 sm:size-8 rounded-full transition-all",
+                          cor.border && "border border-border/70",
+                          ativa
+                            ? "ring-2 ring-primary ring-offset-2 scale-110 shadow-xs"
+                            : "group-hover:scale-105 opacity-85 group-hover:opacity-100",
+                        )}
+                        style={{ backgroundColor: cor.hex }}
+                      >
+                        {count > 0 && (
+                          <span className="absolute -top-1 -right-1 flex size-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground shadow-xs">
+                            {count}
+                          </span>
+                        )}
+                      </span>
                     </button>
                   );
                 })}
@@ -420,7 +502,7 @@ function ProdutoPage() {
             <div className="flex gap-2.5 rounded-2xl bg-accent p-3 text-accent-foreground text-xs sm:text-sm">
               <Info className="mt-0.5 size-4 shrink-0" />
               <p className="font-medium leading-relaxed">
-                As cores selecionadas serão atendidas conforme disponibilidade do estoque. Caso alguma cor escolhida não esteja disponível, enviaremos cores sortidas.
+                As cores selecionadas são separadas conforme disponibilidade de estoque. Não realizamos substituições de cores sem o seu consentimento prévio.
               </p>
             </div>
 

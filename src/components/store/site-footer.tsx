@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { siteQuery } from "@/lib/catalog.functions";
 import { whatsappLinkNumber } from "@/lib/format";
+import { analytics } from "@/lib/analytics";
 
 export function SiteFooter() {
   const { data } = useQuery(siteQuery());
@@ -22,10 +23,19 @@ export function SiteFooter() {
 
   return (
     <footer className="mt-16 border-t bg-card/40">
-      <div className="container-page py-6">
-        <div className="flex flex-col items-center justify-between gap-4 text-center text-sm text-muted-foreground sm:flex-row sm:text-left">
-          <p>© {new Date().getFullYear()} Líder Atacado. Todos os direitos reservados.</p>
-          <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
+      <div className="container-page py-8">
+        <div className="flex flex-col items-center justify-between gap-6 text-center text-sm text-muted-foreground md:flex-row md:text-left">
+          <div className="space-y-1">
+            <p className="font-semibold text-foreground">Líder Atacado</p>
+            <p className="text-xs text-muted-foreground">
+              Camisetas básicas e camisas polo no atacado direto de fábrica a partir de 10 peças.
+            </p>
+            <p className="text-xs text-muted-foreground">
+              © {new Date().getFullYear()} Líder Atacado. Todos os direitos reservados.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs sm:text-sm">
             <button
               type="button"
               onClick={() => setOpenContato(true)}
@@ -38,14 +48,35 @@ export function SiteFooter() {
               to="/sobre"
               className="font-medium transition hover:text-foreground hover:underline underline-offset-4"
             >
-              Sobre
+              Sobre Nós
+            </Link>
+            <span className="text-border">·</span>
+            <Link
+              to="/como-comprar"
+              className="font-medium transition hover:text-foreground hover:underline underline-offset-4"
+            >
+              Como Comprar
+            </Link>
+            <span className="text-border">·</span>
+            <Link
+              to="/faq"
+              className="font-medium transition hover:text-foreground hover:underline underline-offset-4"
+            >
+              Dúvidas (FAQ)
+            </Link>
+            <span className="text-border">·</span>
+            <Link
+              to="/trocas-e-devolucoes"
+              className="font-medium transition hover:text-foreground hover:underline underline-offset-4"
+            >
+              Trocas e Devoluções
             </Link>
             <span className="text-border">·</span>
             <Link
               to="/privacidade"
               className="font-medium transition hover:text-foreground hover:underline underline-offset-4"
             >
-              Políticas de Privacidade
+              Privacidade (LGPD)
             </Link>
           </div>
         </div>
@@ -56,7 +87,7 @@ export function SiteFooter() {
           <DialogHeader className="text-left space-y-1">
             <DialogTitle className="font-display text-xl font-bold">Fale Conosco</DialogTitle>
             <DialogDescription className="text-sm text-muted-foreground">
-              Escolha uma das opções abaixo para falar diretamente com nosso fornecedor:
+              Escolha uma das opções abaixo para falar diretamente com nosso atendimento de atacado:
             </DialogDescription>
           </DialogHeader>
           <div className="mt-4 flex flex-col gap-3">
@@ -65,6 +96,7 @@ export function SiteFooter() {
                 asChild
                 size="lg"
                 className="w-full bg-emerald-600 hover:bg-emerald-700 text-white gap-2.5 font-semibold text-sm shadow-sm h-12"
+                onClick={() => analytics.clickWhatsApp("footer")}
               >
                 <a
                   href={`https://wa.me/${whatsappLinkNumber(wa)}`}
@@ -72,7 +104,7 @@ export function SiteFooter() {
                   rel="noopener noreferrer"
                   aria-label="Falar com o Fornecedor Via WhatsApp"
                 >
-                  <MessageCircle className="size-5 shrink-0" /> Falar com o Fornecedor Via WhatsApp
+                  <MessageCircle className="size-5 shrink-0" /> Falar com o Atendimento Via WhatsApp
                 </a>
               </Button>
             )}
@@ -84,7 +116,7 @@ export function SiteFooter() {
                 className="w-full gap-2.5 font-semibold text-sm h-12 hover:bg-muted"
               >
                 <a href={`mailto:${email}`} aria-label="Falar com o Fornecedor Via E-mail">
-                  <Mail className="size-5 shrink-0" /> Falar com o Fornecedor Via E-mail
+                  <Mail className="size-5 shrink-0" /> Falar Via E-mail ({email})
                 </a>
               </Button>
             )}

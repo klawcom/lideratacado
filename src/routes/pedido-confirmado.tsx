@@ -7,6 +7,7 @@ import type { PedidoCriado } from "@/lib/orders.functions";
 import { padNumero } from "@/lib/format";
 import { gerarPedidoPdf } from "@/lib/order-pdf";
 import { seo } from "@/lib/seo";
+import { analytics } from "@/lib/analytics";
 
 export const Route = createFileRoute("/pedido-confirmado")({
   head: () => ({
@@ -94,7 +95,12 @@ function Confirmado() {
         </p>
         <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-center">
           <Button asChild size="lg">
-            <a href={p.waUrl} target="_blank" rel="noopener noreferrer">
+            <a
+              href={p.waUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => analytics.clickWhatsApp("confirmado", { numero: p.numero })}
+            >
               <MessageCircle /> Abrir WhatsApp
             </a>
           </Button>
