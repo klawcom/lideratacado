@@ -220,7 +220,7 @@ export function calculateRegioesStats(clientes: ClienteRow[], pedidos: PedidoRow
       const r = REGIOES_MAP[uf]?.regiao || "Outros";
       counts[r] = (counts[r] || 0) + 1;
     } else {
-      counts.Outros = (counts.Outros || 0) + 1;
+      counts["Outros"] = (counts["Outros"] || 0) + 1;
     }
   }
 
@@ -233,7 +233,7 @@ export function calculateRegioesStats(clientes: ClienteRow[], pedidos: PedidoRow
         const r = REGIOES_MAP[uf]?.regiao || "Outros";
         counts[r] = (counts[r] || 0) + 1;
       } else {
-        counts.Outros = (counts.Outros || 0) + 1;
+        counts["Outros"] = (counts["Outros"] || 0) + 1;
       }
     }
   }

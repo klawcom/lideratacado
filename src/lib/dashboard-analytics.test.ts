@@ -128,12 +128,12 @@ describe("dashboard-analytics", () => {
     expect(stats.canceladosValor).toBe(400);
 
     expect(stats.pieData).toHaveLength(3);
-    expect(stats.pieData[0].name).toBe("Finalizados");
-    expect(stats.pieData[0].value).toBe(2);
-    expect(stats.pieData[1].name).toBe("Carrinho Aberto");
-    expect(stats.pieData[1].value).toBe(2);
-    expect(stats.pieData[2].name).toBe("Não Pagos");
-    expect(stats.pieData[2].value).toBe(1);
+    expect(stats.pieData[0]?.name).toBe("Finalizados");
+    expect(stats.pieData[0]?.value).toBe(2);
+    expect(stats.pieData[1]?.name).toBe("Carrinho Aberto");
+    expect(stats.pieData[1]?.value).toBe(2);
+    expect(stats.pieData[2]?.name).toBe("Não Pagos");
+    expect(stats.pieData[2]?.value).toBe(1);
   });
 
   it("calcula balanço financeiro e métricas de vendas", () => {
@@ -146,9 +146,9 @@ describe("dashboard-analytics", () => {
     expect(fin.totalPecas).toBe(30); // 10 + 20
 
     expect(fin.barrasStatus).toHaveLength(3);
-    expect(fin.barrasStatus[0].valor).toBe(1500);
-    expect(fin.barrasStatus[1].valor).toBe(1350);
-    expect(fin.barrasStatus[2].valor).toBe(400);
+    expect(fin.barrasStatus[0]?.valor).toBe(1500);
+    expect(fin.barrasStatus[1]?.valor).toBe(1350);
+    expect(fin.barrasStatus[2]?.valor).toBe(400);
   });
 
   it("calcula distribuição geográfica dos clientes por regiões do Brasil", () => {
@@ -172,9 +172,9 @@ describe("dashboard-analytics", () => {
     expect(cli.percentualNovos).toBe(75);
 
     // João Silva (c1) comprou p1 (500) e p2 (1000) = 1500, liderando o ranking
-    expect(cli.topClientes[0].nome).toBe("João Silva");
-    expect(cli.topClientes[0].totalPedidos).toBe(2);
-    expect(cli.topClientes[0].totalGasto).toBe(1500);
-    expect(cli.topClientes[0].pedidosFinalizados).toBe(2);
+    expect(cli.topClientes[0]?.nome).toBe("João Silva");
+    expect(cli.topClientes[0]?.totalPedidos).toBe(2);
+    expect(cli.topClientes[0]?.totalGasto).toBe(1500);
+    expect(cli.topClientes[0]?.pedidosFinalizados).toBe(2);
   });
 });
