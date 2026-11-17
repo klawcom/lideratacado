@@ -114,10 +114,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       (loaderData?.config as any)?.google_site_verification ||
       (import.meta.env["VITE_GOOGLE_SITE_VERIFICATION"] as string | undefined);
 
-    const gaId =
-      (loaderData?.config as any)?.ga_measurement_id ||
-      (import.meta.env["VITE_GA_MEASUREMENT_ID"] as string | undefined);
-
     const meta: Array<Record<string, string>> = [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
@@ -149,17 +145,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
     ];
 
-    if (gaId) {
-      scripts.push(
-        {
-          src: `https://www.googletagmanager.com/gtag/js?id=${gaId}`,
-          async: true,
-        },
-        {
-          children: `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${gaId}',{send_page_view:true});`,
-        }
-      );
-    }
+    // GA4 is configured in Google Tag Manager, not through a second app-owned gtag.js installation.
 
     return {
       meta,
@@ -192,7 +178,7 @@ function RootShell({ children }: { children: ReactNode }) {
         <script
           id="google-tag-manager"
           dangerouslySetInnerHTML={{
-            __html: `(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','GTM-PTMC46NX');`,
+            __html: `(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','GTM-NXDVLWZF');`,
           }}
         />
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
@@ -201,7 +187,7 @@ function RootShell({ children }: { children: ReactNode }) {
       <body>
         <noscript>
           <iframe
-            src="https://www.googletagmanager.com/ns.html?id=GTM-PTMC46NX"
+            src="https://www.googletagmanager.com/ns.html?id=GTM-NXDVLWZF"
             height="0"
             width="0"
             style={{ display: "none", visibility: "hidden" }}

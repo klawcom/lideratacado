@@ -41,4 +41,4 @@ use the editor.
 - Bulk product import runs in the admin panel (`/admin/produtos/importar`) with the admin's own session and RLS, never with a service key in a local script; grouping/naming/brand rules live in `src/lib/bulk-import.ts` (tested) and storage paths are deterministic so re-runs resume.
 - `.env` (publishable backend URL/key only) must stay tracked in git — the published build reads `VITE_SUPABASE_*` from it; ignoring it made the live site fail with "Missing Supabase environment variable(s)". Never put secret keys in it.
 - Store menu "Atendimento" links come from `configuracoes.menu_links`, normalized by `src/lib/menu-links.ts` (tested); product menu entries are the active categories.
-- Install Google Tag Manager only in RootShell: the official bootstrap in head and noscript as body's first child, so all routes share one installation without replacing Google Analytics.
+- Install Google Tag Manager only in RootShell, with the official head bootstrap and noscript as body's first child; GA4 configuration belongs in GTM, not an app-owned gtag.js loader, to avoid duplicate tracking while retaining analytics.ts events.
