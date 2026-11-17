@@ -279,6 +279,7 @@ function ProdutoPage() {
       faixas: p.faixas_preco,
       qtd: totalQtd,
       cores: itemCores.length ? itemCores : undefined,
+      observacao: "",
     });
 
     analytics.addToCart({

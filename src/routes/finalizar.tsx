@@ -371,7 +371,7 @@ function FinalizarPage() {
     const win = window.open("", "_blank");
     setEnviando(true);
     try {
-      const res = await enviar({ data: payload });
+      const res = await enviar({ data: parsed.data });
       analytics.clickWhatsApp("finalizar", {
         numero: res.numero,
         totalPecas: resumo.totalPecas,
