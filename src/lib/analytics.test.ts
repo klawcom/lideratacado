@@ -15,6 +15,23 @@ describe("analytics and dataLayer tracking", () => {
     });
   });
 
+  it("preserves the GTM queue when sending a commerce event", () => {
+    const queue = [{ event: "gtm.js", "gtm.start": 123 }];
+    window.dataLayer = queue;
+    analytics.beginCheckout({
+      total: 460,
+      totalPecas: 10,
+      itens: [{ id: "pima-04", nome: "Pima 04", pecas: 10, valor: 460 }],
+    });
+    expect(window.dataLayer).toBe(queue);
+    expect(window.dataLayer?.[0]).toEqual({ event: "gtm.js", "gtm.start": 123 });
+    expect(window.dataLayer?.[1]).toMatchObject({
+      event: "begin_checkout",
+      ecommerce: { currency: "BRL", value: 460 },
+      total_pieces: 10,
+    });
+  });
+
   it("pushes view_item e-commerce event", () => {
     analytics.viewItem({
       id: "prod-1",
