@@ -26,6 +26,7 @@ import { Route as TrocasEDevolucoesRouteImport } from './routes/trocas-e-devoluc
 import { Route as AuthenticatedAdminRouteRouteImport } from './routes/_authenticated/admin/route'
 import { Route as AuthenticatedMeusPedidosRouteImport } from './routes/_authenticated/meus-pedidos'
 import { Route as CategoriaSlugRouteImport } from './routes/categoria/$slug'
+import { Route as PagamentoRetornoRouteImport } from './routes/pagamento/retorno'
 import { Route as ProdutoSlugRouteImport } from './routes/produto/$slug'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
 import { Route as AuthenticatedAdminCategoriasRouteImport } from './routes/_authenticated/admin/categorias'
@@ -39,6 +40,7 @@ import { Route as AuthenticatedAdminProdutosIndexRouteImport } from './routes/_a
 import { Route as AuthenticatedAdminProdutosIdRouteImport } from './routes/_authenticated/admin/produtos/$id'
 import { Route as AuthenticatedAdminProdutosImportarRouteImport } from './routes/_authenticated/admin/produtos/importar'
 import { Route as AuthenticatedAdminProdutosNovoRouteImport } from './routes/_authenticated/admin/produtos/novo'
+import { Route as ApiPublicInfinitepayWebhookRouteImport } from './routes/api/public/infinitepay.webhook'
 import { Route as ApiPublicMidiaSplatRouteImport } from './routes/api/public/midia.$'
 
 const IndexRoute = IndexRouteImport.update({
@@ -126,6 +128,11 @@ const CategoriaSlugRoute = CategoriaSlugRouteImport.update({
   path: '/categoria/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PagamentoRetornoRoute = PagamentoRetornoRouteImport.update({
+  id: '/pagamento/retorno',
+  path: '/pagamento/retorno',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProdutoSlugRoute = ProdutoSlugRouteImport.update({
   id: '/produto/$slug',
   path: '/produto/$slug',
@@ -202,6 +209,12 @@ const AuthenticatedAdminProdutosNovoRoute =
     path: '/produtos/novo',
     getParentRoute: () => AuthenticatedAdminRouteRoute,
   } as any)
+const ApiPublicInfinitepayWebhookRoute =
+  ApiPublicInfinitepayWebhookRouteImport.update({
+    id: '/api/public/infinitepay/webhook',
+    path: '/api/public/infinitepay/webhook',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicMidiaSplatRoute = ApiPublicMidiaSplatRouteImport.update({
   id: '/api/public/midia/$',
   path: '/api/public/midia/$',
@@ -225,6 +238,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/meus-pedidos': typeof AuthenticatedMeusPedidosRoute
   '/categoria/$slug': typeof CategoriaSlugRoute
+  '/pagamento/retorno': typeof PagamentoRetornoRoute
   '/produto/$slug': typeof ProdutoSlugRoute
   '/admin/categorias': typeof AuthenticatedAdminCategoriasRoute
   '/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
@@ -235,6 +249,7 @@ export interface FileRoutesByFullPath {
   '/admin/produtos/$id': typeof AuthenticatedAdminProdutosIdRoute
   '/admin/produtos/importar': typeof AuthenticatedAdminProdutosImportarRoute
   '/admin/produtos/novo': typeof AuthenticatedAdminProdutosNovoRoute
+  '/api/public/infinitepay/webhook': typeof ApiPublicInfinitepayWebhookRoute
   '/api/public/midia/$': typeof ApiPublicMidiaSplatRoute
   '/admin/clientes/': typeof AuthenticatedAdminClientesIndexRoute
   '/admin/pedidos/': typeof AuthenticatedAdminPedidosIndexRoute
@@ -256,6 +271,7 @@ export interface FileRoutesByTo {
   '/trocas-e-devolucoes': typeof TrocasEDevolucoesRoute
   '/meus-pedidos': typeof AuthenticatedMeusPedidosRoute
   '/categoria/$slug': typeof CategoriaSlugRoute
+  '/pagamento/retorno': typeof PagamentoRetornoRoute
   '/produto/$slug': typeof ProdutoSlugRoute
   '/admin/categorias': typeof AuthenticatedAdminCategoriasRoute
   '/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
@@ -266,6 +282,7 @@ export interface FileRoutesByTo {
   '/admin/produtos/$id': typeof AuthenticatedAdminProdutosIdRoute
   '/admin/produtos/importar': typeof AuthenticatedAdminProdutosImportarRoute
   '/admin/produtos/novo': typeof AuthenticatedAdminProdutosNovoRoute
+  '/api/public/infinitepay/webhook': typeof ApiPublicInfinitepayWebhookRoute
   '/api/public/midia/$': typeof ApiPublicMidiaSplatRoute
   '/admin/clientes': typeof AuthenticatedAdminClientesIndexRoute
   '/admin/pedidos': typeof AuthenticatedAdminPedidosIndexRoute
@@ -290,6 +307,7 @@ export interface FileRoutesById {
   '/_authenticated/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/_authenticated/meus-pedidos': typeof AuthenticatedMeusPedidosRoute
   '/categoria/$slug': typeof CategoriaSlugRoute
+  '/pagamento/retorno': typeof PagamentoRetornoRoute
   '/produto/$slug': typeof ProdutoSlugRoute
   '/_authenticated/admin/categorias': typeof AuthenticatedAdminCategoriasRoute
   '/_authenticated/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
@@ -300,6 +318,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/produtos/$id': typeof AuthenticatedAdminProdutosIdRoute
   '/_authenticated/admin/produtos/importar': typeof AuthenticatedAdminProdutosImportarRoute
   '/_authenticated/admin/produtos/novo': typeof AuthenticatedAdminProdutosNovoRoute
+  '/api/public/infinitepay/webhook': typeof ApiPublicInfinitepayWebhookRoute
   '/api/public/midia/$': typeof ApiPublicMidiaSplatRoute
   '/_authenticated/admin/clientes/': typeof AuthenticatedAdminClientesIndexRoute
   '/_authenticated/admin/pedidos/': typeof AuthenticatedAdminPedidosIndexRoute
@@ -324,6 +343,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/meus-pedidos'
     | '/categoria/$slug'
+    | '/pagamento/retorno'
     | '/produto/$slug'
     | '/admin/categorias'
     | '/admin/configuracoes'
@@ -334,6 +354,7 @@ export interface FileRouteTypes {
     | '/admin/produtos/$id'
     | '/admin/produtos/importar'
     | '/admin/produtos/novo'
+    | '/api/public/infinitepay/webhook'
     | '/api/public/midia/$'
     | '/admin/clientes/'
     | '/admin/pedidos/'
@@ -355,6 +376,7 @@ export interface FileRouteTypes {
     | '/trocas-e-devolucoes'
     | '/meus-pedidos'
     | '/categoria/$slug'
+    | '/pagamento/retorno'
     | '/produto/$slug'
     | '/admin/categorias'
     | '/admin/configuracoes'
@@ -365,6 +387,7 @@ export interface FileRouteTypes {
     | '/admin/produtos/$id'
     | '/admin/produtos/importar'
     | '/admin/produtos/novo'
+    | '/api/public/infinitepay/webhook'
     | '/api/public/midia/$'
     | '/admin/clientes'
     | '/admin/pedidos'
@@ -388,6 +411,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin'
     | '/_authenticated/meus-pedidos'
     | '/categoria/$slug'
+    | '/pagamento/retorno'
     | '/produto/$slug'
     | '/_authenticated/admin/categorias'
     | '/_authenticated/admin/configuracoes'
@@ -398,6 +422,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/produtos/$id'
     | '/_authenticated/admin/produtos/importar'
     | '/_authenticated/admin/produtos/novo'
+    | '/api/public/infinitepay/webhook'
     | '/api/public/midia/$'
     | '/_authenticated/admin/clientes/'
     | '/_authenticated/admin/pedidos/'
@@ -420,7 +445,9 @@ export interface RootRouteChildren {
   SobreRoute: typeof SobreRoute
   TrocasEDevolucoesRoute: typeof TrocasEDevolucoesRoute
   CategoriaSlugRoute: typeof CategoriaSlugRoute
+  PagamentoRetornoRoute: typeof PagamentoRetornoRoute
   ProdutoSlugRoute: typeof ProdutoSlugRoute
+  ApiPublicInfinitepayWebhookRoute: typeof ApiPublicInfinitepayWebhookRoute
   ApiPublicMidiaSplatRoute: typeof ApiPublicMidiaSplatRoute
 }
 
@@ -545,6 +572,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CategoriaSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/pagamento/retorno': {
+      id: '/pagamento/retorno'
+      path: '/pagamento/retorno'
+      fullPath: '/pagamento/retorno'
+      preLoaderRoute: typeof PagamentoRetornoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/produto/$slug': {
       id: '/produto/$slug'
       path: '/produto/$slug'
@@ -636,6 +670,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminProdutosNovoRouteImport
       parentRoute: typeof AuthenticatedAdminRouteRoute
     }
+    '/api/public/infinitepay/webhook': {
+      id: '/api/public/infinitepay/webhook'
+      path: '/api/public/infinitepay/webhook'
+      fullPath: '/api/public/infinitepay/webhook'
+      preLoaderRoute: typeof ApiPublicInfinitepayWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/midia/$': {
       id: '/api/public/midia/$'
       path: '/api/public/midia/$'
@@ -712,7 +753,9 @@ const rootRouteChildren: RootRouteChildren = {
   SobreRoute: SobreRoute,
   TrocasEDevolucoesRoute: TrocasEDevolucoesRoute,
   CategoriaSlugRoute: CategoriaSlugRoute,
+  PagamentoRetornoRoute: PagamentoRetornoRoute,
   ProdutoSlugRoute: ProdutoSlugRoute,
+  ApiPublicInfinitepayWebhookRoute: ApiPublicInfinitepayWebhookRoute,
   ApiPublicMidiaSplatRoute: ApiPublicMidiaSplatRoute,
 }
 export const routeTree = rootRouteImport

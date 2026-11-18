@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useRef, useState } from "react";
-import { AlertCircle, CheckCircle2, ChevronLeft, Loader2, MessageCircle, RefreshCw, Truck } from "lucide-react";
+import { AlertCircle, CheckCircle2, ChevronLeft, CreditCard, Loader2, MessageCircle, RefreshCw, Truck } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +13,7 @@ import { calcularPedido, pecas } from "@/lib/pricing";
 import { UFS, brl, faltamPecas, maskCep, maskCpf, maskPhone, onlyDigits } from "@/lib/format";
 import { siteQuery } from "@/lib/catalog.functions";
 import { criarPedido, pedidoSchema } from "@/lib/orders.functions";
+import { configuracaoInfinitePay, criarCobrancaInfinitePay } from "@/lib/payments.functions";
 import { simularFrete } from "@/lib/frete.functions";
 import { formatarPrazoFrete, logoFrete, type FreteOpcao } from "@/lib/frete";
 import { lerDadosEntrega, salvarDadosEntrega, salvarUltimoPedido } from "@/lib/checkout-storage";
@@ -27,7 +28,7 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/finalizar")({
   head: () => ({
     meta: [
-      ...seo({ title: "Finalizar pedido | Líder Atacado", description: "Informe seus dados de entrega e envie o pedido pelo WhatsApp." }),
+      ...seo({ title: "Finalizar pedido | Líder Atacado", description: "Informe seus dados de entrega e escolha pagamento online ou atendimento pelo WhatsApp." }),
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -111,8 +112,15 @@ function FinalizarPage() {
   const minimo = site?.config?.pedido_minimo ?? 10;
   const resumo = calcularPedido(items, minimo);
   const enviar = useServerFn(criarPedido);
+  const gerarCobranca = useServerFn(criarCobrancaInfinitePay);
   const simular = useServerFn(simularFrete);
+  const { data: paymentConfig } = useQuery({
+    queryKey: ["infinitepay", "config"],
+    queryFn: () => configuracaoInfinitePay(),
+    staleTime: 60_000,
+  });
 
+  const [formaPagamento, setFormaPagamento] = useState<"whatsapp" | "infinitepay">("whatsapp");
   const [f, setF] = useState<Form>(VAZIO);
   const [obs, setObs] = useState("");
   const [erros, setErros] = useState<Partial<Record<keyof Form, string>>>({});
@@ -131,6 +139,7 @@ function FinalizarPage() {
   const destNumeroRef = useRef<HTMLInputElement>(null);
   const lastCep = useRef("");
   const lastDestCep = useRef("");
+  const checkoutKeyRef = useRef<string | null>(null);
 
   const cepEnvio = isDropshipping ? dest.cep : f.cep;
 
@@ -321,7 +330,10 @@ function FinalizarPage() {
       }
     }
 
+    const checkoutKey = checkoutKeyRef.current ??= crypto.randomUUID();
     const payload = {
+      idempotencyKey: checkoutKey,
+      formaPagamento,
       cliente: { ...f },
       frete: {
         servico: `${freteEscolhido.nome} (${freteEscolhido.transportadora})`,
@@ -368,10 +380,24 @@ function FinalizarPage() {
       return;
     }
     // Open the WhatsApp tab during the tap so browsers don't block it.
-    const win = window.open("", "_blank");
+    const win = parsed.data.formaPagamento === "whatsapp" ? window.open("", "_blank") : null;
     setEnviando(true);
     try {
       const res = await enviar({ data: parsed.data });
+      salvarDadosEntrega({ ...f });
+      salvarUltimoPedido(res);
+
+      if (res.formaPagamento === "infinitepay") {
+        const cobranca = await gerarCobranca({ data: { pedidoId: res.id, checkoutKey: res.checkoutKey } });
+        cart.clear();
+        if (cobranca.paymentUrl) {
+          window.location.assign(cobranca.paymentUrl);
+        } else {
+          navigate({ to: "/pagamento/retorno", search: { order_nsu: res.id } });
+        }
+        return;
+      }
+
       analytics.clickWhatsApp("finalizar", {
         numero: res.numero,
         totalPecas: resumo.totalPecas,
@@ -388,8 +414,6 @@ function FinalizarPage() {
           valor: i.valor,
         })),
       });
-      salvarDadosEntrega({ ...f });
-      salvarUltimoPedido(res);
       cart.clear();
       if (win) win.location.href = res.waUrl;
       navigate({ to: "/pedido-confirmado" });
@@ -422,7 +446,7 @@ function FinalizarPage() {
         <ChevronLeft className="size-5" /> Voltar ao pedido
       </Link>
       <h1 className="mt-1 text-3xl font-extrabold">Finalizar pedido</h1>
-      <p className="mt-1 text-muted-foreground">Sem pagamento no site. Seu pedido será enviado pelo WhatsApp.</p>
+      <p className="mt-1 text-muted-foreground">Escolha pagamento online ou conclua o pedido pelo WhatsApp.</p>
       {!user && (
         <p className="mt-3 text-sm text-muted-foreground">
           Já comprou antes?{" "}
@@ -822,6 +846,42 @@ function FinalizarPage() {
             <p className="mt-1 text-right text-sm text-muted-foreground">{obs.length}/500</p>
           </div>
 
+          <fieldset className="rounded-2xl border bg-card p-4 sm:p-5">
+            <legend className="mb-3 font-display text-lg font-bold">Forma de pagamento</legend>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <button
+                type="button"
+                aria-pressed={formaPagamento === "infinitepay"}
+                disabled={paymentConfig?.available !== true}
+                onClick={() => setFormaPagamento("infinitepay")}
+                className={cn(
+                  "min-h-24 rounded-xl border p-4 text-left transition",
+                  formaPagamento === "infinitepay" ? "border-primary bg-primary/5 ring-2 ring-primary" : "bg-card hover:border-foreground/30",
+                  paymentConfig?.available !== true && "cursor-not-allowed opacity-60",
+                )}
+              >
+                <span className="flex items-center gap-2 font-bold"><CreditCard className="size-5" /> Pagar online</span>
+                <span className="mt-1 block text-sm text-muted-foreground">Pix ou cartão pela InfinitePay</span>
+                {paymentConfig?.available !== true && <span className="mt-1 block text-xs font-medium">Configuração pendente</span>}
+              </button>
+              <button
+                type="button"
+                aria-pressed={formaPagamento === "whatsapp"}
+                onClick={() => setFormaPagamento("whatsapp")}
+                className={cn(
+                  "min-h-24 rounded-xl border p-4 text-left transition",
+                  formaPagamento === "whatsapp" ? "border-primary bg-primary/5 ring-2 ring-primary" : "bg-card hover:border-foreground/30",
+                )}
+              >
+                <span className="flex items-center gap-2 font-bold"><MessageCircle className="size-5" /> Combinar pelo WhatsApp</span>
+                <span className="mt-1 block text-sm text-muted-foreground">Nossa equipe informa as opções de pagamento</span>
+              </button>
+            </div>
+            {formaPagamento === "infinitepay" && (
+              <p className="mt-3 text-sm text-muted-foreground">Você será direcionado ao ambiente seguro da InfinitePay. O pedido só será marcado como pago após confirmação.</p>
+            )}
+          </fieldset>
+
           <div className="pt-2">
             <Button
               type="submit"
@@ -829,11 +889,11 @@ function FinalizarPage() {
               className="w-full h-12 text-base font-semibold shadow-sm"
               disabled={enviando}
             >
-              {enviando ? <Loader2 className="mr-2 size-5 animate-spin" /> : <MessageCircle className="mr-2 size-5" />}
-              {enviando ? "Enviando pedido..." : "Enviar pedido via WhatsApp"}
+              {enviando ? <Loader2 className="mr-2 size-5 animate-spin" /> : formaPagamento === "infinitepay" ? <CreditCard className="mr-2 size-5" /> : <MessageCircle className="mr-2 size-5" />}
+              {enviando ? "Registrando pedido..." : formaPagamento === "infinitepay" ? "Ir para o pagamento" : "Enviar pedido via WhatsApp"}
             </Button>
             <p className="mt-2 text-center text-xs text-muted-foreground">
-              Seu pedido será registrado com segurança e nossa equipe confirmará no WhatsApp.
+              {formaPagamento === "infinitepay" ? "O valor é conferido no servidor antes de gerar a cobrança." : "Seu pedido será registrado com segurança e nossa equipe confirmará no WhatsApp."}
             </p>
           </div>
         </form>
@@ -918,8 +978,8 @@ function FinalizarPage() {
             className="mt-5 w-full h-12 text-base font-semibold shadow-sm"
             disabled={enviando}
           >
-            {enviando ? <Loader2 className="mr-2 size-5 animate-spin" /> : <MessageCircle className="mr-2 size-5" />}
-            {enviando ? "Enviando pedido..." : "Enviar pedido"}
+            {enviando ? <Loader2 className="mr-2 size-5 animate-spin" /> : formaPagamento === "infinitepay" ? <CreditCard className="mr-2 size-5" /> : <MessageCircle className="mr-2 size-5" />}
+            {enviando ? "Registrando pedido..." : formaPagamento === "infinitepay" ? "Ir para o pagamento" : "Enviar pedido"}
           </Button>
         </aside>
       </div>

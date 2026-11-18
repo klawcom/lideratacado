@@ -5,6 +5,8 @@ import { calcularPedido, pecas, type Qtd } from "./pricing";
 import { linkWhatsapp, montarMensagemPedido } from "./whatsapp-message";
 import { faltamPecas, formatWhatsappIntl, maskCpf, money, onlyDigits, validarCpf } from "./format";
 import { formatarCorTamanhos } from "./colors";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import type { Database } from "@/integrations/supabase/types";
 
 const qtd = z.number().int().min(0).max(100000).default(0);
 
@@ -21,6 +23,8 @@ const corQtdSchema = z.object({
 });
 
 export const pedidoSchema = z.object({
+  idempotencyKey: z.string().uuid(),
+  formaPagamento: z.enum(["whatsapp", "infinitepay"]).default("whatsapp"),
   cliente: z.object({
     nome: z.string().trim().min(2, "Informe seu nome").max(120),
     cpf: z
@@ -98,6 +102,9 @@ export const pedidoSchema = z.object({
 export type PedidoInput = z.input<typeof pedidoSchema>;
 
 export type PedidoCriado = {
+  id: string;
+  checkoutKey: string;
+  formaPagamento: "whatsapp" | "infinitepay";
   numero: number;
   criadoEm: string;
   mensagem: string;
@@ -130,6 +137,81 @@ export type PedidoCriado = {
   };
 };
 
+type PedidoComItens = Database["public"]["Tables"]["pedidos"]["Row"] & {
+  pedido_itens: Database["public"]["Tables"]["pedido_itens"]["Row"][];
+};
+
+function montarRetornoExistente(
+  pedido: PedidoComItens,
+  data: z.output<typeof pedidoSchema>,
+  whatsappLoja: string,
+): PedidoCriado {
+  const itens = pedido.pedido_itens.map((item) => {
+    const qtd = { p: item.qtd_p, m: item.qtd_m, g: item.qtd_g, gg: item.qtd_gg };
+    return {
+      nome: item.produto_nome,
+      codigo: item.codigo_modelo,
+      pecas: pecas(qtd) || Math.round(Number(item.valor) / Number(item.preco_unitario)),
+      preco: Number(item.preco_unitario),
+      valor: Number(item.valor),
+      qtd,
+      observacao: item.observacao,
+    };
+  });
+  const isDropshipping = pedido.observacao.includes("[DROPSHIPPING]");
+  const entrega = {
+    rua: pedido.rua,
+    numero: pedido.numero_endereco,
+    complemento: pedido.complemento,
+    bairro: pedido.bairro,
+    cidade: pedido.cidade,
+    estado: pedido.estado,
+    cep: pedido.cep,
+    isDropshipping,
+    destinatario: isDropshipping ? data.dropshipping?.destinatarioNome : undefined,
+    cpfDestinatario: isDropshipping ? data.dropshipping?.destinatarioCpf : undefined,
+    whatsappDestinatario: isDropshipping ? data.dropshipping?.destinatarioWhatsapp : undefined,
+  };
+  const cliente = {
+    nome: pedido.cliente_nome,
+    email: pedido.cliente_email,
+    whatsapp: pedido.cliente_whatsapp,
+    cpf: data.cliente.cpf,
+  };
+  const mensagem = montarMensagemPedido({
+    numero: Number(pedido.numero),
+    criadoEm: pedido.created_at,
+    itens,
+    totalPecas: pedido.total_pecas,
+    faixa: pedido.faixa_aplicada,
+    total: Number(pedido.total),
+    frete: data.frete,
+    cliente,
+    entrega,
+    substituicaoCores: data.substituicaoCores,
+    observacao: data.observacao,
+  });
+  return {
+    id: pedido.id,
+    checkoutKey: data.idempotencyKey,
+    formaPagamento: pedido.forma_pagamento === "infinitepay" ? "infinitepay" : "whatsapp",
+    numero: Number(pedido.numero),
+    criadoEm: pedido.created_at,
+    mensagem,
+    waUrl: linkWhatsapp(whatsappLoja, mensagem),
+    cliente,
+    entrega,
+    frete: data.frete,
+    observacao: data.observacao,
+    resumo: {
+      itens,
+      totalPecas: pedido.total_pecas,
+      faixa: pedido.faixa_aplicada,
+      total: Number(pedido.total),
+    },
+  };
+}
+
 export const criarPedido = createServerFn({ method: "POST" })
   .validator((d: PedidoInput) => pedidoSchema.parse(d))
   .handler(async ({ data }): Promise<PedidoCriado> => {
@@ -150,6 +232,10 @@ export const criarPedido = createServerFn({ method: "POST" })
 
     const { data: config } = await db.from("configuracoes").select("whatsapp, pedido_minimo").eq("id", 1).single();
     const pedidoMinimo = config?.pedido_minimo ?? 10;
+
+    const { data: pedidoExistente } = await db.from("pedidos").select("*, pedido_itens(*)")
+      .eq("idempotency_key", data.idempotencyKey).maybeSingle();
+    if (pedidoExistente) return montarRetornoExistente(pedidoExistente, data, config?.whatsapp ?? "5566996444461");
 
     // Merge repeated products and drop empty lines.
     const merged = new Map<string, (typeof data.itens)[number]>();
@@ -269,6 +355,8 @@ export const criarPedido = createServerFn({ method: "POST" })
     const { data: pedido, error: pedErr } = await db
       .from("pedidos")
       .insert({
+        idempotency_key: data.idempotencyKey,
+        forma_pagamento: data.formaPagamento,
         cliente_id: clienteId,
         user_id: userId,
         total: totalComFrete,
@@ -288,7 +376,14 @@ export const criarPedido = createServerFn({ method: "POST" })
       })
       .select("id, numero, created_at")
       .single();
-    if (pedErr) throw new Error(pedErr.message);
+    if (pedErr) {
+      if (pedErr.code === "23505") {
+        const { data: existente } = await db.from("pedidos").select("*, pedido_itens(*)")
+          .eq("idempotency_key", data.idempotencyKey).maybeSingle();
+        if (existente) return montarRetornoExistente(existente, data, config?.whatsapp ?? "5566996444461");
+      }
+      throw new Error(pedErr.message);
+    }
 
     const { error: itErr } = await db.from("pedido_itens").insert(
       resumo.itens.map((i) => {
@@ -367,6 +462,9 @@ export const criarPedido = createServerFn({ method: "POST" })
     });
 
     return {
+      id: pedido.id,
+      checkoutKey: data.idempotencyKey,
+      formaPagamento: data.formaPagamento,
       numero: Number(pedido.numero),
       criadoEm: pedido.created_at,
       mensagem,
@@ -385,10 +483,15 @@ export const criarPedido = createServerFn({ method: "POST" })
   });
 
 export const excluirPedidosFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .validator((ids: string[]) => z.array(z.string().uuid()).min(1).parse(ids))
-  .handler(async ({ data: ids }) => {
+  .handler(async ({ data: ids, context }) => {
+    const { data: isAdmin } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
+    if (!isAdmin) throw new Error("Acesso restrito ao administrador.");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const db = supabaseAdmin;
+    const { data: cobrancas } = await db.from("pagamentos").select("pedido_id").in("pedido_id", ids).limit(1);
+    if (cobrancas?.length) throw new Error("Pedidos com cobranças não podem ser excluídos. Preserve o histórico financeiro.");
     // 1. Delete associated notes
     await db.from("pedido_notas").delete().in("pedido_id", ids);
     // 2. Delete associated items

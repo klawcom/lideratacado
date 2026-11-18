@@ -1,0 +1,1 @@
+DROP INDEX public.pedidos_idempotency_key_idx;

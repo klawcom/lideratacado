@@ -178,6 +178,112 @@ export type Database = {
           },
         ]
       }
+      pagamento_eventos: {
+        Row: {
+          confirmado: boolean
+          created_at: string
+          evento: string
+          id: string
+          pagamento_id: string
+          transaction_nsu: string
+        }
+        Insert: {
+          confirmado?: boolean
+          created_at?: string
+          evento: string
+          id?: string
+          pagamento_id: string
+          transaction_nsu?: string
+        }
+        Update: {
+          confirmado?: boolean
+          created_at?: string
+          evento?: string
+          id?: string
+          pagamento_id?: string
+          transaction_nsu?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pagamento_eventos_pagamento_id_fkey"
+            columns: ["pagamento_id"]
+            isOneToOne: false
+            referencedRelation: "pagamentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pagamentos: {
+        Row: {
+          amount: number
+          capture_method: string | null
+          created_at: string
+          id: string
+          installments: number | null
+          invoice_slug: string | null
+          last_checked_at: string | null
+          last_error: string | null
+          order_nsu: string
+          paid_amount: number | null
+          paid_at: string | null
+          payment_url: string | null
+          pedido_id: string
+          provedor: string
+          receipt_url: string | null
+          status: string
+          transaction_nsu: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          capture_method?: string | null
+          created_at?: string
+          id?: string
+          installments?: number | null
+          invoice_slug?: string | null
+          last_checked_at?: string | null
+          last_error?: string | null
+          order_nsu: string
+          paid_amount?: number | null
+          paid_at?: string | null
+          payment_url?: string | null
+          pedido_id: string
+          provedor?: string
+          receipt_url?: string | null
+          status?: string
+          transaction_nsu?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          capture_method?: string | null
+          created_at?: string
+          id?: string
+          installments?: number | null
+          invoice_slug?: string | null
+          last_checked_at?: string | null
+          last_error?: string | null
+          order_nsu?: string
+          paid_amount?: number | null
+          paid_at?: string | null
+          payment_url?: string | null
+          pedido_id?: string
+          provedor?: string
+          receipt_url?: string | null
+          status?: string
+          transaction_nsu?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pagamentos_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: true
+            referencedRelation: "pedidos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pedido_itens: {
         Row: {
           codigo_modelo: string
@@ -277,7 +383,9 @@ export type Database = {
           created_at: string
           estado: string
           faixa_aplicada: number
+          forma_pagamento: string
           id: string
+          idempotency_key: string | null
           numero: number
           numero_endereco: string
           observacao: string
@@ -299,7 +407,9 @@ export type Database = {
           created_at?: string
           estado?: string
           faixa_aplicada?: number
+          forma_pagamento?: string
           id?: string
+          idempotency_key?: string | null
           numero?: number
           numero_endereco?: string
           observacao?: string
@@ -321,7 +431,9 @@ export type Database = {
           created_at?: string
           estado?: string
           faixa_aplicada?: number
+          forma_pagamento?: string
           id?: string
+          idempotency_key?: string | null
           numero?: number
           numero_endereco?: string
           observacao?: string

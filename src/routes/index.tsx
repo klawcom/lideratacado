@@ -56,7 +56,7 @@ const FAQS_HOME = [
   {
     pergunta: "Como finalizo o pedido e realizo o pagamento?",
     resposta:
-      "Você monta seu carrinho no site e, ao clicar em 'Enviar pedido', sua solicitação é transmitida formatada diretamente para o nosso WhatsApp oficial. Nossa equipe confere as peças, confirma o frete e combina a forma de pagamento (PIX ou cartão de crédito).",
+      "Você monta seu carrinho, informa a entrega e escolhe pagar online com Pix ou cartão pela InfinitePay. Se preferir, envie o pedido para nosso WhatsApp oficial e nossa equipe combinará o pagamento com você.",
   },
 ];
 

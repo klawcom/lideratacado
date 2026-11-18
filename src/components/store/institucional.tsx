@@ -51,8 +51,8 @@ Dentro da página de cada produto:
 #### 3. Simule o Frete e Revise o Carrinho
 No carrinho de compras, você confere o total de peças, a faixa de desconto aplicada e pode digitar seu CEP para consultar as opções de envio via Correios (PAC ou SEDEX) com prazos reais.
 
-#### 4. Finalize os Dados e Envie pelo WhatsApp
-Ao clicar em **Finalizar Pedido**, informe seus dados de entrega (ou dados do seu cliente final se for dropshipping) e confirme. Seu pedido será gerado e enviado diretamente para o nosso atendimento no WhatsApp para conferência e pagamento (PIX ou Cartão).
+#### 4. Finalize os Dados e Escolha o Pagamento
+Ao clicar em **Finalizar Pedido**, informe seus dados de entrega (ou dados do seu cliente final se for dropshipping). Você pode pagar online com Pix ou cartão pela InfinitePay, ou enviar o pedido ao nosso atendimento no WhatsApp para combinar o pagamento.
 `.trim(),
 
   texto_faq: `
@@ -79,7 +79,7 @@ Sim! Trabalhamos com **grade livre** para modelos e tamanhos. Em relação às c
 O frete é calculado com base no peso e CEP de destino via integração oficial com os Correios (PAC e SEDEX). Você pode simular o frete diretamente na página do produto ou no carrinho.
 
 #### Como é realizado o pagamento?
-Após o envio do pedido pelo site, nosso atendimento no WhatsApp confirma a disponibilidade das peças e fornece a chave PIX ou o link para pagamento via cartão de crédito.
+No checkout, você pode pagar online com Pix ou cartão de crédito pelo ambiente seguro da InfinitePay. Se preferir, envie o pedido pelo WhatsApp e nosso atendimento combinará o pagamento com você.
 `.trim(),
 
   texto_trocas: `

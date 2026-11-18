@@ -15,6 +15,20 @@
       "when": 1794707963236,
       "tag": "0001_menu_links_config",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1794980151096,
+      "tag": "0002_add_infinitepay_payments",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1794980165201,
+      "tag": "0003_remove_duplicate_order_idempotency_index",
+      "breakpoints": true
     }
   ]
 }

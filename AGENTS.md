@@ -42,3 +42,4 @@ use the editor.
 - `.env` (publishable backend URL/key only) must stay tracked in git — the published build reads `VITE_SUPABASE_*` from it; ignoring it made the live site fail with "Missing Supabase environment variable(s)". Never put secret keys in it.
 - Store menu "Atendimento" links come from `configuracoes.menu_links`, normalized by `src/lib/menu-links.ts` (tested); product menu entries are the active categories.
 - Install Google Tag Manager only in RootShell, with the official head bootstrap and noscript as body's first child; GA4 configuration belongs in GTM, not an app-owned gtag.js loader, to avoid duplicate tracking while retaining analytics.ts events.
+- InfinitePay credentials are server-only; checkout uses TanStack server functions, and the unsigned public webhook must confirm every payment through `payment_check` before marking it paid. Keep one payment per order and never delete orders with payment records.

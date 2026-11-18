@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
-import { ChevronLeft, FileDown, Loader2, MessageCircle, Save, Trash2 } from "lucide-react";
+import { ChevronLeft, CreditCard, ExternalLink, FileDown, Loader2, MessageCircle, RefreshCw, Save, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -22,6 +22,8 @@ import { STATUS, StatusBadge, statusLabel, type PedidoStatus } from "@/component
 import { brl, formatDateTime, formatWhatsappIntl, maskCep, money, padNumero, whatsappLinkNumber } from "@/lib/format";
 import { tamanhosLinha } from "@/lib/whatsapp-message";
 import { excluirPedidosFn } from "@/lib/orders.functions";
+import { verificarPagamentoAdmin } from "@/lib/payments.functions";
+import { pagamentoStatusLabel } from "@/lib/infinitepay";
 import { gerarPedidoPdf } from "@/lib/order-pdf";
 
 export const Route = createFileRoute("/_authenticated/admin/pedidos/$id")({ component: Pedido });
@@ -31,18 +33,22 @@ function Pedido() {
   const qc = useQueryClient();
   const navigate = useNavigate();
   const excluirFn = useServerFn(excluirPedidosFn);
+  const verificarFn = useServerFn(verificarPagamentoAdmin);
+  const [verificandoPagamento, setVerificandoPagamento] = useState(false);
   const [dialogExcluir, setDialogExcluir] = useState(false);
   const [excluindo, setExcluindo] = useState(false);
 
   const { data: p, isLoading } = useQuery({
     queryKey: ["admin", "pedido", id],
     queryFn: async () => {
-      const [{ data, error }, { data: nota }] = await Promise.all([
+      const [{ data, error }, { data: nota }, { data: pagamento, error: pagamentoError }] = await Promise.all([
         supabase.from("pedidos").select("*, pedido_itens(*)").eq("id", id).single(),
         supabase.from("pedido_notas").select("notas").eq("pedido_id", id).maybeSingle(),
+        supabase.from("pagamentos").select("*").eq("pedido_id", id).maybeSingle(),
       ]);
       if (error) throw error;
-      return { ...data, notas: nota?.notas ?? "" };
+      if (pagamentoError) throw pagamentoError;
+      return { ...data, notas: nota?.notas ?? "", pagamento };
     },
   });
   const [notas, setNotas] = useState("");
@@ -53,6 +59,18 @@ function Pedido() {
     if (error) { toast.error(error.message); return; }
     toast.success(`Status: ${statusLabel(status)}`);
     qc.invalidateQueries({ queryKey: ["admin"] });
+  }
+  async function verificarPagamento() {
+    setVerificandoPagamento(true);
+    try {
+      const result = await verificarFn({ data: id });
+      toast.success(result.label);
+      await qc.invalidateQueries({ queryKey: ["admin"] });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Não foi possível verificar o pagamento.");
+    } finally {
+      setVerificandoPagamento(false);
+    }
   }
   async function salvarNotas() {
     const { error } = await supabase.from("pedido_notas").upsert({ pedido_id: id, notas, updated_at: new Date().toISOString() });
@@ -192,6 +210,39 @@ function Pedido() {
         </div>
 
         <div className="space-y-4">
+          <Panel>
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="flex items-center gap-2 font-sans text-base font-bold tracking-normal"><CreditCard className="size-5" /> Pagamento</h2>
+              <span className="text-sm font-semibold">{p.pagamento ? pagamentoStatusLabel(p.pagamento.status) : p.forma_pagamento === "infinitepay" ? "Link não gerado" : "Pelo WhatsApp"}</span>
+            </div>
+            {p.pagamento ? (
+              <div className="mt-3 space-y-2 text-sm">
+                <div className="flex justify-between gap-3"><span className="text-muted-foreground">Provedor</span><span>InfinitePay</span></div>
+                <div className="flex justify-between gap-3"><span className="text-muted-foreground">Valor da cobrança</span><strong>{brl(p.pagamento.amount / 100)}</strong></div>
+                {p.pagamento.paid_amount !== null && <div className="flex justify-between gap-3"><span className="text-muted-foreground">Valor pago</span><strong>{brl(p.pagamento.paid_amount / 100)}</strong></div>}
+                {p.pagamento.capture_method && <div className="flex justify-between gap-3"><span className="text-muted-foreground">Método</span><span>{p.pagamento.capture_method === "pix" ? "Pix" : "Cartão de crédito"}</span></div>}
+                {p.pagamento.installments && <div className="flex justify-between gap-3"><span className="text-muted-foreground">Parcelas</span><span>{p.pagamento.installments}x</span></div>}
+                {p.pagamento.transaction_nsu && <div className="break-all"><span className="text-muted-foreground">Transação</span><p className="mt-0.5 font-mono text-xs">{p.pagamento.transaction_nsu}</p></div>}
+                {p.pagamento.last_checked_at && <p className="text-xs text-muted-foreground">Última verificação: {formatDateTime(p.pagamento.last_checked_at).data} às {formatDateTime(p.pagamento.last_checked_at).hora}</p>}
+                {p.pagamento.last_error && <p className="rounded-xl bg-destructive/10 p-3 text-xs text-destructive">{p.pagamento.last_error}</p>}
+                <div className="flex flex-col gap-2 pt-2">
+                  {p.pagamento.transaction_nsu && p.pagamento.invoice_slug && p.pagamento.status !== "pago" && (
+                    <Button variant="outline" onClick={verificarPagamento} disabled={verificandoPagamento}>
+                      <RefreshCw className={verificandoPagamento ? "animate-spin" : ""} /> {verificandoPagamento ? "Verificando..." : "Verificar na InfinitePay"}
+                    </Button>
+                  )}
+                  {p.pagamento.payment_url && p.pagamento.status !== "pago" && (
+                    <Button asChild variant="outline"><a href={p.pagamento.payment_url} target="_blank" rel="noopener noreferrer"><ExternalLink /> Abrir cobrança</a></Button>
+                  )}
+                  {p.pagamento.receipt_url && (
+                    <Button asChild variant="outline"><a href={p.pagamento.receipt_url} target="_blank" rel="noopener noreferrer"><ExternalLink /> Ver comprovante</a></Button>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <p className="mt-2 text-sm text-muted-foreground">{p.forma_pagamento === "infinitepay" ? "O cliente ainda não concluiu a geração do link." : "Pagamento combinado no atendimento, sem cobrança online neste pedido."}</p>
+            )}
+          </Panel>
           <Panel>
             <label htmlFor="st" className="mb-1.5 block font-semibold">
               Status
