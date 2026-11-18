@@ -1,5 +1,8 @@
 # Integração InfinitePay
 
+- [ ] Diagnosticar e corrigir a falha de geração do link do pedido existente, preservando a confirmação segura.
+- [ ] Aplicar as cores InfinitePay aos controles de pagamento e verificar celular/computador.
+
 - [x] Auditar checkout, pedidos, clientes, políticas de acesso e integrações existentes.
 - [x] Criar estrutura de cobranças e eventos, sem alterar pedidos existentes.
 - [x] Implementar criação idempotente de pedidos e links de pagamento.

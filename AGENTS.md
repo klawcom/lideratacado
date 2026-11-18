@@ -43,3 +43,4 @@ use the editor.
 - Store menu "Atendimento" links come from `configuracoes.menu_links`, normalized by `src/lib/menu-links.ts` (tested); product menu entries are the active categories.
 - Install Google Tag Manager only in RootShell, with the official head bootstrap and noscript as body's first child; GA4 configuration belongs in GTM, not an app-owned gtag.js loader, to avoid duplicate tracking while retaining analytics.ts events.
 - InfinitePay credentials are server-only; checkout uses TanStack server functions, and the unsigned public webhook must confirm every payment through `payment_check` before marking it paid. Keep one payment per order and never delete orders with payment records.
+- Parse InfinitePay link responses through the shared validated adapter, accepting the live API's `url` field and legacy aliases; provider payment controls use a dedicated semantic Button variant so store theme changes cannot override their contrast.

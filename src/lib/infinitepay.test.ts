@@ -34,7 +34,16 @@ describe("InfinitePay checkout", () => {
     expect(() => montarPayloadCobranca({ ...base, total: 500 })).toThrow("não confere");
   });
 
-  it("aceita os dois formatos documentados de resposta do link", () => {
+  it("aceita o campo url retornado pela API real", () => {
+    expect(extrairLinkCobranca({ url: "https://checkout.infinitepay.io/pedido-7" })).toEqual({ paymentUrl: "https://checkout.infinitepay.io/pedido-7", invoiceSlug: null });
+  });
+
+  it("recusa links fora do domínio seguro da InfinitePay", () => {
+    expect(() => extrairLinkCobranca({ url: "https://example.com/pagamento" })).toThrow();
+    expect(() => extrairLinkCobranca({ url: "http://checkout.infinitepay.io/pagamento" })).toThrow();
+  });
+
+  it("preserva os formatos alternativos de resposta do link", () => {
     expect(extrairLinkCobranca({ checkout_url: "https://checkout.infinitepay.io/abc" }).paymentUrl).toBe("https://checkout.infinitepay.io/abc");
     expect(extrairLinkCobranca({ link: "https://checkout.infinitepay.io/def", slug: "fatura-1" })).toEqual({ paymentUrl: "https://checkout.infinitepay.io/def", invoiceSlug: "fatura-1" });
   });

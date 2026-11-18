@@ -12,6 +12,7 @@ const buttonVariants = cva(
         default: "bg-[#14532D] hover:bg-[#0F3F24] active:bg-[#0A2E1A] text-white shadow-soft transition-colors dark:bg-[#166534] dark:hover:bg-[#14532D]",
         action: "bg-[#14532D] hover:bg-[#0F3F24] active:bg-[#0A2E1A] text-white shadow-soft transition-colors dark:bg-[#166534] dark:hover:bg-[#14532D]",
         ink: "bg-ink text-ink-foreground shadow-soft hover:opacity-90",
+        infinitepay: "bg-infinitepay text-infinitepay-foreground hover:bg-infinitepay-hover shadow-soft focus-visible:ring-infinitepay",
         destructive: "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90",
         outline: "border border-input bg-card hover:bg-accent hover:text-accent-foreground",
         secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/70",

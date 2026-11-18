@@ -105,9 +105,9 @@ export const criarCobrancaInfinitePay = createServerFn({ method: "POST" })
         invoice_slug: link.invoiceSlug,
         last_error: null,
       }).eq("id", payment.id).is("payment_url", null).select("*").single();
-      if (saveError || !saved) throw new Error("Não foi possível salvar o link de pagamento.");
+      if (saveError || !saved?.payment_url) throw new Error("Não foi possível salvar o link de pagamento.");
 
-      return { pedidoId: pedido.id, numero: Number(pedido.numero), status: "pendente" as const, paymentUrl: saved.payment_url! };
+      return { pedidoId: pedido.id, numero: Number(pedido.numero), status: "pendente" as const, paymentUrl: saved.payment_url };
     } catch (error) {
       await db.from("pagamentos").update({ status: "erro", last_error: "Não foi possível gerar o link. Uma nova tentativa pode ser feita." })
         .eq("id", payment.id).is("payment_url", null);

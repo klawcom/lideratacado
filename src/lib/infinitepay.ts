@@ -98,6 +98,7 @@ const providerUrl = z.string().url().max(2048).refine((value) => {
 });
 
 const checkoutLinkSchema = z.object({
+  url: providerUrl.optional(),
   checkout_url: providerUrl.optional(),
   link: providerUrl.optional(),
   slug: z.string().trim().min(1).max(120).optional(),
@@ -105,7 +106,7 @@ const checkoutLinkSchema = z.object({
 
 export function extrairLinkCobranca(payload: unknown): { paymentUrl: string; invoiceSlug: string | null } {
   const parsed = checkoutLinkSchema.parse(payload);
-  const paymentUrl = parsed.checkout_url ?? parsed.link;
+  const paymentUrl = parsed.url ?? parsed.checkout_url ?? parsed.link;
   if (!paymentUrl) throw new Error("A InfinitePay não retornou o link de pagamento.");
   return { paymentUrl, invoiceSlug: parsed.slug ?? null };
 }

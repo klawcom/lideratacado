@@ -38,6 +38,9 @@
   --color-gold-ink: var(--gold-ink);
   --color-ink: var(--ink);
   --color-ink-foreground: var(--ink-foreground);
+  --color-infinitepay: var(--infinitepay);
+  --color-infinitepay-hover: var(--infinitepay-hover);
+  --color-infinitepay-foreground: var(--infinitepay-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
@@ -60,6 +63,10 @@
 }
 
 :root {
+  /* Provider branding remains high-contrast in both store themes. */
+  --infinitepay: #C6FF00;
+  --infinitepay-hover: #B5E900;
+  --infinitepay-foreground: #111111;
   --radius: 1rem;
   /* Modern crisp light theme */
   --background: #F8FAFC;

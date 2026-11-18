@@ -849,21 +849,22 @@ function FinalizarPage() {
           <fieldset className="rounded-2xl border bg-card p-4 sm:p-5">
             <legend className="mb-3 font-display text-lg font-bold">Forma de pagamento</legend>
             <div className="grid gap-3 sm:grid-cols-2">
-              <button
+              <Button
                 type="button"
+                variant="infinitepay"
                 aria-pressed={formaPagamento === "infinitepay"}
                 disabled={paymentConfig?.available !== true}
                 onClick={() => setFormaPagamento("infinitepay")}
                 className={cn(
-                  "min-h-24 rounded-xl border p-4 text-left transition",
-                  formaPagamento === "infinitepay" ? "border-primary bg-primary/5 ring-2 ring-primary" : "bg-card hover:border-foreground/30",
+                  "h-auto min-h-24 flex-col items-start gap-0 whitespace-normal rounded-xl border border-infinitepay p-4 text-left transition",
+                  formaPagamento === "infinitepay" && "ring-2 ring-infinitepay ring-offset-2 ring-offset-background",
                   paymentConfig?.available !== true && "cursor-not-allowed opacity-60",
                 )}
               >
                 <span className="flex items-center gap-2 font-bold"><CreditCard className="size-5" /> Pagar online</span>
-                <span className="mt-1 block text-sm text-muted-foreground">Pix ou cartão pela InfinitePay</span>
+                <span className="mt-1 block text-base font-normal">Pix ou cartão pela InfinitePay</span>
                 {paymentConfig?.available !== true && <span className="mt-1 block text-xs font-medium">Configuração pendente</span>}
-              </button>
+              </Button>
               <button
                 type="button"
                 aria-pressed={formaPagamento === "whatsapp"}
@@ -885,6 +886,7 @@ function FinalizarPage() {
           <div className="pt-2">
             <Button
               type="submit"
+              variant={formaPagamento === "infinitepay" ? "infinitepay" : "default"}
               size="lg"
               className="w-full h-12 text-base font-semibold shadow-sm"
               disabled={enviando}
@@ -974,6 +976,7 @@ function FinalizarPage() {
           <Button
             type="submit"
             form="form-pedido"
+            variant={formaPagamento === "infinitepay" ? "infinitepay" : "default"}
             size="lg"
             className="mt-5 w-full h-12 text-base font-semibold shadow-sm"
             disabled={enviando}
