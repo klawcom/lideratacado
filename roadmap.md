@@ -7,5 +7,6 @@
 - [x] Adicionar opção Pix/cartão ao checkout e página de retorno.
 - [x] Exibir status e transações no painel administrativo.
 - [x] Testar regras, build e fluxo completo sem simular pagamento real.
-- [ ] Publicar a infraestrutura e solicitar as credenciais pelo formulário seguro.
-- [ ] Validar a chave e a comunicação real com a InfinitePay após o cadastro.
+- [x] Publicar a infraestrutura e solicitar as credenciais pelo formulário seguro.
+- [x] Validar a chave e a comunicação real com a InfinitePay após o cadastro.
+- [ ] Testar uma cobrança e um pagamento reais de ponta a ponta — a InfinitePay não oferece sandbox; depende de uma compra real.
