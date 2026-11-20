@@ -805,11 +805,12 @@ function Config() {
           </div>
 
           <div className="rounded-xl bg-accent p-3.5 text-xs text-accent-foreground leading-relaxed">
-            <p className="font-semibold mb-1">📦 Regras de peso aplicadas automaticamente:</p>
+            <p className="font-semibold mb-1">📦 Regras de frete aplicadas automaticamente:</p>
             <ul className="list-disc pl-4 space-y-0.5">
-              <li><strong>Camiseta:</strong> 200g (0,20 kg) por peça</li>
-              <li><strong>Polo:</strong> 250g (0,25 kg) por peça</li>
-              <li>Dimensões da embalagem calculadas proporcionalmente à quantidade de peças do pedido.</li>
+              <li><strong>Pedidos de até 10 peças:</strong> considera sempre 4 kg (base mínima de atacado para Correios/SuperFrete).</li>
+              <li><strong>Pedidos acima de 10 peças:</strong> 4 kg base + peso proporcional das peças adicionais (200g camiseta, 250g polo).</li>
+              <li><strong>Medidas da caixa (cálculo interno):</strong> altura 1cm, largura 8cm, comprimento 13cm (medidas mínimas onde prevalece o peso físico).</li>
+              <li>Essas informações não são exibidas para o cliente, servindo exclusivamente para base de cálculo da cotação.</li>
             </ul>
           </div>
         </Panel>
