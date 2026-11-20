@@ -134,38 +134,6 @@ export function ShippingCalculator({
         </a>
       </div>
 
-      {/* Banner da Etiqueta Fixa Sedex - visível sempre, mesmo antes de calcular o frete */}
-      <div className="rounded-xl border border-blue-500/30 bg-blue-500/5 p-3 space-y-1.5">
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <img
-              src="/frete-etiqueta-fixa.jpg"
-              alt="Etiqueta Fixa Sedex"
-              className="size-11 rounded-lg object-contain bg-white shrink-0 shadow-xs border border-border/50"
-            />
-            <div className="min-w-0">
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <span className="font-bold text-foreground text-sm">Etiqueta Fixa Sedex</span>
-                <span className="rounded-full bg-blue-100 dark:bg-blue-900/60 px-2 py-0.5 text-[10px] font-bold text-blue-700 dark:text-blue-300">
-                  Preço Fixo Nacional
-                </span>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Envio expresso via SEDEX dos Correios
-              </p>
-            </div>
-          </div>
-          <div className="text-right shrink-0">
-            <span className="text-base font-bold text-foreground tabular-nums">
-              R$ 130,00
-            </span>
-          </div>
-        </div>
-        <p className="text-[11px] text-muted-foreground leading-tight">
-          💡 <em>Opção com valor fixo para todo o Brasil. Se o cálculo do frete convencional ficar mais alto para sua região, você pode optar pela Etiqueta Fixa no fechamento do pedido.</em>
-        </p>
-      </div>
-
       {erro && (
         <p className="rounded-xl bg-destructive/10 p-2.5 text-xs text-destructive font-medium">
           {erro}
@@ -180,50 +148,63 @@ export function ShippingCalculator({
           <div className="space-y-2">
             {opcoes.map((op) => {
               const icone = op.icone || logoFrete(op.nome);
+              const isEtiquetaFixa = op.nome.toUpperCase().includes("FIXA");
               return (
                 <div
                   key={op.id}
-                  className="flex items-center justify-between rounded-xl border bg-background/80 p-2.5 text-xs"
+                  className={cn(
+                    "flex flex-col gap-1.5 rounded-xl border p-2.5 text-xs transition-all",
+                    isEtiquetaFixa
+                      ? "border-blue-500/40 bg-blue-500/5"
+                      : "border-border/70 bg-background/80",
+                  )}
                 >
-                  <div className="flex items-center gap-2.5">
-                    {icone ? (
-                      <img
-                        src={icone}
-                        alt={op.nome}
-                        className="size-8 rounded-full object-contain shrink-0 shadow-xs"
-                      />
-                    ) : (
-                      <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 font-bold text-[11px] text-primary">
-                        {op.nome === "SEDEX" ? "SED" : "PAC"}
-                      </span>
-                    )}
-                    <div>
-                      <div className="flex items-center gap-1.5">
-                        <span className="font-semibold text-foreground text-sm">{op.nome}</span>
-                        <span className="text-muted-foreground">({op.transportadora})</span>
+                  <div className="flex items-center justify-between gap-2.5">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      {icone ? (
+                        <img
+                          src={icone}
+                          alt={op.nome}
+                          className={cn(
+                            "size-8 shrink-0 object-contain shadow-xs",
+                            isEtiquetaFixa ? "rounded-lg bg-white border border-border/40" : "rounded-full",
+                          )}
+                        />
+                      ) : (
+                        <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 font-bold text-[11px] text-primary">
+                          {op.nome === "SEDEX" ? "SED" : "PAC"}
+                        </span>
+                      )}
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="font-semibold text-foreground text-sm">{op.nome}</span>
+                          <span className="text-muted-foreground text-[11px]">({op.transportadora})</span>
+                        </div>
+                        <p className="text-muted-foreground text-[11px]">{formatarPrazoFrete(op.prazoDias)}</p>
                       </div>
-                      <p className="text-muted-foreground">{formatarPrazoFrete(op.prazoDias)}</p>
+                    </div>
+
+                    <div className="text-right shrink-0">
+                      <span className="font-bold text-sm text-foreground tabular-nums">
+                        {brl(op.preco)}
+                      </span>
+                      {!isEtiquetaFixa && op.desconto && (
+                        <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">
+                          com desconto SuperFrete
+                        </p>
+                      )}
                     </div>
                   </div>
 
-                  <div className="text-right">
-                    <span className="font-bold text-sm text-foreground tabular-nums">
-                      {brl(op.preco)}
-                    </span>
-                    {op.desconto && (
-                      <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">
-                        com desconto SuperFrete
-                      </p>
-                    )}
-                  </div>
+                  {isEtiquetaFixa && (
+                    <p className="text-[11px] font-medium text-blue-700 dark:text-blue-300 bg-blue-500/10 rounded-md px-2 py-1 leading-tight">
+                      💡 Você pode optar pela Etiqueta Fixa caso seja mais vantajoso.
+                    </p>
+                  )}
                 </div>
               );
             })}
           </div>
-
-          <p className="text-[11px] leading-relaxed text-muted-foreground pt-1">
-            ⚠️ <em>Valores e prazos aproximados. No fechamento pelo WhatsApp, confirmamos o frete mais vantajoso e também podemos cotar transportadoras parceiras.</em>
-          </p>
         </div>
       )}
     </div>
