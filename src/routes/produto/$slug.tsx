@@ -191,7 +191,7 @@ function ProdutoPage() {
   const isPolo = !isPima && isProdutoPolo(p);
   const isPlusSize = isProdutoPlusSize(p);
   const tamanhosDisponiveis = isPlusSize ? TAMANHOS_PLUS_SIZE : TAMANHOS_PADRAO;
-  const { composicaoLimpa, coresHabilitadas } = decodeCoresProduto(p.composicao);
+  const { composicaoLimpa, coresHabilitadas, fotoCores } = decodeCoresProduto(p.composicao);
   const coresDisponiveis = CORES_PADRAO.filter((c) => coresHabilitadas.includes(c.nome));
   const listaCores = coresDisponiveis.length > 0 ? coresDisponiveis : CORES_PADRAO;
 
@@ -342,7 +342,7 @@ function ProdutoPage() {
             midias={p.produto_midias}
             nome={p.nome}
             corAtiva={corAtiva}
-            fotoCores={cores.fotoCores}
+            fotoCores={fotoCores}
           />
 
           {/* Na versão desktop, a descrição fica na coluna esquerda abaixo da galeria */}

@@ -54,7 +54,7 @@ function Editar() {
         <Loading />
       ) : (
         <div className="space-y-6">
-          <MediaManager produtoId={id} />
+          <MediaManager produtoId={id} initialComposicao={data.composicao} />
           <ProductForm key={data.id + data.updated_at} produto={data} />
           <div className="border-t pt-6">
             <Button variant="ghost" className="text-destructive hover:text-destructive" onClick={excluir}>

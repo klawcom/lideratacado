@@ -31,7 +31,13 @@ import { CORES_PADRAO, decodeCoresProduto, encodeCoresProduto, getCorDef } from 
 const MAX_VIDEO = 50 * 1024 * 1024;
 const isStoragePath = (u: string | null) => !!u && !/^https?:\/\//.test(u) && !u.startsWith("/") && !u.startsWith("exemplos/");
 
-export function MediaManager({ produtoId }: { produtoId: string }) {
+export function MediaManager({
+  produtoId,
+  initialComposicao,
+}: {
+  produtoId: string;
+  initialComposicao?: string | null;
+}) {
   const qc = useQueryClient();
   const key = ["admin", "midias", produtoId];
   const { data: midias = [] } = useQuery({
@@ -43,16 +49,19 @@ export function MediaManager({ produtoId }: { produtoId: string }) {
     },
   });
 
-  const { data: produtoData } = useQuery({
-    queryKey: ["admin", "produto", produtoId],
+  const { data: composicaoData } = useQuery({
+    queryKey: ["admin", "produto-composicao-midias", produtoId],
     queryFn: async () => {
-      const { data, error } = await supabase.from("produtos").select("id, composicao").eq("id", produtoId).single();
+      const { data, error } = await supabase.from("produtos").select("composicao").eq("id", produtoId).single();
       if (error) throw error;
-      return data;
+      return data?.composicao ?? null;
     },
+    initialData: initialComposicao !== undefined ? initialComposicao : undefined,
   });
 
-  const { composicaoLimpa, coresHabilitadas, fotoCores } = decodeCoresProduto(produtoData?.composicao);
+  const { composicaoLimpa, coresHabilitadas, fotoCores } = decodeCoresProduto(
+    composicaoData !== undefined ? composicaoData : initialComposicao,
+  );
 
   async function associarCorFoto(midiaId: string, corNome: string) {
     const nextFotoCores = { ...fotoCores };
@@ -71,6 +80,7 @@ export function MediaManager({ produtoId }: { produtoId: string }) {
       return;
     }
     toast.success(corNome ? `Foto associada à cor ${corNome}` : "Associação de cor removida");
+    qc.invalidateQueries({ queryKey: ["admin", "produto-composicao-midias", produtoId] });
     qc.invalidateQueries({ queryKey: ["admin", "produto", produtoId] });
     invalidateStore(qc);
   }
