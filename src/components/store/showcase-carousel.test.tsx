@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
-import { buildVitrineProducts, ShowcaseCarousel, type VitrineProduct } from "./showcase-carousel";
+import { buildVitrineProducts, ShowcaseCarousel } from "./showcase-carousel";
 import type { ProdutoCard } from "@/lib/catalog.functions";
 
 vi.mock("@tanstack/react-router", () => ({
@@ -75,48 +75,70 @@ describe("ShowcaseCarousel & buildVitrineProducts", () => {
     expect(uniqueIds.size).toBe(ids.length);
   });
 
-  it("renderiza a vitrine de produtos e permite navegação entre os itens", () => {
-    const mockProdutos: VitrineProduct[] = [
+  it("renderiza o carrossel de produtos com 4+ produtos e permite avançar pelas setas", () => {
+    const mockProdutos: ProdutoCard[] = [
       {
         id: "p1",
-        nome: "Camiseta Cotton Pima Especial",
-        slug: "camiseta-pima-especial",
-        codigo_modelo: "PIMA-01",
-        badge: "Mais Vendido",
-        categoriaNome: "Cotton Pima",
-        categoriaSlug: "camisetas-cotton-pima",
+        nome: "Camiseta Cotton Pima RMN",
+        slug: "camiseta-cotton-pima-rmn",
+        codigo_modelo: "CP01",
+        destaque: true,
+        ordem: 0,
         produto_midias: [],
-        faixas_preco: [
-          { quantidade_minima: 10, preco_peca: 46 },
-          { quantidade_minima: 50, preco_peca: 42 },
-        ],
+        faixas_preco: [{ quantidade_minima: 10, preco_peca: 42 }],
       },
       {
         id: "p2",
-        nome: "Camisa Polo Peruana Prime",
-        slug: "camisa-polo-peruana-prime",
-        codigo_modelo: "POLO-01",
-        badge: "Polos Peruanas",
-        categoriaNome: "Polos",
-        categoriaSlug: "camisas-polos-peruanas",
+        nome: "Camiseta Cotton Pima ARMS 1",
+        slug: "camiseta-cotton-pima-arms-1",
+        codigo_modelo: "CP02",
+        destaque: false,
+        ordem: 1,
         produto_midias: [],
-        faixas_preco: [{ quantidade_minima: 10, preco_peca: 55 }],
+        faixas_preco: [{ quantidade_minima: 10, preco_peca: 42 }],
+      },
+      {
+        id: "p3",
+        nome: "Camiseta Cotton Pima ARMS 2",
+        slug: "camiseta-cotton-pima-arms-2",
+        codigo_modelo: "CP03",
+        destaque: false,
+        ordem: 2,
+        produto_midias: [],
+        faixas_preco: [{ quantidade_minima: 10, preco_peca: 42 }],
+      },
+      {
+        id: "p4",
+        nome: "Camiseta Cotton Pima CLVN",
+        slug: "camiseta-cotton-pima-clvn",
+        codigo_modelo: "CP04",
+        destaque: false,
+        ordem: 3,
+        produto_midias: [],
+        faixas_preco: [{ quantidade_minima: 10, preco_peca: 42 }],
+      },
+      {
+        id: "p5",
+        nome: "Camiseta Cotton Pima PRETA",
+        slug: "camiseta-cotton-pima-preta",
+        codigo_modelo: "CP05",
+        destaque: false,
+        ordem: 4,
+        produto_midias: [],
+        faixas_preco: [{ quantidade_minima: 10, preco_peca: 42 }],
       },
     ];
 
     render(<ShowcaseCarousel produtos={mockProdutos} />);
 
-    // Produto inicial deve ser exibido
-    expect(screen.getAllByText("Camiseta Cotton Pima Especial")[0]).toBeInTheDocument();
-    expect(screen.getByText("Ref: PIMA-01")).toBeInTheDocument();
-    expect(screen.getByText(/Mais Vendido/i)).toBeInTheDocument();
+    // Deve exibir o título da seção e os produtos
+    expect(screen.getByText("Destaques da Coleção")).toBeInTheDocument();
+    expect(screen.getByText("Camiseta Cotton Pima RMN")).toBeInTheDocument();
+    expect(screen.getByText("Camiseta Cotton Pima CLVN")).toBeInTheDocument();
 
-    // Clica no botão para avançar para o próximo produto
-    const nextBtn = screen.getByLabelText("Próximo produto da vitrine");
+    // Deve possuir setas de navegação
+    const nextBtn = screen.getByLabelText("Próximos produtos");
+    expect(nextBtn).toBeInTheDocument();
     fireEvent.click(nextBtn);
-
-    // O segundo produto agora deve estar em destaque
-    expect(screen.getAllByText("Camisa Polo Peruana Prime")[0]).toBeInTheDocument();
-    expect(screen.getByText("Ref: POLO-01")).toBeInTheDocument();
   });
 });
