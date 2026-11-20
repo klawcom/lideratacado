@@ -1,7 +1,7 @@
 import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { AlertCircle, ChevronLeft, ChevronRight, Headphones, MessageCircle, ShoppingBag, Sparkles, Truck, X } from "lucide-react";
+import { AlertCircle, ChevronLeft, ChevronRight, ShoppingBag, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { MediaGallery } from "@/components/store/media-gallery";
@@ -541,46 +541,6 @@ function ProdutoPage() {
             </div>
 
             <ShippingCalculator itens={[{ nome: p.nome, pecas: n > 0 ? n : 10 }]} />
-
-            {/* Destaques de confiança e envio */}
-            <div className="grid grid-cols-2 gap-2.5 pt-1">
-              <div className="card-hover flex items-center gap-2.5 rounded-xl border bg-card/60 p-2.5 shadow-2xs">
-                <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-gradient-to-br from-sky-500 to-blue-600 text-white shadow-2xs">
-                  <Truck className="size-4" />
-                </span>
-                <div className="min-w-0">
-                  <p className="text-xs font-bold text-foreground truncate">Frete Correios</p>
-                  <p className="text-[11px] text-muted-foreground truncate">PAC e SEDEX</p>
-                </div>
-              </div>
-              <div className="card-hover flex items-center gap-2.5 rounded-xl border bg-card/60 p-2.5 shadow-2xs">
-                <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 text-white shadow-2xs">
-                  <Headphones className="size-4" />
-                </span>
-                <div className="min-w-0">
-                  <p className="text-xs font-bold text-foreground truncate">Atendimento 24h</p>
-                  <p className="text-[11px] text-muted-foreground truncate">100% humanizado</p>
-                </div>
-              </div>
-              <div className="card-hover flex items-center gap-2.5 rounded-xl border bg-card/60 p-2.5 shadow-2xs">
-                <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 text-white shadow-2xs">
-                  <Sparkles className="size-4" />
-                </span>
-                <div className="min-w-0">
-                  <p className="text-xs font-bold text-foreground truncate">{isPlusSize ? "Plus Size" : isPolo ? "Polo Premium" : "Algodão Pima"}</p>
-                  <p className="text-[11px] text-muted-foreground truncate">{isPlusSize ? "Corte amplo especial" : isPolo ? "Piquet de alta qualidade" : "Alta qualidade"}</p>
-                </div>
-              </div>
-              <div className="card-hover flex items-center gap-2.5 rounded-xl border bg-card/60 p-2.5 shadow-2xs">
-                <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-2xs">
-                  <MessageCircle className="size-4" />
-                </span>
-                <div className="min-w-0">
-                  <p className="text-xs font-bold text-foreground truncate">WhatsApp</p>
-                  <p className="text-[11px] text-muted-foreground truncate">Suporte rápido</p>
-                </div>
-              </div>
-            </div>
 
             {/* Detalhes do produto (Descrição, Composição e Medidas) no mobile após as opções de compra */}
             <div className="block md:hidden pt-2">

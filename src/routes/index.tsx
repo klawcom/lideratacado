@@ -140,9 +140,21 @@ const VANTAGENS = [
   },
   {
     icon: Sparkles,
-    titulo: "100% Algodão Pima Peruano",
-    sub: "Malha nobre de toque macio, elastano e durabilidade",
+    titulo: "Algodão Pima, Polos e Plus Size",
+    sub: "Malha nobre de toque macio e alta qualidade de fábrica",
     gradient: "from-violet-500 to-purple-600",
+  },
+  {
+    icon: Headphones,
+    titulo: "Atendimento 24h",
+    sub: "Suporte dedicado 100% humanizado",
+    gradient: "from-rose-500 to-pink-600",
+  },
+  {
+    icon: MessageCircle,
+    titulo: "WhatsApp Suporte Rápido",
+    sub: "Canal direto para tirar dúvidas e fechar pedidos",
+    gradient: "from-teal-500 to-emerald-600",
   },
 ];
 
@@ -493,7 +505,7 @@ function Home() {
         <BannerCarousel slides={slides} primeira={primeira} />
 
         {/* Barra de benefícios comerciais e diferenciais */}
-        <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {VANTAGENS.map((v) => (
             <div
               key={v.titulo}
