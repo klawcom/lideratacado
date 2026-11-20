@@ -82,7 +82,7 @@ export function MediaGallery({ midias, nome }: { midias: MidiaRow[]; nome: strin
     strip.scrollTo({ left: Math.max(0, offset - (strip.clientWidth - btn.clientWidth) / 2), behavior: "smooth" });
   }, [idx]);
 
-  if (list.length === 0) return <div className="aspect-square sm:aspect-[4/5] rounded-2xl sm:rounded-3xl bg-muted" />;
+  if (list.length === 0) return <div className="aspect-[4/5] rounded-2xl sm:rounded-3xl bg-muted" />;
 
   return (
     <div className="min-w-0 max-w-full">
@@ -93,10 +93,10 @@ export function MediaGallery({ midias, nome }: { midias: MidiaRow[]; nome: strin
             const el = e.currentTarget;
             setIdx(Math.round(el.scrollLeft / Math.max(1, el.clientWidth)));
           }}
-          className="no-scrollbar flex aspect-square sm:aspect-[4/5] w-full snap-x snap-mandatory overflow-x-auto overscroll-x-contain"
+          className="no-scrollbar flex aspect-[4/5] w-full snap-x snap-mandatory overflow-x-auto overscroll-x-contain"
         >
           {list.map((m, i) => (
-            <div key={m.id} className="aspect-square sm:aspect-[4/5] w-full shrink-0 snap-center flex items-center justify-center">
+            <div key={m.id} className="aspect-[4/5] w-full shrink-0 snap-center flex items-center justify-center">
               <Slide m={m} alt={`${nome}${list.length > 1 ? ` — mídia ${i + 1}` : ""}`} fallbackPoster={fallbackPoster} eager={i === 0} />
             </div>
           ))}
@@ -121,7 +121,7 @@ export function MediaGallery({ midias, nome }: { midias: MidiaRow[]; nome: strin
                 aria-label={`Ver mídia ${i + 1}`}
                 aria-current={i === idx}
                 className={cn(
-                  "relative aspect-square w-12 sm:w-16 shrink-0 overflow-hidden rounded-xl border-2 bg-muted transition",
+                  "relative aspect-[4/5] w-12 sm:w-16 shrink-0 overflow-hidden rounded-xl border-2 bg-muted transition",
                   i === idx ? "border-primary ring-2 ring-primary/20 scale-105" : "border-border/60 opacity-70 hover:opacity-100",
                 )}
               >

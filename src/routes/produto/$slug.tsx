@@ -301,7 +301,7 @@ function ProdutoPage() {
   const coresPreenchidas = Object.entries(coresQtd).filter(([_, q]) => pecas(q) > 0);
 
   return (
-    <div className="container-page pt-3 sm:pt-4 md:pt-6 max-w-full overflow-x-hidden min-w-0">
+    <div className="container-page py-4 sm:py-6 md:py-10 min-w-0">
       {/* Navegação estrutural / Breadcrumb */}
       <nav aria-label="Navegação estrutural" className="mb-3 flex items-center gap-1.5 text-xs text-muted-foreground flex-wrap">
         <Link to="/" className="inline-flex min-h-11 items-center hover:text-foreground">
