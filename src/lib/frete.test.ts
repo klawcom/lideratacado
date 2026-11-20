@@ -4,8 +4,10 @@ import {
   PESO_CAMISETA_KG,
   PESO_MINIMO_ATE_10_PECAS_KG,
   PESO_POLO_KG,
+  PRECO_ETIQUETA_FIXA,
   calcularDimensoesPacote,
   calcularPesoTotalKg,
+  criarOpcaoEtiquetaFixa,
   formatarPrazoFrete,
   logoFrete,
   pesoUnitarioKg,
@@ -81,12 +83,24 @@ describe("módulo de frete", () => {
     expect(formatarPrazoFrete(8)).toBe("Em até 8 dias úteis");
   });
 
-  it("retorna o logo correto para PAC e SEDEX", () => {
+  it("retorna o logo correto para PAC, SEDEX e Etiqueta Fixa Sedex", () => {
     expect(logoFrete("PAC")).toBe("/frete-pac.png");
     expect(logoFrete("PAC Correios")).toBe("/frete-pac.png");
     expect(logoFrete("SEDEX")).toBe("/frete-sedex.png");
     expect(logoFrete("SEDEX 10")).toBe("/frete-sedex.png");
+    expect(logoFrete("Etiqueta Fixa Sedex")).toBe("/frete-etiqueta-fixa.jpg");
+    expect(logoFrete("Frete Fixo")).toBe("/frete-etiqueta-fixa.jpg");
     expect(logoFrete("Transportadora")).toBeNull();
     expect(logoFrete("")).toBeNull();
+  });
+
+  it("cria opção de Etiqueta Fixa Sedex com valor fixo de R$ 130,00", () => {
+    expect(PRECO_ETIQUETA_FIXA).toBe(130);
+    const op = criarOpcaoEtiquetaFixa(3);
+    expect(op.nome).toBe("Etiqueta Fixa Sedex");
+    expect(op.transportadora).toBe("Correios");
+    expect(op.preco).toBe(130);
+    expect(op.prazoDias).toBe(3);
+    expect(op.icone).toBe("/frete-etiqueta-fixa.jpg");
   });
 });

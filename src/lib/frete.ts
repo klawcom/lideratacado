@@ -13,6 +13,25 @@ export const PESO_CAMISETA_KG = 0.2;
 export const PESO_POLO_KG = 0.25;
 export const PESO_MINIMO_ATE_10_PECAS_KG = 4.0;
 
+/**
+ * Configuração da modalidade Etiqueta Fixa Sedex:
+ * Frete fixo no valor de R$ 130,00 via SEDEX dos Correios para todo o Brasil.
+ */
+export const PRECO_ETIQUETA_FIXA = 130;
+export const ID_ETIQUETA_FIXA = 999999;
+
+export function criarOpcaoEtiquetaFixa(prazoDiasReferencia?: number): FreteOpcao {
+  return {
+    id: ID_ETIQUETA_FIXA,
+    nome: "Etiqueta Fixa Sedex",
+    transportadora: "Correios",
+    preco: PRECO_ETIQUETA_FIXA,
+    prazoDias: prazoDiasReferencia && prazoDiasReferencia > 0 ? prazoDiasReferencia : 4,
+    desconto: "Preço Fixo",
+    icone: "/frete-etiqueta-fixa.jpg",
+  };
+}
+
 export type ItemFrete = {
   nome: string;
   pecas: number;
@@ -94,11 +113,12 @@ export function formatarPrazoFrete(dias: number): string {
 }
 
 /**
- * Retorna o caminho do logo oficial para o serviço de frete (PAC ou SEDEX).
+ * Retorna o caminho do logo oficial para o serviço de frete (Etiqueta Fixa, PAC ou SEDEX).
  */
 export function logoFrete(nomeOuServico?: string | null): string | null {
   if (!nomeOuServico) return null;
   const s = nomeOuServico.toUpperCase();
+  if (s.includes("FIXA") || s.includes("FIXO") || s.includes("ETIQUETA")) return "/frete-etiqueta-fixa.jpg";
   if (s.includes("SEDEX")) return "/frete-sedex.png";
   if (s.includes("PAC")) return "/frete-pac.png";
   return null;

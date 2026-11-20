@@ -15,7 +15,7 @@ import { siteQuery } from "@/lib/catalog.functions";
 import { criarPedido, pedidoSchema } from "@/lib/orders.functions";
 import { configuracaoInfinitePay, criarCobrancaInfinitePay } from "@/lib/payments.functions";
 import { simularFrete } from "@/lib/frete.functions";
-import { formatarPrazoFrete, logoFrete, type FreteOpcao } from "@/lib/frete";
+import { criarOpcaoEtiquetaFixa, formatarPrazoFrete, logoFrete, type FreteOpcao } from "@/lib/frete";
 import { lerDadosEntrega, salvarDadosEntrega, salvarUltimoPedido } from "@/lib/checkout-storage";
 import { tamanhosLinha } from "@/lib/whatsapp-message";
 import { formatarCorTamanhos } from "@/lib/colors";
@@ -724,11 +724,52 @@ function FinalizarPage() {
             </div>
 
             {onlyDigits(cepEnvio).length !== 8 && (
-              <div className="rounded-xl border border-dashed p-4 text-center text-sm text-muted-foreground">
-                <Truck className="mx-auto mb-1.5 size-5 opacity-60" />
-                {isDropshipping
-                  ? "Informe o CEP do destinatário acima para calcular o frete dos Correios."
-                  : "Informe o seu CEP acima para calcular o frete e os prazos dos Correios (PAC / SEDEX)."}
+              <div className="space-y-3">
+                <div className="rounded-xl border border-dashed p-4 text-center text-sm text-muted-foreground">
+                  <Truck className="mx-auto mb-1.5 size-5 opacity-60" />
+                  {isDropshipping
+                    ? "Informe o CEP do destinatário acima para calcular o frete dos Correios."
+                    : "Informe o seu CEP acima para calcular o frete e os prazos dos Correios (PAC / SEDEX)."}
+                </div>
+
+                {/* Opção da Etiqueta Fixa Sedex disponível mesmo antes de preencher o CEP */}
+                <div className="rounded-xl border border-blue-500/40 bg-blue-500/5 p-3.5 space-y-2">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-start gap-2.5">
+                      <img
+                        src="/frete-etiqueta-fixa.jpg"
+                        alt="Etiqueta Fixa Sedex"
+                        className="size-11 rounded-lg object-contain bg-white shrink-0 shadow-xs border border-border/50"
+                      />
+                      <div>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="font-bold text-foreground text-sm">Etiqueta Fixa Sedex</span>
+                          <span className="rounded-full bg-blue-100 dark:bg-blue-900/60 px-2 py-0.5 text-[10px] font-bold text-blue-700 dark:text-blue-300">
+                            Preço Fixo Nacional
+                          </span>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          Envio expresso via SEDEX dos Correios · R$ 130,00 fixo
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      type="button"
+                      variant={freteEscolhido?.nome?.toUpperCase().includes("FIXA") ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => {
+                        setFreteEscolhido(criarOpcaoEtiquetaFixa());
+                        setErroFreteValidacao(null);
+                      }}
+                      className="shrink-0 text-xs font-semibold"
+                    >
+                      {freteEscolhido?.nome?.toUpperCase().includes("FIXA") ? "Selecionado" : "Escolher R$ 130"}
+                    </Button>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground leading-tight">
+                    💡 <em>Opção com valor único para qualquer região do Brasil. Se o cálculo do frete convencional ficar alto, você pode optar pela Etiqueta Fixa.</em>
+                  </p>
+                </div>
               </div>
             )}
 
@@ -790,22 +831,30 @@ function FinalizarPage() {
                         )}
                       >
                         <div className="flex items-start justify-between gap-3">
-                          <div className="flex items-start gap-2.5">
+                          <div className="flex items-start gap-2.5 min-w-0">
                             {icone ? (
                               <img
                                 src={icone}
                                 alt={op.nome}
-                                className="size-9 rounded-full object-contain shrink-0 shadow-xs mt-0.5"
+                                className={cn(
+                                  "size-9 shrink-0 shadow-xs mt-0.5 object-contain",
+                                  op.nome.toUpperCase().includes("FIXA") ? "rounded-lg bg-white border border-border/40" : "rounded-full",
+                                )}
                               />
                             ) : (
                               <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 font-bold text-xs text-primary mt-0.5">
                                 {op.nome.slice(0, 3)}
                               </span>
                             )}
-                            <div>
-                              <div className="flex items-center gap-1.5">
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-1.5 flex-wrap">
                                 <span className="font-bold text-foreground text-sm">{op.nome}</span>
                                 <span className="text-[11px] text-muted-foreground font-medium">({op.transportadora})</span>
+                                {op.desconto && (
+                                  <span className="rounded-full bg-blue-100 dark:bg-blue-900/60 px-2 py-0.2 text-[10px] font-bold text-blue-700 dark:text-blue-300">
+                                    {op.desconto}
+                                  </span>
+                                )}
                               </div>
                               <p className="text-xs text-muted-foreground mt-0.5">
                                 {formatarPrazoFrete(op.prazoDias)}

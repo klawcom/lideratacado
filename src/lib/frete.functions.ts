@@ -4,6 +4,7 @@ import { onlyDigits } from "./format";
 import {
   calcularDimensoesPacote,
   calcularPesoTotalKg,
+  criarOpcaoEtiquetaFixa,
   logoFrete,
   type FreteOpcao,
   type SimulacaoFreteResultado,
@@ -125,40 +126,47 @@ export const simularFrete = createServerFn({ method: "POST" })
       }
 
       const opcoes: FreteOpcao[] = [];
+      let sedexPrazo: number | undefined;
+
       for (const item of raw) {
         if (item.has_error || item.error || typeof item.price !== "number") continue;
         const nomeServico = String(item.name ?? "Correios");
+        const prazo = Number(item.delivery_time ?? 0);
+        if (nomeServico.toUpperCase().includes("SEDEX")) {
+          sedexPrazo = prazo;
+        }
         opcoes.push({
           id: Number(item.id),
           nome: nomeServico,
           transportadora: String(item.company?.name ?? "Correios"),
           preco: Number(item.price),
-          prazoDias: Number(item.delivery_time ?? 0),
+          prazoDias: prazo,
           desconto: item.discount ? String(item.discount) : undefined,
           icone: logoFrete(nomeServico) ?? item.company?.picture,
         });
       }
 
+      // Adiciona sempre a opção Etiqueta Fixa Sedex (R$ 130,00)
+      opcoes.push(criarOpcaoEtiquetaFixa(sedexPrazo));
+
       opcoes.sort((a, b) => a.preco - b.preco);
 
       return {
-        sucesso: opcoes.length > 0,
+        sucesso: true,
         cepOrigem,
         cepDestino: data.cepDestino,
         pesoKg,
         totalPecas,
         opcoes,
-        mensagem: opcoes.length === 0 ? "Nenhum serviço disponível para este CEP." : undefined,
       };
     } catch (err) {
       return {
-        sucesso: false,
+        sucesso: true,
         cepOrigem,
         cepDestino: data.cepDestino,
         pesoKg,
         totalPecas,
-        opcoes: [],
-        mensagem: err instanceof Error ? err.message : "Erro ao consultar frete.",
+        opcoes: [criarOpcaoEtiquetaFixa()],
       };
     }
   });

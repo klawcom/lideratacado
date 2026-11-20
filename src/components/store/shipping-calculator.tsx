@@ -134,6 +134,38 @@ export function ShippingCalculator({
         </a>
       </div>
 
+      {/* Banner da Etiqueta Fixa Sedex - visível sempre, mesmo antes de calcular o frete */}
+      <div className="rounded-xl border border-blue-500/30 bg-blue-500/5 p-3 space-y-1.5">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <img
+              src="/frete-etiqueta-fixa.jpg"
+              alt="Etiqueta Fixa Sedex"
+              className="size-11 rounded-lg object-contain bg-white shrink-0 shadow-xs border border-border/50"
+            />
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="font-bold text-foreground text-sm">Etiqueta Fixa Sedex</span>
+                <span className="rounded-full bg-blue-100 dark:bg-blue-900/60 px-2 py-0.5 text-[10px] font-bold text-blue-700 dark:text-blue-300">
+                  Preço Fixo Nacional
+                </span>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Envio expresso via SEDEX dos Correios
+              </p>
+            </div>
+          </div>
+          <div className="text-right shrink-0">
+            <span className="text-base font-bold text-foreground tabular-nums">
+              R$ 130,00
+            </span>
+          </div>
+        </div>
+        <p className="text-[11px] text-muted-foreground leading-tight">
+          💡 <em>Opção com valor fixo para todo o Brasil. Se o cálculo do frete convencional ficar mais alto para sua região, você pode optar pela Etiqueta Fixa no fechamento do pedido.</em>
+        </p>
+      </div>
+
       {erro && (
         <p className="rounded-xl bg-destructive/10 p-2.5 text-xs text-destructive font-medium">
           {erro}
