@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import {
@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ProductGrid } from "@/components/store/product-card";
+import { ShowcaseCarousel, buildVitrineProducts } from "@/components/store/showcase-carousel";
 import {
   Accordion,
   AccordionContent,
@@ -452,6 +453,11 @@ function Home() {
   const primeira = categorias[0];
   const whatsappNumber = site.config?.whatsapp || "5547991364084";
 
+  const exibirBanners = (site as any).home_display?.exibir_banners ?? false;
+  const exibirVitrine = (site as any).home_display?.exibir_vitrine ?? true;
+
+  const vitrineProdutos = useMemo(() => buildVitrineProducts(categorias), [categorias]);
+
   const rawItems = (
     site.banners as {
       items?: Array<{
@@ -501,11 +507,17 @@ function Home() {
 
   return (
     <>
-      <section className="container-page pt-4 md:pt-8">
-        <BannerCarousel slides={slides} primeira={primeira} />
+      <section className="container-page pt-4 md:pt-8 space-y-5">
+        {exibirBanners && (
+          <BannerCarousel slides={slides} primeira={primeira} />
+        )}
+
+        {exibirVitrine && vitrineProdutos.length > 0 && (
+          <ShowcaseCarousel produtos={vitrineProdutos} />
+        )}
 
         {/* Barra de benefícios comerciais e diferenciais */}
-        <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {VANTAGENS.map((v) => (
             <div
               key={v.titulo}

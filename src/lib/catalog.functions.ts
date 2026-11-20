@@ -126,6 +126,11 @@ export const getSiteData = createServerFn({ method: "GET" }).handler(async () =>
     bannersList.push({ id: 1, wide: null, mobile: null });
   }
 
+  const rawMenu = config?.menu_links as Record<string, unknown> | null;
+  const homeDisplay = (rawMenu?.["home_display"] as { exibir_banners?: boolean; exibir_vitrine?: boolean } | undefined) ?? {};
+  const exibirBanners = typeof homeDisplay.exibir_banners === "boolean" ? homeDisplay.exibir_banners : false;
+  const exibirVitrine = typeof homeDisplay.exibir_vitrine === "boolean" ? homeDisplay.exibir_vitrine : true;
+
   return {
     config: config as Config,
     categorias: categorias ?? [],
@@ -133,6 +138,10 @@ export const getSiteData = createServerFn({ method: "GET" }).handler(async () =>
       wide: bannersList[0]?.wide ?? null,
       mobile: bannersList[0]?.mobile ?? null,
       items: bannersList,
+    },
+    home_display: {
+      exibir_banners: exibirBanners,
+      exibir_vitrine: exibirVitrine,
     },
     origin: requestOrigin(getRequest()),
   };

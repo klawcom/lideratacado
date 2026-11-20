@@ -52,6 +52,8 @@ function Config() {
   const [cepOrigemSuperFrete, setCepOrigemSuperFrete] = useState("78464-222");
   const [limiteCategoriasHome, setLimiteCategoriasHome] = useState<number>(0);
   const [limiteProdutosHome, setLimiteProdutosHome] = useState<number>(8);
+  const [exibirBannersHome, setExibirBannersHome] = useState<boolean>(false);
+  const [exibirVitrineHome, setExibirVitrineHome] = useState<boolean>(true);
   const logoRef = useRef<HTMLInputElement>(null);
   const wideBannerRef = useRef<HTMLInputElement>(null);
   const mobileBannerRef = useRef<HTMLInputElement>(null);
@@ -160,6 +162,12 @@ function Config() {
           if (typeof homeLimits.produtos_por_categoria === "number") setLimiteProdutosHome(homeLimits.produtos_por_categoria);
         }
 
+        const homeDisplay = sf["home_display"] as { exibir_banners?: boolean; exibir_vitrine?: boolean } | undefined;
+        if (homeDisplay) {
+          if (typeof homeDisplay.exibir_banners === "boolean") setExibirBannersHome(homeDisplay.exibir_banners);
+          if (typeof homeDisplay.exibir_vitrine === "boolean") setExibirVitrineHome(homeDisplay.exibir_vitrine);
+        }
+
         if (Array.isArray(sf["banners"])) {
           const links: Record<1 | 2 | 3, string> = { 1: "", 2: "", 3: "" };
           const titulos: Record<1 | 2 | 3, string> = { 1: "", 2: "", 3: "" };
@@ -231,6 +239,10 @@ function Config() {
       home_limits: {
         categorias: Math.max(0, Number(limiteCategoriasHome) || 0),
         produtos_por_categoria: Math.max(0, Number(limiteProdutosHome) || 0),
+      },
+      home_display: {
+        exibir_banners: exibirBannersHome,
+        exibir_vitrine: exibirVitrineHome,
       },
     };
     const { error } = await supabase
@@ -306,11 +318,57 @@ function Config() {
         </Panel>
 
         <Panel className="space-y-6">
+          {/* Seletor de Vitrine vs Banners no topo da página inicial */}
+          <div className="rounded-2xl border border-border/80 bg-card p-4 sm:p-5 space-y-4">
+            <div>
+              <h2 className="font-sans text-lg font-bold tracking-normal text-foreground">
+                Exibição do Topo da Página Inicial
+              </h2>
+              <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
+                Configure se deseja exibir a nova vitrine em carrossel com produtos em destaque (Mais Vendidos, Novidades e Categorias) e/ou os banners gráficos tradicionais.
+              </p>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="flex items-start justify-between gap-4 rounded-xl border bg-muted/30 p-3.5">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-1.5 font-semibold text-sm text-foreground">
+                    <Sparkles className="size-4 text-primary" /> Vitrine de Produtos em Destaque
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Carrossel dinâmico no topo com os mais vendidos, novidades e peças de cada categoria, fotos 4:5 e preços no atacado.
+                  </p>
+                </div>
+                <Switch
+                  checked={exibirVitrineHome}
+                  onCheckedChange={setExibirVitrineHome}
+                  aria-label="Ativar vitrine de produtos no topo"
+                />
+              </div>
+
+              <div className="flex items-start justify-between gap-4 rounded-xl border bg-muted/30 p-3.5">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-1.5 font-semibold text-sm text-foreground">
+                    <ImagePlus className="size-4 text-muted-foreground" /> Banners Promocionais
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Carrossel de banners gráficos (desativado por padrão para dar destaque direto às peças).
+                  </p>
+                </div>
+                <Switch
+                  checked={exibirBannersHome}
+                  onCheckedChange={setExibirBannersHome}
+                  aria-label="Ativar banners promocionais no topo"
+                />
+              </div>
+            </div>
+          </div>
+
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b pb-4">
             <div>
-              <h2 className="font-sans text-lg font-bold tracking-normal">Carrossel de Banners da Loja</h2>
+              <h3 className="font-sans text-base font-bold tracking-normal">Carrossel de Banners da Loja</h3>
               <p className="text-sm text-muted-foreground">
-                Configure até 3 banners para exibir no carrossel da página inicial. O Banner 1 é o principal; os Banners 2 e 3 entram automaticamente no carrossel quando imagens forem enviadas.
+                Configure até 3 banners para exibir quando os banners estiverem ativados. O Banner 1 é o principal; os Banners 2 e 3 entram automaticamente quando imagens forem enviadas.
               </p>
             </div>
             <div className="flex items-center gap-1.5 self-start shrink-0 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
