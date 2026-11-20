@@ -1,15 +1,61 @@
 import { useEffect, useRef, useState } from "react";
-import { Play } from "lucide-react";
+import { ChevronLeft, ChevronRight, Play, ZoomIn, ZoomOut } from "lucide-react";
 import type { MidiaRow } from "@/lib/catalog.functions";
 import { mediaUrl, ordenarMidias, youtubeId, youtubeThumb } from "@/lib/media";
 import { cn } from "@/lib/utils";
 
-function Slide({ m, alt, fallbackPoster, eager }: { m: MidiaRow; alt: string; fallbackPoster: string; eager: boolean }) {
+function Slide({
+  m,
+  alt,
+  fallbackPoster,
+  eager,
+  isZoomed,
+  onToggleZoom,
+}: {
+  m: MidiaRow;
+  alt: string;
+  fallbackPoster: string;
+  eager: boolean;
+  isZoomed: boolean;
+  onToggleZoom: () => void;
+}) {
   const [play, setPlay] = useState(false);
+  const [origin, setOrigin] = useState({ x: 50, y: 50 });
   const yt = youtubeId(m.video_externo);
+
   if (m.tipo === "foto" && m.url) {
     return (
-      <div className="flex h-full w-full items-center justify-center p-2 sm:p-3">
+      <div
+        className="relative flex h-full w-full items-center justify-center overflow-hidden select-none"
+        onClick={(e) => {
+          if (!isZoomed) {
+            const rect = e.currentTarget.getBoundingClientRect();
+            const x = Math.max(0, Math.min(100, ((e.clientX - rect.left) / rect.width) * 100));
+            const y = Math.max(0, Math.min(100, ((e.clientY - rect.top) / rect.height) * 100));
+            setOrigin({ x, y });
+          }
+          onToggleZoom();
+        }}
+        onMouseMove={(e) => {
+          if (!isZoomed) return;
+          const rect = e.currentTarget.getBoundingClientRect();
+          const x = Math.max(0, Math.min(100, ((e.clientX - rect.left) / rect.width) * 100));
+          const y = Math.max(0, Math.min(100, ((e.clientY - rect.top) / rect.height) * 100));
+          setOrigin({ x, y });
+        }}
+        onMouseLeave={() => {
+          if (isZoomed) onToggleZoom();
+        }}
+        onTouchMove={(e) => {
+          if (!isZoomed || e.touches.length === 0) return;
+          const touch = e.touches[0];
+          const rect = e.currentTarget.getBoundingClientRect();
+          const x = Math.max(0, Math.min(100, ((touch.clientX - rect.left) / rect.width) * 100));
+          const y = Math.max(0, Math.min(100, ((touch.clientY - rect.top) / rect.height) * 100));
+          setOrigin({ x, y });
+        }}
+        style={{ cursor: isZoomed ? "zoom-out" : "zoom-in" }}
+      >
         <img
           src={mediaUrl(m.url)}
           alt={alt}
@@ -17,8 +63,34 @@ function Slide({ m, alt, fallbackPoster, eager }: { m: MidiaRow; alt: string; fa
           height={1500}
           loading={eager ? "eager" : "lazy"}
           decoding="async"
-          className="h-full w-full object-contain"
+          className={cn(
+            "h-full w-full object-contain p-2 sm:p-3 transition-transform duration-300 ease-out will-change-transform select-none",
+            isZoomed ? "scale-[2.2] pointer-events-none" : "scale-100",
+          )}
+          style={{
+            transformOrigin: `${origin.x}% ${origin.y}%`,
+          }}
         />
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            if (!isZoomed) {
+              setOrigin({ x: 50, y: 50 });
+            }
+            onToggleZoom();
+          }}
+          aria-label={isZoomed ? "Reduzir zoom da imagem" : "Ampliar imagem"}
+          title={isZoomed ? "Reduzir zoom" : "Clique para ampliar"}
+          className="absolute top-3 right-3 z-10 flex size-9 items-center justify-center rounded-full bg-background/80 hover:bg-background text-foreground/80 hover:text-foreground backdrop-blur-xs border border-border/40 shadow-xs transition-transform active:scale-95 before:absolute before:-inset-1.5 before:content-['']"
+        >
+          {isZoomed ? <ZoomOut className="size-4" /> : <ZoomIn className="size-4" />}
+        </button>
+        {isZoomed && (
+          <div className="pointer-events-none absolute bottom-3 left-3 z-10 rounded-full bg-background/85 px-2.5 py-1 text-[11px] font-medium text-muted-foreground backdrop-blur-xs shadow-xs animate-in fade-in duration-200">
+            Toque ou clique para voltar
+          </div>
+        )}
       </div>
     );
   }
@@ -63,50 +135,125 @@ function Slide({ m, alt, fallbackPoster, eager }: { m: MidiaRow; alt: string; fa
 export function MediaGallery({ midias, nome }: { midias: MidiaRow[]; nome: string }) {
   const list = ordenarMidias(midias);
   const [idx, setIdx] = useState(0);
+  const [isZoomed, setIsZoomed] = useState(false);
   const track = useRef<HTMLDivElement>(null);
   const thumbs = useRef<HTMLDivElement>(null);
   const firstPhoto = list.find((m) => m.tipo === "foto" && m.url);
   const fallbackPoster = firstPhoto ? mediaUrl(firstPhoto.url) : "";
 
   function go(i: number) {
+    setIsZoomed(false);
+    const target = Math.max(0, Math.min(list.length - 1, i));
     const el = track.current;
     if (!el) return;
-    el.scrollTo({ left: i * el.clientWidth, behavior: "smooth" });
+    setIdx(target);
+    if (typeof el.scrollTo === "function") {
+      el.scrollTo({ left: target * el.clientWidth, behavior: "smooth" });
+    } else {
+      el.scrollLeft = target * el.clientWidth;
+    }
   }
+
+  useEffect(() => {
+    setIsZoomed(false);
+  }, [idx]);
 
   useEffect(() => {
     const strip = thumbs.current;
     const btn = strip?.children[idx] as HTMLElement | undefined;
     if (!strip || !btn) return;
     const offset = btn.getBoundingClientRect().left - strip.getBoundingClientRect().left + strip.scrollLeft;
-    strip.scrollTo({ left: Math.max(0, offset - (strip.clientWidth - btn.clientWidth) / 2), behavior: "smooth" });
+    const left = Math.max(0, offset - (strip.clientWidth - btn.clientWidth) / 2);
+    if (typeof strip.scrollTo === "function") {
+      strip.scrollTo({ left, behavior: "smooth" });
+    } else {
+      strip.scrollLeft = left;
+    }
   }, [idx]);
 
   if (list.length === 0) return <div className="aspect-[4/5] rounded-2xl sm:rounded-3xl bg-muted" />;
 
   return (
-    <div className="min-w-0 max-w-full">
-      <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl border border-border/60 bg-muted/20">
+    <div
+      className="min-w-0 max-w-full focus:outline-none"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === "ArrowLeft") {
+          e.preventDefault();
+          go(idx - 1);
+        } else if (e.key === "ArrowRight") {
+          e.preventDefault();
+          go(idx + 1);
+        } else if (e.key === "Escape" && isZoomed) {
+          setIsZoomed(false);
+        }
+      }}
+    >
+      <div className="group relative overflow-hidden rounded-2xl sm:rounded-3xl border border-border/60 bg-muted/20">
         <div
           ref={track}
           onScroll={(e) => {
+            if (isZoomed) return;
             const el = e.currentTarget;
             setIdx(Math.round(el.scrollLeft / Math.max(1, el.clientWidth)));
           }}
-          className="no-scrollbar flex aspect-[4/5] w-full snap-x snap-mandatory overflow-x-auto overscroll-x-contain"
+          className={cn(
+            "no-scrollbar flex aspect-[4/5] w-full snap-x snap-mandatory overscroll-x-contain",
+            isZoomed ? "overflow-hidden" : "overflow-x-auto",
+          )}
         >
           {list.map((m, i) => (
             <div key={m.id} className="aspect-[4/5] w-full shrink-0 snap-center flex items-center justify-center">
-              <Slide m={m} alt={`${nome}${list.length > 1 ? ` — mídia ${i + 1}` : ""}`} fallbackPoster={fallbackPoster} eager={i === 0} />
+              <Slide
+                m={m}
+                alt={`${nome}${list.length > 1 ? ` — mídia ${i + 1}` : ""}`}
+                fallbackPoster={fallbackPoster}
+                eager={i === 0}
+                isZoomed={isZoomed && i === idx}
+                onToggleZoom={() => setIsZoomed((prev) => !prev)}
+              />
             </div>
           ))}
         </div>
-        {list.length > 1 && (
+
+        {/* Setas discretas para avançar e retroceder */}
+        {list.length > 1 && !isZoomed && (
+          <>
+            <button
+              type="button"
+              onClick={() => go(idx - 1)}
+              disabled={idx === 0}
+              aria-label="Imagem anterior"
+              className={cn(
+                "absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 z-10 flex size-9 sm:size-10 items-center justify-center rounded-full bg-background/80 text-foreground/85 shadow-md backdrop-blur-xs border border-border/40 transition-all hover:bg-background hover:text-foreground hover:scale-105 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary before:absolute before:-inset-1.5 before:content-['']",
+                idx === 0 ? "opacity-0 pointer-events-none" : "opacity-80 hover:opacity-100",
+              )}
+            >
+              <ChevronLeft className="size-5" />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => go(idx + 1)}
+              disabled={idx === list.length - 1}
+              aria-label="Próxima imagem"
+              className={cn(
+                "absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 z-10 flex size-9 sm:size-10 items-center justify-center rounded-full bg-background/80 text-foreground/85 shadow-md backdrop-blur-xs border border-border/40 transition-all hover:bg-background hover:text-foreground hover:scale-105 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary before:absolute before:-inset-1.5 before:content-['']",
+                idx === list.length - 1 ? "opacity-0 pointer-events-none" : "opacity-80 hover:opacity-100",
+              )}
+            >
+              <ChevronRight className="size-5" />
+            </button>
+          </>
+        )}
+
+        {list.length > 1 && !isZoomed && (
           <span className="pointer-events-none absolute bottom-3 right-3 rounded-full bg-background/90 px-2.5 py-0.5 text-xs font-semibold tabular-nums shadow-soft" aria-live="polite">
             {idx + 1} de {list.length}
           </span>
         )}
       </div>
+
       {list.length > 1 && (
         <div ref={thumbs} className="no-scrollbar mt-2.5 flex gap-2 overflow-x-auto overscroll-x-contain pb-1 max-w-full">
           {list.map((m, i) => {
