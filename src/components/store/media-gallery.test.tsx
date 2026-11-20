@@ -95,4 +95,28 @@ describe("MediaGallery component", () => {
 
     expect(screen.getByText("Cor: Preta")).toBeInTheDocument();
   });
+
+  it("permite avançar e retroceder imagens através das setas nas miniaturas", () => {
+    render(<MediaGallery midias={MOCK_MIDIAS} nome="Camiseta Cotton Pima" />);
+
+    const prevThumbBtn = screen.getByLabelText("Miniatura anterior");
+    const nextThumbBtn = screen.getByLabelText("Próxima miniatura");
+
+    expect(prevThumbBtn).toBeInTheDocument();
+    expect(nextThumbBtn).toBeInTheDocument();
+    expect(prevThumbBtn).toBeDisabled();
+    expect(nextThumbBtn).not.toBeDisabled();
+
+    // Clica para avançar na miniatura
+    fireEvent.click(nextThumbBtn);
+
+    // Agora o botão anterior deve estar habilitado e o próximo desabilitado (são 2 imagens)
+    expect(prevThumbBtn).not.toBeDisabled();
+    expect(nextThumbBtn).toBeDisabled();
+
+    // Clica para retroceder
+    fireEvent.click(prevThumbBtn);
+    expect(prevThumbBtn).toBeDisabled();
+    expect(nextThumbBtn).not.toBeDisabled();
+  });
 });

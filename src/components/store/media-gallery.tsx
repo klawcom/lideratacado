@@ -163,6 +163,36 @@ export function MediaGallery({
   const firstPhoto = list.find((m) => m.tipo === "foto" && m.url);
   const fallbackPoster = firstPhoto ? mediaUrl(firstPhoto.url) : "";
 
+  const isDraggingRef = useRef(false);
+  const startXRef = useRef(0);
+  const scrollLeftRef = useRef(0);
+  const hasDraggedRef = useRef(false);
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (!thumbs.current) return;
+    isDraggingRef.current = true;
+    hasDraggedRef.current = false;
+    startXRef.current = e.pageX - thumbs.current.offsetLeft;
+    scrollLeftRef.current = thumbs.current.scrollLeft;
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDraggingRef.current || !thumbs.current) return;
+    const x = e.pageX - thumbs.current.offsetLeft;
+    const walk = x - startXRef.current;
+    if (Math.abs(walk) > 5) {
+      hasDraggedRef.current = true;
+      thumbs.current.scrollLeft = scrollLeftRef.current - walk;
+    }
+  };
+
+  const handleMouseUp = () => {
+    isDraggingRef.current = false;
+    setTimeout(() => {
+      hasDraggedRef.current = false;
+    }, 50);
+  };
+
   function go(i: number) {
     setIsZoomed(false);
     const target = Math.max(0, Math.min(list.length - 1, i));
@@ -290,40 +320,81 @@ export function MediaGallery({
       </div>
 
       {list.length > 1 && (
-        <div ref={thumbs} className="no-scrollbar mt-2.5 flex gap-2 overflow-x-auto overscroll-x-contain pb-1 max-w-full">
-          {list.map((m, i) => {
-            const yt = youtubeId(m.video_externo);
-            const thumb =
-              m.tipo === "foto" && m.url ? mediaUrl(m.url) : m.capa_url ? mediaUrl(m.capa_url) : yt ? youtubeThumb(yt) : fallbackPoster;
-            const thumbCor = fotoCores ? fotoCores[m.id] || (m.url ? fotoCores[m.url] : undefined) : undefined;
-            return (
-              <button
-                key={m.id}
-                type="button"
-                onClick={() => go(i)}
-                aria-label={`Ver mídia ${i + 1}`}
-                aria-current={i === idx}
-                className={cn(
-                  "relative aspect-[4/5] w-12 sm:w-16 shrink-0 overflow-hidden rounded-xl border-2 bg-muted transition",
-                  i === idx ? "border-primary ring-2 ring-primary/20 scale-105" : "border-border/60 opacity-70 hover:opacity-100",
-                )}
-              >
-                {thumb && <img src={thumb} alt="" loading="lazy" className="h-full w-full object-cover" />}
-                {thumbCor && (
-                  <span
-                    className="absolute top-1 right-1 size-2 rounded-full border border-background shadow-xs z-10"
-                    style={{ backgroundColor: getCorDef(thumbCor).hex }}
-                    title={`Foto da cor ${thumbCor}`}
-                  />
-                )}
-                {m.tipo === "video" && (
-                  <span className="absolute inset-0 grid place-items-center">
-                    <Play className="size-5 fill-background text-background drop-shadow" />
-                  </span>
-                )}
-              </button>
-            );
-          })}
+        <div className="relative mt-2.5 flex items-center gap-1.5 sm:gap-2">
+          {/* Seta discreta para retroceder nas miniaturas */}
+          <button
+            type="button"
+            onClick={() => go(idx - 1)}
+            disabled={idx === 0}
+            aria-label="Miniatura anterior"
+            title="Ver imagem anterior"
+            className={cn(
+              "relative flex size-8 sm:size-9 shrink-0 items-center justify-center rounded-full border border-border/60 bg-background/90 text-foreground/80 shadow-xs backdrop-blur-xs transition-all hover:bg-background hover:text-foreground hover:scale-105 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary before:absolute before:-inset-2 before:content-['']",
+              idx === 0 ? "opacity-25 pointer-events-none cursor-not-allowed" : "opacity-90 hover:opacity-100",
+            )}
+          >
+            <ChevronLeft className="size-4 sm:size-5" />
+          </button>
+
+          <div
+            ref={thumbs}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseUp}
+            className="no-scrollbar flex-1 flex gap-2 overflow-x-auto overscroll-x-contain pb-1 max-w-full cursor-grab active:cursor-grabbing select-none"
+          >
+            {list.map((m, i) => {
+              const yt = youtubeId(m.video_externo);
+              const thumb =
+                m.tipo === "foto" && m.url ? mediaUrl(m.url) : m.capa_url ? mediaUrl(m.capa_url) : yt ? youtubeThumb(yt) : fallbackPoster;
+              const thumbCor = fotoCores ? fotoCores[m.id] || (m.url ? fotoCores[m.url] : undefined) : undefined;
+              return (
+                <button
+                  key={m.id}
+                  type="button"
+                  onClick={() => {
+                    if (!hasDraggedRef.current) go(i);
+                  }}
+                  aria-label={`Ver mídia ${i + 1}`}
+                  aria-current={i === idx}
+                  className={cn(
+                    "relative aspect-[4/5] w-12 sm:w-16 shrink-0 overflow-hidden rounded-xl border-2 bg-muted transition",
+                    i === idx ? "border-primary ring-2 ring-primary/20 scale-105" : "border-border/60 opacity-70 hover:opacity-100",
+                  )}
+                >
+                  {thumb && <img src={thumb} alt="" loading="lazy" className="h-full w-full object-cover pointer-events-none" />}
+                  {thumbCor && (
+                    <span
+                      className="absolute top-1 right-1 size-2 rounded-full border border-background shadow-xs z-10"
+                      style={{ backgroundColor: getCorDef(thumbCor).hex }}
+                      title={`Foto da cor ${thumbCor}`}
+                    />
+                  )}
+                  {m.tipo === "video" && (
+                    <span className="absolute inset-0 grid place-items-center">
+                      <Play className="size-5 fill-background text-background drop-shadow" />
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Seta discreta para avançar nas miniaturas */}
+          <button
+            type="button"
+            onClick={() => go(idx + 1)}
+            disabled={idx === list.length - 1}
+            aria-label="Próxima miniatura"
+            title="Ver próxima imagem"
+            className={cn(
+              "relative flex size-8 sm:size-9 shrink-0 items-center justify-center rounded-full border border-border/60 bg-background/90 text-foreground/80 shadow-xs backdrop-blur-xs transition-all hover:bg-background hover:text-foreground hover:scale-105 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary before:absolute before:-inset-2 before:content-['']",
+              idx === list.length - 1 ? "opacity-25 pointer-events-none cursor-not-allowed" : "opacity-90 hover:opacity-100",
+            )}
+          >
+            <ChevronRight className="size-4 sm:size-5" />
+          </button>
         </div>
       )}
     </div>
