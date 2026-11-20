@@ -37,6 +37,57 @@ export const CORES_PADRAO: CorDef[] = [
 
 export const MAPA_CORES = new Map(CORES_PADRAO.map((c) => [c.nome.toLowerCase(), c]));
 
+function parseHexToRgb(hex: string): { r: number; g: number; b: number } {
+  let clean = hex.replace("#", "").trim();
+  if (clean.length === 3) {
+    clean = clean
+      .split("")
+      .map((c) => c + c)
+      .join("");
+  }
+  const r = parseInt(clean.substring(0, 2), 16) || 0;
+  const g = parseInt(clean.substring(2, 4), 16) || 0;
+  const b = parseInt(clean.substring(4, 6), 16) || 0;
+  return { r, g, b };
+}
+
+/**
+ * Determina se uma cor hexadecimal é considerada clara (precisa de borda escura para contraste no tema claro).
+ */
+export function isCorClara(hex: string): boolean {
+  const { r, g, b } = parseHexToRgb(hex);
+  const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+  return brightness >= 180;
+}
+
+/**
+ * Determina se uma cor hexadecimal é considerada escura (precisa de borda clara para contraste no tema escuro).
+ */
+export function isCorEscura(hex: string): boolean {
+  const { r, g, b } = parseHexToRgb(hex);
+  const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+  return brightness <= 75;
+}
+
+/**
+ * Retorna as classes Tailwind para garantir alto contraste e visibilidade
+ * das amostras de cores tanto no modo claro quanto no modo escuro.
+ */
+export function getCorContrasteClasses(hex: string): string {
+  if (isCorClara(hex)) {
+    // Cores claras (Branca, Off-white, Creme, Bege, Amarelo, etc.):
+    // Borda slate bem visível no modo claro + borda suave no modo escuro
+    return "border-2 border-slate-300/90 dark:border-white/30 shadow-xs";
+  }
+  if (isCorEscura(hex)) {
+    // Cores escuras (Preta, Marrom Escuro, Azul Marinho, Vinho, Verde Escuro):
+    // Borda sutil no modo claro + borda luminosa slate/branca bem evidente no modo escuro
+    return "border border-black/20 dark:border-2 dark:border-slate-300 dark:shadow-[0_0_4px_rgba(255,255,255,0.25)] shadow-xs";
+  }
+  // Cores médias:
+  return "border border-black/15 dark:border-white/25 shadow-2xs";
+}
+
 export function getCorDef(nome: string): CorDef {
   return (
     MAPA_CORES.get(nome.toLowerCase()) ?? {

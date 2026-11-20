@@ -12,7 +12,7 @@ import { imagemPrincipal } from "@/lib/media";
 import { FAIXAS, TAMANHOS, TAMANHOS_PADRAO, TAMANHOS_PLUS_SIZE, faixaDoTotal, menorPreco, pecas, precoNaFaixa, type Qtd } from "@/lib/pricing";
 import { brl, money } from "@/lib/format";
 import { cart, useCartCount } from "@/lib/cart";
-import { CORES_PADRAO, decodeCoresProduto, formatarCorTamanhos, getCorDef } from "@/lib/colors";
+import { CORES_PADRAO, decodeCoresProduto, formatarCorTamanhos, getCorContrasteClasses, getCorDef } from "@/lib/colors";
 import {
   COMPOSICAO_COTTON_PIMA,
   DESCRICAO_COTTON_PIMA,
@@ -434,10 +434,10 @@ function ProdutoPage() {
                       <span
                         className={cn(
                           "relative size-7 sm:size-8 rounded-full transition-all",
-                          cor.border && "border border-border/70",
+                          getCorContrasteClasses(cor.hex),
                           ativa
-                            ? "ring-2 ring-primary ring-offset-2 scale-110 shadow-xs"
-                            : "group-hover:scale-105 opacity-85 group-hover:opacity-100",
+                            ? "ring-2 ring-primary ring-offset-2 ring-offset-background scale-110 shadow-sm"
+                            : "group-hover:scale-105",
                         )}
                         style={{ backgroundColor: cor.hex }}
                       >
@@ -486,7 +486,7 @@ function ProdutoPage() {
                       className="inline-flex items-center gap-1.5 rounded-lg border bg-muted/50 px-2 py-0.5 text-xs"
                     >
                       <span
-                        className="size-2.5 rounded-full border border-border"
+                        className={cn("size-2.5 rounded-full shrink-0", getCorContrasteClasses(getCorDef(corNome).hex))}
                         style={{ backgroundColor: getCorDef(corNome).hex }}
                       />
                       <span className="font-medium">{formatarCorTamanhos(corNome, q)}</span>

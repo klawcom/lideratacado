@@ -12,7 +12,7 @@ import type { Tables } from "@/integrations/supabase/types";
 import { FieldLabel, Panel, invalidateStore, selectClass } from "./ui";
 import { FAIXAS } from "@/lib/pricing";
 import { money, slugify } from "@/lib/format";
-import { CORES_PADRAO, decodeCoresProduto, encodeCoresProduto } from "@/lib/colors";
+import { CORES_PADRAO, decodeCoresProduto, encodeCoresProduto, getCorContrasteClasses } from "@/lib/colors";
 import { cn } from "@/lib/utils";
 
 export type ProdutoEdit = Tables<"produtos"> & { faixas_preco: { quantidade_minima: number; preco_peca: number }[] };
@@ -214,7 +214,7 @@ export function ProductForm({ produto }: { produto?: ProdutoEdit }) {
                 )}
               >
                 <span
-                  className={cn("size-6 shrink-0 rounded-full", c.border && "border border-border")}
+                  className={cn("size-6 shrink-0 rounded-full", getCorContrasteClasses(c.hex))}
                   style={{ backgroundColor: c.hex }}
                 />
                 <span className="truncate">{c.nome}</span>
