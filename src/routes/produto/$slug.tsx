@@ -392,17 +392,15 @@ function ProdutoPage() {
             </ul>
           </section>
 
-          {/* Aviso em destaque absoluto sobre regras de cores no atacado */}
-          <div className="rounded-2xl border-2 border-amber-500/60 bg-amber-500/10 p-3.5 sm:p-4 text-amber-950 dark:text-amber-200 shadow-xs">
-            <div className="flex items-start gap-2.5">
-              <AlertCircle className="mt-0.5 size-5 shrink-0 text-amber-600 dark:text-amber-400" />
-              <div className="space-y-1 text-xs sm:text-sm">
-                <p className="font-bold uppercase tracking-wide text-amber-800 dark:text-amber-300">
-                  ⚠️ Aviso Importante — Regra de Cores no Atacado
-                </p>
-                <p className="leading-relaxed">
-                  Trabalhamos com venda em atacado de alto giro direto de fábrica. Atendemos as cores escolhidas conforme a disponibilidade imediata de estoque. Caso alguma cor selecionada não esteja disponível no momento da separação, enviaremos peças em <strong>cores sortidas</strong> de mesma qualidade e modelo.
-                </p>
+          {/* Aviso sobre cores no atacado */}
+          <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 dark:bg-amber-950/25 p-2.5 sm:p-3 text-amber-900 dark:text-amber-200 shadow-2xs">
+            <div className="flex items-start gap-2">
+              <AlertCircle className="mt-0.5 size-4 shrink-0 text-amber-600 dark:text-amber-400" />
+              <div className="text-xs sm:text-sm leading-snug">
+                <span className="font-bold text-amber-800 dark:text-amber-300">⚠️ Aviso: Cores no Atacado:</span>{" "}
+                <span className="text-amber-900/90 dark:text-amber-200/90">
+                  Vendemos no atacado, direto de fábrica e com alto giro. As cores são atendidas conforme o estoque disponível na hora da separação. Se alguma estiver em falta, enviamos cores sortidas, de mesma qualidade e modelo.
+                </span>
               </div>
             </div>
           </div>

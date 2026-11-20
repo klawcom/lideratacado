@@ -29,9 +29,9 @@ export function SiteHeader() {
   return (
     <header className="fixed top-0 inset-x-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 shadow-xs">
       <div className="container-page flex h-16 items-center gap-2">
-        <Link to="/" className="flex min-w-0 items-center gap-3" aria-label="Líder Atacado, página inicial">
-          <Logo size={44} />
-          <span className="hidden truncate font-display text-lg font-bold sm:block">Líder Atacado</span>
+        <Link to="/" className="flex min-w-0 items-center gap-2 sm:gap-3 shrink-0" aria-label="Líder Atacado, página inicial">
+          <Logo size={40} className="sm:size-[44px]" />
+          <span className="truncate font-display text-base font-bold text-foreground sm:text-lg">Líder Atacado</span>
         </Link>
 
         <nav className="ml-6 hidden items-center gap-1 lg:flex" aria-label="Categorias">
