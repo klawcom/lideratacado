@@ -26,6 +26,7 @@ import { Panel, invalidateStore } from "./ui";
 import { mediaUrl, youtubeId, youtubeThumb } from "@/lib/media";
 import { resizeToWebp, videoPoster } from "@/lib/image-resize";
 import { cn } from "@/lib/utils";
+import { CORES_PADRAO, decodeCoresProduto, encodeCoresProduto, getCorDef } from "@/lib/colors";
 
 const MAX_VIDEO = 50 * 1024 * 1024;
 const isStoragePath = (u: string | null) => !!u && !/^https?:\/\//.test(u) && !u.startsWith("/") && !u.startsWith("exemplos/");
@@ -41,6 +42,39 @@ export function MediaManager({ produtoId }: { produtoId: string }) {
       return data;
     },
   });
+
+  const { data: produtoData } = useQuery({
+    queryKey: ["admin", "produto", produtoId],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("produtos").select("id, composicao").eq("id", produtoId).single();
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { composicaoLimpa, coresHabilitadas, fotoCores } = decodeCoresProduto(produtoData?.composicao);
+
+  async function associarCorFoto(midiaId: string, corNome: string) {
+    const nextFotoCores = { ...fotoCores };
+    if (!corNome) {
+      delete nextFotoCores[midiaId];
+    } else {
+      nextFotoCores[midiaId] = corNome;
+    }
+    const novaComposicao = encodeCoresProduto(composicaoLimpa, coresHabilitadas, nextFotoCores);
+    const { error } = await supabase
+      .from("produtos")
+      .update({ composicao: novaComposicao })
+      .eq("id", produtoId);
+    if (error) {
+      toast.error("Erro ao associar cor: " + error.message);
+      return;
+    }
+    toast.success(corNome ? `Foto associada à cor ${corNome}` : "Associação de cor removida");
+    qc.invalidateQueries({ queryKey: ["admin", "produto", produtoId] });
+    invalidateStore(qc);
+  }
+
   const [progress, setProgress] = useState<string | null>(null);
   const [drag, setDrag] = useState(false);
   const [draggingIdx, setDraggingIdx] = useState<number | null>(null);
@@ -440,6 +474,7 @@ export function MediaManager({ produtoId }: { produtoId: string }) {
               const isSelected = selectedIds.has(m.id);
               const isBeingDragged = draggingIdx === i;
               const isBatchDragged = draggingIdx !== null && selectedIds.has(midias[draggingIdx]?.id ?? "") && isSelected;
+              const corAssociada = fotoCores[m.id] || (m.url ? fotoCores[m.url] : "");
 
               return (
                 <li
@@ -522,6 +557,15 @@ export function MediaManager({ produtoId }: { produtoId: string }) {
                         Principal
                       </span>
                     )}
+                    {corAssociada && (
+                      <span className="absolute left-2 top-11 z-10 inline-flex items-center gap-1.5 rounded-full bg-background/95 px-2 py-0.5 text-[11px] font-bold text-foreground shadow-xs border border-border/60 backdrop-blur-xs">
+                        <span
+                          className="size-2 rounded-full border border-black/20"
+                          style={{ backgroundColor: getCorDef(corAssociada).hex }}
+                        />
+                        Cor: {corAssociada}
+                      </span>
+                    )}
                   </div>
                   <div className="grid grid-cols-4">
                     <Button type="button" variant="ghost" size="icon" className="w-full rounded-none" aria-label="Mover para trás" disabled={i === 0} onClick={() => mover(i, -1)}>
@@ -537,6 +581,32 @@ export function MediaManager({ produtoId }: { produtoId: string }) {
                       <Trash2 />
                     </Button>
                   </div>
+                  {m.tipo === "foto" && (
+                    <div className="border-t border-border/60 bg-muted/20 p-2 space-y-1">
+                      <div className="flex items-center justify-between text-[11px] font-semibold text-muted-foreground">
+                        <span>Associar cor:</span>
+                        {corAssociada && (
+                          <span
+                            className="size-2.5 rounded-full border border-black/20"
+                            style={{ backgroundColor: getCorDef(corAssociada).hex }}
+                          />
+                        )}
+                      </div>
+                      <select
+                        value={corAssociada || ""}
+                        onChange={(e) => associarCorFoto(m.id, e.target.value)}
+                        className="h-8 w-full rounded-lg border border-input bg-background px-2 text-xs font-medium text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
+                        aria-label={`Associar cor à foto ${i + 1}`}
+                      >
+                        <option value="">(Nenhuma cor associada)</option>
+                        {coresHabilitadas.map((nome) => (
+                          <option key={nome} value={nome}>
+                            {nome}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
                 </li>
               );
             })}

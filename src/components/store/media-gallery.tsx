@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, Play, ZoomIn, ZoomOut } from "lucide-react";
 import type { MidiaRow } from "@/lib/catalog.functions";
 import { mediaUrl, ordenarMidias, youtubeId, youtubeThumb } from "@/lib/media";
+import { getCorDef } from "@/lib/colors";
 import { cn } from "@/lib/utils";
 
 function Slide({
@@ -10,6 +11,7 @@ function Slide({
   fallbackPoster,
   eager,
   isZoomed,
+  corDaFoto,
   onToggleZoom,
 }: {
   m: MidiaRow;
@@ -17,6 +19,7 @@ function Slide({
   fallbackPoster: string;
   eager: boolean;
   isZoomed: boolean;
+  corDaFoto?: string;
   onToggleZoom: () => void;
 }) {
   const [play, setPlay] = useState(false);
@@ -86,6 +89,15 @@ function Slide({
         >
           {isZoomed ? <ZoomOut className="size-4" /> : <ZoomIn className="size-4" />}
         </button>
+        {corDaFoto && (
+          <span className="pointer-events-none absolute top-3 left-3 z-10 inline-flex items-center gap-1.5 rounded-full bg-background/90 px-2.5 py-1 text-xs font-semibold text-foreground backdrop-blur-xs border border-border/50 shadow-xs">
+            <span
+              className="size-2 rounded-full border border-black/20"
+              style={{ backgroundColor: getCorDef(corDaFoto).hex }}
+            />
+            Cor: {corDaFoto}
+          </span>
+        )}
         {isZoomed && (
           <div className="pointer-events-none absolute bottom-3 left-3 z-10 rounded-full bg-background/85 px-2.5 py-1 text-[11px] font-medium text-muted-foreground backdrop-blur-xs shadow-xs animate-in fade-in duration-200">
             Toque ou clique para voltar
@@ -132,7 +144,17 @@ function Slide({
   return null;
 }
 
-export function MediaGallery({ midias, nome }: { midias: MidiaRow[]; nome: string }) {
+export function MediaGallery({
+  midias,
+  nome,
+  corAtiva,
+  fotoCores,
+}: {
+  midias: MidiaRow[];
+  nome: string;
+  corAtiva?: string;
+  fotoCores?: Record<string, string>;
+}) {
   const list = ordenarMidias(midias);
   const [idx, setIdx] = useState(0);
   const [isZoomed, setIsZoomed] = useState(false);
@@ -153,6 +175,18 @@ export function MediaGallery({ midias, nome }: { midias: MidiaRow[]; nome: strin
       el.scrollLeft = target * el.clientWidth;
     }
   }
+
+  // Quando o cliente clica numa cor, desliza suavemente para a foto correspondente
+  useEffect(() => {
+    if (!corAtiva || !fotoCores) return;
+    const targetIdx = list.findIndex((m) => {
+      const c = fotoCores[m.id] || (m.url ? fotoCores[m.url] : null);
+      return c && c.toLowerCase() === corAtiva.toLowerCase();
+    });
+    if (targetIdx !== -1) {
+      go(targetIdx);
+    }
+  }, [corAtiva, fotoCores]);
 
   useEffect(() => {
     setIsZoomed(false);
@@ -210,6 +244,7 @@ export function MediaGallery({ midias, nome }: { midias: MidiaRow[]; nome: strin
                 fallbackPoster={fallbackPoster}
                 eager={i === 0}
                 isZoomed={isZoomed && i === idx}
+                corDaFoto={fotoCores ? fotoCores[m.id] || (m.url ? fotoCores[m.url] : undefined) : undefined}
                 onToggleZoom={() => setIsZoomed((prev) => !prev)}
               />
             </div>
@@ -260,6 +295,7 @@ export function MediaGallery({ midias, nome }: { midias: MidiaRow[]; nome: strin
             const yt = youtubeId(m.video_externo);
             const thumb =
               m.tipo === "foto" && m.url ? mediaUrl(m.url) : m.capa_url ? mediaUrl(m.capa_url) : yt ? youtubeThumb(yt) : fallbackPoster;
+            const thumbCor = fotoCores ? fotoCores[m.id] || (m.url ? fotoCores[m.url] : undefined) : undefined;
             return (
               <button
                 key={m.id}
@@ -273,6 +309,13 @@ export function MediaGallery({ midias, nome }: { midias: MidiaRow[]; nome: strin
                 )}
               >
                 {thumb && <img src={thumb} alt="" loading="lazy" className="h-full w-full object-cover" />}
+                {thumbCor && (
+                  <span
+                    className="absolute top-1 right-1 size-2 rounded-full border border-background shadow-xs z-10"
+                    style={{ backgroundColor: getCorDef(thumbCor).hex }}
+                    title={`Foto da cor ${thumbCor}`}
+                  />
+                )}
                 {m.tipo === "video" && (
                   <span className="absolute inset-0 grid place-items-center">
                     <Play className="size-5 fill-background text-background drop-shadow" />

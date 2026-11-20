@@ -100,50 +100,83 @@ export function getCorDef(nome: string): CorDef {
 /**
  * Decodifica as cores habilitadas de um anúncio armazenadas no campo composicao.
  * Se nenhuma cor específica estiver configurada, todas as cores padrão estão ativas.
+ * Também decodifica o mapa de associação entre fotos e cores (<!--foto_cores:...-->).
  */
 export function decodeCoresProduto(composicao: string | null | undefined): {
   composicaoLimpa: string;
   coresHabilitadas: string[];
+  fotoCores: Record<string, string>;
 } {
   const comp = composicao ?? "";
   const match = comp.match(/<!--cores:(.*?)-->/);
-  const composicaoLimpa = comp.replace(/<!--cores:.*?-->/g, "").trim();
+  const matchFoto = comp.match(/<!--foto_cores:(.*?)-->/);
+  const composicaoLimpa = comp
+    .replace(/<!--cores:.*?-->/g, "")
+    .replace(/<!--foto_cores:.*?-->/g, "")
+    .trim();
 
-  if (!match || !match[1]) {
-    return {
-      composicaoLimpa,
-      coresHabilitadas: CORES_PADRAO.map((c) => c.nome),
-    };
+  let coresHabilitadas = CORES_PADRAO.map((c) => c.nome);
+  if (match && match[1]) {
+    try {
+      const parsed = JSON.parse(match[1]);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        coresHabilitadas = parsed;
+      }
+    } catch {
+      /* fallback to default */
+    }
   }
 
-  try {
-    const parsed = JSON.parse(match[1]);
-    if (Array.isArray(parsed) && parsed.length > 0) {
-      return {
-        composicaoLimpa,
-        coresHabilitadas: parsed,
-      };
+  let fotoCores: Record<string, string> = {};
+  if (matchFoto && matchFoto[1]) {
+    try {
+      const parsed = JSON.parse(matchFoto[1]);
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+        fotoCores = parsed;
+      }
+    } catch {
+      /* fallback to empty */
     }
-  } catch {
-    /* fallback to default */
   }
 
   return {
     composicaoLimpa,
-    coresHabilitadas: CORES_PADRAO.map((c) => c.nome),
+    coresHabilitadas,
+    fotoCores,
   };
 }
 
 /**
- * Codifica a lista de cores selecionadas no campo composicao do produto.
+ * Codifica a lista de cores selecionadas e o mapa de foto-cor no campo composicao do produto.
  */
-export function encodeCoresProduto(composicaoLimpa: string, coresSelecionadas: string[]): string {
-  const base = composicaoLimpa.replace(/<!--cores:.*?-->/g, "").trim();
-  // Se selecionou todas as cores ou nenhuma, não precisa poluir
-  if (coresSelecionadas.length === 0 || coresSelecionadas.length === CORES_PADRAO.length) {
-    return base;
+export function encodeCoresProduto(
+  composicaoLimpa: string,
+  coresSelecionadas: string[],
+  fotoCores?: Record<string, string>,
+): string {
+  let base = composicaoLimpa
+    .replace(/<!--cores:.*?-->/g, "")
+    .replace(/<!--foto_cores:.*?-->/g, "")
+    .trim();
+
+  // Se selecionou cores específicas (diferente de todas)
+  if (coresSelecionadas.length > 0 && coresSelecionadas.length < CORES_PADRAO.length) {
+    base = `${base}<!--cores:${JSON.stringify(coresSelecionadas)}-->`;
   }
-  return `${base}<!--cores:${JSON.stringify(coresSelecionadas)}-->`;
+
+  // Se houver fotos associadas a cores
+  if (fotoCores) {
+    const keys = Object.keys(fotoCores).filter((k) => !!fotoCores[k]);
+    if (keys.length > 0) {
+      const cleanMap: Record<string, string> = {};
+      for (const k of keys) {
+        cleanMap[k] = fotoCores[k];
+      }
+      base = `${base}<!--foto_cores:${JSON.stringify(cleanMap)}-->`;
+    }
+  }
+
+  return base;
 }
 
 /**

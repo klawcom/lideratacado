@@ -338,7 +338,12 @@ function ProdutoPage() {
 
       <div className="grid gap-6 md:grid-cols-2 md:gap-10">
         <div className="min-w-0 space-y-5">
-          <MediaGallery midias={p.produto_midias} nome={p.nome} />
+          <MediaGallery
+            midias={p.produto_midias}
+            nome={p.nome}
+            corAtiva={corAtiva}
+            fotoCores={cores.fotoCores}
+          />
 
           {/* Na versão desktop, a descrição fica na coluna esquerda abaixo da galeria */}
           <div className="hidden md:block">

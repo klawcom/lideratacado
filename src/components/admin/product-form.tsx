@@ -90,7 +90,7 @@ export function ProductForm({ produto }: { produto?: ProdutoEdit }) {
     }
     if (!faixas.length) { toast.error("Informe ao menos um preço por peça."); return; }
     setSaving(true);
-    const composicaoSalva = encodeCoresProduto(composicaoTexto, coresHabilitadas);
+    const composicaoSalva = encodeCoresProduto(composicaoTexto, coresHabilitadas, decodedCores.fotoCores);
     const payload = {
       nome,
       codigo_modelo: codigo,

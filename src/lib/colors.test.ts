@@ -66,13 +66,16 @@ describe("colors module", () => {
 
   it("encode e decode preservam cores selecionadas e limpam texto", () => {
     const selecionadas = ["Branca", "Preta", "Azul"];
-    const encoded = encodeCoresProduto("100% Algodão", selecionadas);
+    const fotoCores = { "midia-1": "Branca", "midia-2": "Preta" };
+    const encoded = encodeCoresProduto("100% Algodão", selecionadas, fotoCores);
     expect(encoded).toContain("100% Algodão");
     expect(encoded).toContain("<!--cores:");
+    expect(encoded).toContain("<!--foto_cores:");
 
     const decoded = decodeCoresProduto(encoded);
     expect(decoded.composicaoLimpa).toBe("100% Algodão");
     expect(decoded.coresHabilitadas).toEqual(selecionadas);
+    expect(decoded.fotoCores).toEqual(fotoCores);
   });
 
   it("formatarCorTamanhos gera string no formato correto: cor: 1-P, 2-M, 4-G, 2-GG", () => {

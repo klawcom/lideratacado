@@ -65,4 +65,34 @@ describe("MediaGallery component", () => {
     expect(screen.queryByLabelText("Imagem anterior")).not.toBeInTheDocument();
     expect(screen.queryByLabelText("Próxima imagem")).not.toBeInTheDocument();
   });
+
+  it("exibe a tag da cor associada e navega para a foto da cor selecionada", () => {
+    const fotoCores = {
+      1: "Branca",
+      2: "Preta",
+    };
+
+    const { rerender } = render(
+      <MediaGallery
+        midias={MOCK_MIDIAS}
+        nome="Camiseta Cotton Pima"
+        corAtiva="Branca"
+        fotoCores={fotoCores}
+      />,
+    );
+
+    expect(screen.getByText("Cor: Branca")).toBeInTheDocument();
+
+    // Alterna a cor ativa para Preta
+    rerender(
+      <MediaGallery
+        midias={MOCK_MIDIAS}
+        nome="Camiseta Cotton Pima"
+        corAtiva="Preta"
+        fotoCores={fotoCores}
+      />,
+    );
+
+    expect(screen.getByText("Cor: Preta")).toBeInTheDocument();
+  });
 });
