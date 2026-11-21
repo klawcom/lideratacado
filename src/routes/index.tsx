@@ -47,7 +47,7 @@ const FAQS_HOME = [
   {
     pergunta: "Posso escolher as cores e os tamanhos livremente (grade livre)?",
     resposta:
-      "Sim! Você tem total liberdade na escolha de modelos e tamanhos (P ao GG e Plus Size G1/G2). Em relação às cores: vendemos no atacado, direto de fábrica e com alto giro. As cores são atendidas conforme o estoque disponível na hora da separação. Se alguma estiver em falta, enviamos cores sortidas, de mesma qualidade e modelo.",
+      "Sim! Você tem total liberdade na escolha de modelos e tamanhos (P ao GG e Plus Size G1/G2). Em relação às cores: vendemos no atacado, direto de fábrica e com alto giro. As cores são atendidas conforme o estoque disponível na hora da separação. Se alguma estiver em falta, enviamos cores sortidas, de mesma qualidade e modelo. As imagens são meramente ilustrativas com base nos produtos reais, e você pode solicitar imagens e vídeos reais das peças via WhatsApp a qualquer momento.",
   },
   {
     pergunta: "Como funciona o frete e o prazo de entrega para meu estado?",

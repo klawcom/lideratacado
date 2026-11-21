@@ -1,5 +1,5 @@
 import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { AlertCircle, ChevronLeft, ChevronRight, ShoppingBag, X } from "lucide-react";
 import { toast } from "sonner";
@@ -10,7 +10,7 @@ import { ShippingCalculator } from "@/components/store/shipping-calculator";
 import { produtoQuery, siteQuery } from "@/lib/catalog.functions";
 import { imagemPrincipal } from "@/lib/media";
 import { FAIXAS, TAMANHOS, TAMANHOS_PADRAO, TAMANHOS_PLUS_SIZE, faixaDoTotal, menorPreco, pecas, precoNaFaixa, type Qtd } from "@/lib/pricing";
-import { brl, money } from "@/lib/format";
+import { brl, money, whatsappLinkNumber } from "@/lib/format";
 import { cart, useCartCount } from "@/lib/cart";
 import { CORES_PADRAO, decodeCoresProduto, formatarCorTamanhos, getCorContrasteClasses, getCorDef } from "@/lib/colors";
 import {
@@ -182,6 +182,8 @@ function DetalhesProduto({
 function ProdutoPage() {
   const { slug } = Route.useParams();
   const { data: p } = useSuspenseQuery(produtoQuery(slug));
+  const { data: site } = useQuery(siteQuery());
+  const waNumber = site?.config?.whatsapp || "5547991364084";
   const navigate = useNavigate();
   const noCarrinho = useCartCount();
 
@@ -392,15 +394,29 @@ function ProdutoPage() {
             </ul>
           </section>
 
-          {/* Aviso sobre cores no atacado */}
+          {/* Aviso sobre cores e imagens ilustrativas no atacado */}
           <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 dark:bg-amber-950/25 p-2.5 sm:p-3 text-amber-900 dark:text-amber-200 shadow-2xs">
             <div className="flex items-start gap-2">
               <AlertCircle className="mt-0.5 size-4 shrink-0 text-amber-600 dark:text-amber-400" />
-              <div className="text-xs sm:text-sm leading-snug">
-                <span className="font-bold text-amber-800 dark:text-amber-300">⚠️ Aviso: Cores no Atacado:</span>{" "}
-                <span className="text-amber-900/90 dark:text-amber-200/90">
-                  Vendemos no atacado, direto de fábrica e com alto giro. As cores são atendidas conforme o estoque disponível na hora da separação. Se alguma estiver em falta, enviamos cores sortidas, de mesma qualidade e modelo.
-                </span>
+              <div className="text-xs sm:text-sm leading-snug space-y-1.5">
+                <p>
+                  <span className="font-bold text-amber-800 dark:text-amber-300">⚠️ Aviso: Cores e Imagens no Atacado:</span>{" "}
+                  <span className="text-amber-900/90 dark:text-amber-200/90">
+                    Vendemos no atacado, direto de fábrica e com alto giro. As cores são atendidas conforme o estoque disponível na hora da separação. Se alguma estiver em falta, enviamos cores sortidas, de mesma qualidade e modelo.
+                  </span>
+                </p>
+                <p className="text-amber-900/90 dark:text-amber-200/90">
+                  As imagens são meramente ilustrativas com base nos produtos reais. Você pode{" "}
+                  <a
+                    href={`https://wa.me/${whatsappLinkNumber(waNumber)}?text=${encodeURIComponent(`Olá! Gostaria de solicitar imagens e vídeos reais das peças do produto: ${p.nome}`)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-bold underline underline-offset-2 hover:text-amber-950 dark:hover:text-white"
+                  >
+                    solicitar imagens e vídeos reais das peças via WhatsApp
+                  </a>{" "}
+                  a qualquer momento.
+                </p>
               </div>
             </div>
           </div>
