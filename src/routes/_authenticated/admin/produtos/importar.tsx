@@ -10,7 +10,7 @@ import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminPage, FieldLabel, Panel, invalidateStore, selectClass } from "@/components/admin/ui";
 import { useCategoriasAdmin } from "@/components/admin/product-form";
-import { resizeToWebp, videoPoster } from "@/lib/image-resize";
+import { videoPoster } from "@/lib/image-resize";
 import { slugify } from "@/lib/format";
 import {
   FAIXAS_PADRAO,
@@ -20,6 +20,7 @@ import {
   caminhoVideo,
   codigoModelo,
   encontrarCategoriaCorrespondente,
+  extensao,
   extrairPastaRaiz,
   nomeDaCategoria,
   tituloDaPasta,
@@ -314,16 +315,17 @@ function Importar() {
           const midias: { tipo: "foto" | "video"; url: string; capa_url: string | null; ordem: number; principal: boolean }[] = [];
 
           await poolMap(p.g.fotos, 3, async (a, i) => {
-            const url = caminhoFoto(p.codigo, i + 1);
+            const url = caminhoFoto(p.codigo, i + 1, a.file.name);
             try {
               if (!atual.urls.has(url)) {
-                const blob = await resizeToWebp(a.file, 1600, 0.8);
-                const { error } = await supabase.storage.from("produtos").upload(url, blob, { contentType: "image/webp", cacheControl: "31536000", upsert: true });
+                const ext = extensao(a.file.name).replace(/[^a-z0-9]/g, "") || "png";
+                const tipo = a.file.type || (ext === "png" ? "image/png" : ext === "jpg" || ext === "jpeg" ? "image/jpeg" : ext === "webp" ? "image/webp" : "image/png");
+                const { error } = await supabase.storage.from("produtos").upload(url, a.file, { contentType: tipo, cacheControl: "31536000", upsert: true });
                 if (error) throw error;
                 midias.push({ tipo: "foto", url, capa_url: null, ordem: i, principal: i === 0 });
               }
             } catch (err) {
-              log(`${p.codigo} · ${a.file.name}: ${err instanceof Error ? err.message : "não foi possível converter"}`);
+              log(`${p.codigo} · ${a.file.name}: ${err instanceof Error ? err.message : "não foi possível enviar"}`);
             }
             ok++;
             set({ feitos: ok });
@@ -592,7 +594,7 @@ function Importar() {
                       ? `Arraste a pasta de produtos para importar em "${cats?.find((c) => c.id === categoria)?.nome || "Categoria"}"`
                       : `Arraste a pasta de produtos para a categoria "${nomeNovaCategoria || "Nova categoria"}"`}
                 </p>
-                <p className="text-sm text-muted-foreground">Fotos são reduzidas para 1600 px em WebP. Vídeos até 50 MB são enviados como estão.</p>
+                <p className="text-sm text-muted-foreground">Fotos são enviadas na qualidade original (PNG, JPEG, etc.). Vídeos até 50 MB são enviados como estão.</p>
                 <Button className="mt-4" variant="outline" disabled={rodando} onClick={() => dirRef.current?.click()}>
                   Escolher pasta
                 </Button>

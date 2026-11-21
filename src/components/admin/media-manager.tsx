@@ -24,7 +24,7 @@ import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { Panel, invalidateStore } from "./ui";
 import { mediaUrl, youtubeId, youtubeThumb } from "@/lib/media";
-import { resizeToWebp, videoPoster } from "@/lib/image-resize";
+import { videoPoster } from "@/lib/image-resize";
 import { cn } from "@/lib/utils";
 import { CORES_PADRAO, decodeCoresProduto, encodeCoresProduto, getCorDef } from "@/lib/colors";
 
@@ -134,9 +134,11 @@ export function MediaManager({
       try {
         const id = crypto.randomUUID();
         if (file.type.startsWith("image/")) {
-          const blob = await resizeToWebp(file, 1600);
-          const path = `${produtoId}/${id}.webp`;
-          const { error } = await supabase.storage.from("produtos").upload(path, blob, { contentType: "image/webp", cacheControl: "31536000" });
+          const extMatch = file.name.split(".").pop();
+          const ext = (extMatch ? extMatch.toLowerCase().replace(/[^a-z0-9]/g, "") : "") || (file.type === "image/png" ? "png" : file.type === "image/jpeg" ? "jpg" : "png");
+          const path = `${produtoId}/${id}.${ext}`;
+          const contentType = file.type || (ext === "png" ? "image/png" : ext === "jpg" || ext === "jpeg" ? "image/jpeg" : ext === "webp" ? "image/webp" : "image/png");
+          const { error } = await supabase.storage.from("produtos").upload(path, file, { contentType, cacheControl: "31536000" });
           if (error) throw error;
           const { error: e2 } = await supabase.from("produto_midias").insert({ produto_id: produtoId, tipo: "foto", url: path, ordem: ordem++, principal: !temPrincipal });
           if (e2) throw e2;
@@ -329,7 +331,7 @@ export function MediaManager({
   return (
     <Panel>
       <h2 className="font-sans text-lg font-bold tracking-normal">Fotos e vídeos</h2>
-      <p className="text-sm text-muted-foreground">Fotos são reduzidas para no máximo 1600 px em WebP. Vídeos até 50 MB, sem som na loja.</p>
+      <p className="text-sm text-muted-foreground">Fotos são enviadas na qualidade original (PNG, JPEG, etc.). Vídeos até 50 MB, sem som na loja.</p>
 
       <div
         onDragOver={(e) => {

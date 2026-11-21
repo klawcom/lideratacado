@@ -191,8 +191,9 @@ export function tituloDaPasta(pasta: string, n: number, nomeModelo: string): { t
 }
 
 /** Storage paths for imported files, deterministic so a re-run resumes instead of duplicating. */
-export function caminhoFoto(codigo: string, i: number) {
-  return `products/${codigo}/${pad2(i)}.webp`;
+export function caminhoFoto(codigo: string, i: number, nomeOriginal?: string) {
+  const ext = nomeOriginal ? (extensao(nomeOriginal).replace(/[^a-z0-9]/g, "") || "png") : "webp";
+  return `products/${codigo}/${pad2(i)}.${ext}`;
 }
 export function caminhoVideo(codigo: string, i: number, nomeOriginal: string) {
   const ext = extensao(nomeOriginal).replace(/[^a-z0-9]/g, "") || "mp4";

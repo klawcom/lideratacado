@@ -75,5 +75,6 @@ describe("importação de pasta", () => {
   it("códigos e caminhos seguem o padrão PIMA-NN", () => {
     expect(codigoModelo("pima", 3)).toBe("PIMA-03");
     expect(caminhoFoto("PIMA-03", 1)).toBe("products/PIMA-03/01.webp");
+    expect(caminhoFoto("PIMA-03", 1, "foto.png")).toBe("products/PIMA-03/01.png");
   });
 });
