@@ -31,6 +31,7 @@ use the editor.
 
 ## Project rules (Líder Atacado)
 
+- Always pull and sync the remote repository (`git pull`) at the start of any work so that changes made directly in Lovable are merged and always up to date locally.
 - Store UI is Portuguese (pt-BR) and mobile-first (360–430 px): touch targets ≥ 44 px, body text ≥ 16 px, fixed bottom action bar on product/cart/checkout.
 - Price tier is decided by the TOTAL pieces of the whole order (`src/lib/pricing.ts`); the same module runs in the browser and in `criarPedido`, which recomputes prices server-side. Keep tests in `src/lib/pricing.test.ts`.
 - WhatsApp order text lives only in `src/lib/whatsapp-message.ts` (tested); orders are saved by the `criarPedido` server function with the admin client, never by direct anonymous inserts.
