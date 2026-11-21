@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
-import { CheckSquare, Eye, EyeOff, FileText, FolderInput, FolderUp, Loader2, Package, Plus, Save, Search, Square, Trash2, X } from "lucide-react";
+import { CheckSquare, Eye, EyeOff, FileText, FolderInput, FolderUp, Loader2, Package, Palette, Plus, Save, Search, Square, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,7 +11,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { AdminPage, Empty, Loading, invalidateStore, selectClass } from "@/components/admin/ui";
 import { useCategoriasAdmin } from "@/components/admin/product-form";
 import { excluirProdutos } from "@/lib/admin-products";
-import { syncDescricaoCottonPima, syncDescricaoPolos } from "@/lib/catalog.functions";
+import { syncCoresProdutosBanco, syncDescricaoCottonPima, syncDescricaoPolos } from "@/lib/catalog.functions";
+import { decodeCoresProduto, encodeCoresProduto } from "@/lib/colors";
 import { imagemPrincipal } from "@/lib/media";
 import { menorPreco } from "@/lib/pricing";
 import { brl } from "@/lib/format";
@@ -24,6 +25,7 @@ function Produtos() {
   const qc = useQueryClient();
   const syncPima = useServerFn(syncDescricaoCottonPima);
   const syncPolos = useServerFn(syncDescricaoPolos);
+  const syncCores = useServerFn(syncCoresProdutosBanco);
   const [busca, setBusca] = useState("");
   const [cat, setCat] = useState("");
   const [status, setStatus] = useState<"" | "ativo" | "inativo">("");
@@ -140,6 +142,44 @@ function Produtos() {
           >
             {busy ? <Loader2 className="size-4 animate-spin" /> : <FileText className="size-4" />}
             <span className="hidden sm:inline">Padronizar Polos</span>
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={async () => {
+              if (!confirm("Sincronizar e padronizar os novos nomes de cores (Azul Royal, Marrom, Palha, Salmão, etc.) em todos os produtos do banco?")) return;
+              setBusy(true);
+              try {
+                let count = 0;
+                try {
+                  const res = await syncCores();
+                  count = res.atualizados;
+                } catch {
+                  const { data: prods, error: errList } = await supabase.from("produtos").select("id, composicao");
+                  if (errList) throw errList;
+                  for (const p of prods ?? []) {
+                    const { composicaoLimpa, coresHabilitadas, fotoCores } = decodeCoresProduto(p.composicao);
+                    const novaComp = encodeCoresProduto(composicaoLimpa, coresHabilitadas, fotoCores);
+                    if (novaComp !== (p.composicao || "")) {
+                      await supabase.from("produtos").update({ composicao: novaComp }).eq("id", p.id);
+                      count++;
+                    }
+                  }
+                }
+                toast.success(`${count} produtos sincronizados com as novas cores!`);
+                qc.invalidateQueries({ queryKey: ["admin"] });
+                invalidateStore(qc);
+              } catch (e) {
+                toast.error(e instanceof Error ? e.message : "Erro ao atualizar cores.");
+              } finally {
+                setBusy(false);
+              }
+            }}
+            disabled={busy}
+            title="Padronizar cores em lote em todos os produtos publicados"
+          >
+            {busy ? <Loader2 className="size-4 animate-spin" /> : <Palette className="size-4" />}
+            <span className="hidden sm:inline">Padronizar Cores</span>
           </Button>
           <Button asChild variant="outline">
             <Link to="/admin/produtos/importar">

@@ -306,3 +306,32 @@ export const syncDescricaoPolos = createServerFn({ method: "POST" }).handler(asy
   await Promise.all(updates);
   return { atualizados: polos.length };
 });
+
+/** Atualiza no banco a padronização de cores de todos os produtos publicados */
+export const syncCoresProdutosBanco = createServerFn({ method: "POST" }).handler(async () => {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { decodeCoresProduto, encodeCoresProduto } = await import("./colors");
+
+  const { data: todos, error: errBusca } = await supabaseAdmin
+    .from("produtos")
+    .select("id, composicao");
+
+  if (errBusca) throw new Error(errBusca.message);
+  if (!todos || todos.length === 0) return { atualizados: 0 };
+
+  let atualizados = 0;
+  for (const p of todos) {
+    const compAtual = p.composicao || "";
+    const { composicaoLimpa, coresHabilitadas, fotoCores } = decodeCoresProduto(compAtual);
+    const novaComp = encodeCoresProduto(composicaoLimpa, coresHabilitadas, fotoCores);
+    if (novaComp !== compAtual) {
+      const { error: errUp } = await supabaseAdmin
+        .from("produtos")
+        .update({ composicao: novaComp })
+        .eq("id", p.id);
+      if (!errUp) atualizados++;
+    }
+  }
+
+  return { atualizados, total: todos.length };
+});

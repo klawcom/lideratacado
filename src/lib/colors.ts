@@ -13,20 +13,21 @@ export type CorDef = {
 export const CORES_PADRAO: CorDef[] = [
   { nome: "Branca", hex: "#FFFFFF", border: true },
   { nome: "Preta", hex: "#111111" },
-  { nome: "Cinza", hex: "#9CA3AF" },
-  { nome: "Azul", hex: "#2563EB" },
+  { nome: "Cinza Mescla Claro", hex: "#CBD5E1", border: true },
+  { nome: "Azul Royal", hex: "#2563EB" },
   { nome: "Azul Marinho", hex: "#1E3A8A" },
-  { nome: "Azul Bebê", hex: "#93C5FD" },
+  { nome: "Azul Claro", hex: "#93C5FD" },
   { nome: "Vermelho", hex: "#DC2626" },
   { nome: "Vinho", hex: "#7F1D1D" },
   { nome: "Verde", hex: "#16A34A" },
   { nome: "Verde Escuro", hex: "#14532D" },
   { nome: "Verde Musgo", hex: "#4D7C0F" },
   { nome: "Verde Claro", hex: "#86EFAC" },
-  { nome: "Rosa Bebê", hex: "#FBCFE8" },
-  { nome: "Pink", hex: "#EC4899" },
-  { nome: "Marrom Claro", hex: "#A16207" },
-  { nome: "Marrom Escuro", hex: "#451A03" },
+  { nome: "Rosa Claro", hex: "#FBCFE8" },
+  { nome: "Rosa Pink", hex: "#EC4899" },
+  { nome: "Palha", hex: "#E8D8B8", border: true },
+  { nome: "Marrom", hex: "#451A03" },
+  { nome: "Salmão", hex: "#FA8072" },
   { nome: "Bege", hex: "#D4C5A9" },
   { nome: "Creme", hex: "#FEF3C7", border: true },
   { nome: "Off-white", hex: "#F5F5F0", border: true },
@@ -34,6 +35,25 @@ export const CORES_PADRAO: CorDef[] = [
   { nome: "Amarelo", hex: "#FACC15" },
   { nome: "Roxo", hex: "#7C3AED" },
 ];
+
+/** Mapa de/para para migração e compatibilidade de nomes antigos */
+export const DE_PARA_CORES: Record<string, string> = {
+  "marrom escuro": "Marrom",
+  "marrom claro": "Palha",
+  "azul": "Azul Royal",
+  "azul bebê": "Azul Claro",
+  "azul bebe": "Azul Claro",
+  "rosa bebê": "Rosa Claro",
+  "rosa bebe": "Rosa Claro",
+  "cinza": "Cinza Mescla Claro",
+  "pink": "Rosa Pink",
+};
+
+export function normalizarNomeCor(nome: string): string {
+  if (!nome) return "";
+  const limpo = nome.trim().toLowerCase();
+  return DE_PARA_CORES[limpo] ?? nome.trim();
+}
 
 export const MAPA_CORES = new Map(CORES_PADRAO.map((c) => [c.nome.toLowerCase(), c]));
 
@@ -80,7 +100,7 @@ export function getCorContrasteClasses(hex: string): string {
     return "border-2 border-slate-300/90 dark:border-white/30 shadow-xs";
   }
   if (isCorEscura(hex)) {
-    // Cores escuras (Preta, Marrom Escuro, Azul Marinho, Vinho, Verde Escuro):
+    // Cores escuras (Preta, Marrom, Azul Marinho, Vinho, Verde Escuro):
     // Borda sutil no modo claro + borda luminosa slate/branca bem evidente no modo escuro
     return "border border-black/20 dark:border-2 dark:border-slate-300 dark:shadow-[0_0_4px_rgba(255,255,255,0.25)] shadow-xs";
   }
@@ -89,9 +109,11 @@ export function getCorContrasteClasses(hex: string): string {
 }
 
 export function getCorDef(nome: string): CorDef {
+  const norm = normalizarNomeCor(nome);
   return (
+    MAPA_CORES.get(norm.toLowerCase()) ??
     MAPA_CORES.get(nome.toLowerCase()) ?? {
-      nome,
+      nome: norm || nome,
       hex: "#888888",
     }
   );
@@ -120,7 +142,9 @@ export function decodeCoresProduto(composicao: string | null | undefined): {
     try {
       const parsed = JSON.parse(match[1]);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        coresHabilitadas = parsed;
+        // Normaliza cores antigas para novas e remove duplicatas mantendo a ordem
+        const normalizadas = parsed.map((c) => normalizarNomeCor(String(c)));
+        coresHabilitadas = Array.from(new Set(normalizadas));
       }
     } catch {
       /* fallback to default */
@@ -132,7 +156,11 @@ export function decodeCoresProduto(composicao: string | null | undefined): {
     try {
       const parsed = JSON.parse(matchFoto[1]);
       if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
-        fotoCores = parsed;
+        for (const [k, v] of Object.entries(parsed)) {
+          if (typeof v === "string" && v) {
+            fotoCores[k] = normalizarNomeCor(v);
+          }
+        }
       }
     } catch {
       /* fallback to empty */
@@ -159,9 +187,11 @@ export function encodeCoresProduto(
     .replace(/<!--foto_cores:.*?-->/g, "")
     .trim();
 
+  const normalizadas = Array.from(new Set(coresSelecionadas.map((c) => normalizarNomeCor(c))));
+
   // Se selecionou cores específicas (diferente de todas)
-  if (coresSelecionadas.length > 0 && coresSelecionadas.length < CORES_PADRAO.length) {
-    base = `${base}<!--cores:${JSON.stringify(coresSelecionadas)}-->`;
+  if (normalizadas.length > 0 && normalizadas.length < CORES_PADRAO.length) {
+    base = `${base}<!--cores:${JSON.stringify(normalizadas)}-->`;
   }
 
   // Se houver fotos associadas a cores
@@ -170,7 +200,7 @@ export function encodeCoresProduto(
     if (keys.length > 0) {
       const cleanMap: Record<string, string> = {};
       for (const k of keys) {
-        cleanMap[k] = fotoCores[k];
+        cleanMap[k] = normalizarNomeCor(fotoCores[k]);
       }
       base = `${base}<!--foto_cores:${JSON.stringify(cleanMap)}-->`;
     }
@@ -184,6 +214,7 @@ export function encodeCoresProduto(
  * Ex: "branca: 1-P, 2-M, 4-G, 2-GG"
  */
 export function formatarCorTamanhos(cor: string, q: Qtd): string {
+  const nomeNorm = normalizarNomeCor(cor);
   const partes = TAMANHOS.filter((t) => (q[t.key] || 0) > 0).map((t) => `${q[t.key]}-${t.label}`);
-  return partes.length ? `${cor.toLowerCase()}: ${partes.join(", ")}` : "";
+  return partes.length ? `${nomeNorm.toLowerCase()}: ${partes.join(", ")}` : "";
 }
