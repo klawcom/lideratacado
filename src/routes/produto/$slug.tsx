@@ -1,7 +1,7 @@
 import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { AlertCircle, ChevronLeft, ChevronRight, ShoppingBag, X } from "lucide-react";
+import { AlertCircle, ChevronLeft, ChevronRight, MessageCircle, ShoppingBag, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { MediaGallery } from "@/components/store/media-gallery";
@@ -395,28 +395,38 @@ function ProdutoPage() {
           </section>
 
           {/* Aviso sobre cores e imagens ilustrativas no atacado */}
-          <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 dark:bg-amber-950/25 p-2.5 sm:p-3 text-amber-900 dark:text-amber-200 shadow-2xs">
+          <div className="rounded-xl border border-lime-500/50 bg-lime-500/15 dark:bg-lime-950/60 dark:border-lime-500/40 p-2.5 sm:p-3 text-lime-950 dark:text-lime-100 shadow-2xs">
             <div className="flex items-start gap-2">
-              <AlertCircle className="mt-0.5 size-4 shrink-0 text-amber-600 dark:text-amber-400" />
-              <div className="text-xs sm:text-sm leading-snug space-y-1.5">
+              <AlertCircle className="mt-0.5 size-4 shrink-0 text-lime-600 dark:text-lime-400" />
+              <div className="text-xs sm:text-sm leading-snug space-y-1.5 min-w-0">
                 <p>
-                  <span className="font-bold text-amber-800 dark:text-amber-300">⚠️ Aviso: Cores e Imagens no Atacado:</span>{" "}
-                  <span className="text-amber-900/90 dark:text-amber-200/90">
+                  <span className="font-bold text-lime-900 dark:text-lime-300">⚠️ Aviso: Cores e Imagens no Atacado:</span>{" "}
+                  <span className="text-lime-950/90 dark:text-lime-100/90">
                     Vendemos no atacado, direto de fábrica e com alto giro. As cores são atendidas conforme o estoque disponível na hora da separação. Se alguma estiver em falta, enviamos cores sortidas, de mesma qualidade e modelo.
                   </span>
                 </p>
-                <p className="text-amber-900/90 dark:text-amber-200/90">
-                  As imagens são meramente ilustrativas com base nos produtos reais. Você pode{" "}
-                  <a
-                    href={`https://wa.me/${whatsappLinkNumber(waNumber)}?text=${encodeURIComponent(`Olá! Gostaria de solicitar imagens e vídeos reais das peças do produto: ${p.nome}`)}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="font-bold underline underline-offset-2 hover:text-amber-950 dark:hover:text-white"
-                  >
-                    solicitar imagens e vídeos reais das peças via WhatsApp
-                  </a>{" "}
-                  a qualquer momento.
+                <p className="text-lime-950/90 dark:text-lime-100/90">
+                  As imagens são meramente ilustrativas com base nos produtos reais. Você pode solicitar imagens e vídeos reais das peças a qualquer momento:
                 </p>
+                <div className="pt-1">
+                  <Button
+                    asChild
+                    variant="outline"
+                    size="sm"
+                    className="h-8 gap-1.5 rounded-lg border-lime-600/40 bg-background/90 hover:bg-lime-500/15 text-lime-950 dark:text-lime-200 text-xs font-semibold shadow-2xs"
+                  >
+                    <a
+                      href={`https://wa.me/${whatsappLinkNumber(waNumber)}?text=${encodeURIComponent(
+                        `Olá! Gostaria de solicitar imagens e vídeos reais das peças do produto: ${p.nome}`,
+                      )}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <MessageCircle className="size-3.5 text-emerald-600 dark:text-emerald-400" />
+                      <span>Solicitar fotos e vídeos no WhatsApp</span>
+                    </a>
+                  </Button>
+                </div>
               </div>
             </div>
           </div>

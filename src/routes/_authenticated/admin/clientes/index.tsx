@@ -176,9 +176,8 @@ function Clientes() {
             return (
               <li key={c.id} className="relative">
                 <div
-                  className={`group block rounded-2xl border bg-card p-4 transition ${
-                    isSelected ? "border-primary ring-2 ring-primary/20" : "hover:border-primary"
-                  }`}
+                  className={`group block rounded-2xl border bg-card p-4 transition ${isSelected ? "border-primary ring-2 ring-primary/20" : "hover:border-primary"
+                    }`}
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-2 min-w-0">
@@ -263,8 +262,8 @@ function Clientes() {
               {excluindo
                 ? "Excluindo..."
                 : clientesParaExcluir?.length === 1
-                ? "Excluir Cliente"
-                : `Excluir ${clientesParaExcluir?.length} Clientes`}
+                  ? "Excluir Cliente"
+                  : `Excluir ${clientesParaExcluir?.length} Clientes`}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
