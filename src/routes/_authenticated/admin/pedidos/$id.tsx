@@ -305,7 +305,7 @@ function Pedido() {
           <AlertDialogHeader>
             <AlertDialogTitle>Excluir pedido #{padNumero(p.numero)}?</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta ação é definitiva e removerá este pedido de teste permanentemente do banco de dados, incluindo seus itens e notas internas. Os relatórios financeiros e contadores do painel serão recalculados automaticamente.
+              Esta ação é definitiva e removerá este pedido permanentemente do banco de dados, incluindo seus pagamentos/cobranças, itens e notas internas. Os relatórios financeiros e contadores do painel serão recalculados automaticamente.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

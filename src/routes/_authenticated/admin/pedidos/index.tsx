@@ -366,7 +366,7 @@ function Pedidos() {
             </AlertDialogTitle>
             <AlertDialogDescription>
               Esta ação é permanente e não poderá ser desfeita. Todos os dados dos pedidos
-              selecionados (incluindo itens e notas) serão removidos do sistema.
+              selecionados (incluindo cobranças, itens e notas) serão removidos do sistema.
               As estatísticas e balanços do painel serão atualizados automaticamente.
             </AlertDialogDescription>
           </AlertDialogHeader>

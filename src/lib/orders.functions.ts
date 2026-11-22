@@ -522,13 +522,13 @@ export const excluirPedidosFn = createServerFn({ method: "POST" })
     if (!isAdmin) throw new Error("Acesso restrito ao administrador.");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const db = supabaseAdmin;
-    const { data: cobrancas } = await db.from("pagamentos").select("pedido_id").in("pedido_id", ids).limit(1);
-    if (cobrancas?.length) throw new Error("Pedidos com cobranças não podem ser excluídos. Preserve o histórico financeiro.");
-    // 1. Delete associated notes
+    // 1. Exclui cobranças/pagamentos vinculados (ex: pedidos de teste do administrador)
+    await db.from("pagamentos").delete().in("pedido_id", ids);
+    // 2. Exclui notas internas vinculadas
     await db.from("pedido_notas").delete().in("pedido_id", ids);
-    // 2. Delete associated items
+    // 3. Exclui itens vinculados
     await db.from("pedido_itens").delete().in("pedido_id", ids);
-    // 3. Delete orders
+    // 4. Exclui os pedidos
     const { error } = await db.from("pedidos").delete().in("id", ids);
     if (error) throw new Error(error.message);
     return { success: true, count: ids.length };
