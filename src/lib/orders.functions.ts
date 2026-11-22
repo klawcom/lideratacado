@@ -461,6 +461,29 @@ export const criarPedido = createServerFn({ method: "POST" })
       observacao: data.observacao,
     });
 
+    // Dispara notificação por e-mail em background (não bloqueia resposta ao cliente)
+    void (async () => {
+      try {
+        const { enviarEmailNovoPedido } = await import("./order-email");
+        await enviarEmailNovoPedido({
+          numero: Number(pedido.numero),
+          criadoEm: pedido.created_at,
+          formaPagamento: data.formaPagamento,
+          total: totalComFrete,
+          totalPecas: resumo.totalPecas,
+          faixa: resumo.faixa,
+          frete: data.frete,
+          cliente: { nome: c.nome, email: c.email, whatsapp: c.whatsapp, cpf: c.cpf },
+          entrega: entregaMsg,
+          itens: itensMsg,
+          observacao: data.observacao,
+          emailLoja: config?.email_contato || "lideratacado8@gmail.com",
+        });
+      } catch (err) {
+        console.error("[Email Notificacao] Erro ao disparar e-mail de novo pedido:", err);
+      }
+    })();
+
     return {
       id: pedido.id,
       checkoutKey: data.idempotencyKey,
@@ -500,4 +523,61 @@ export const excluirPedidosFn = createServerFn({ method: "POST" })
     const { error } = await db.from("pedidos").delete().in("id", ids);
     if (error) throw new Error(error.message);
     return { success: true, count: ids.length };
+  });
+
+/** Função de teste de envio de e-mail disparada pelo painel administrativo */
+export const testarEnvioEmailFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((d: { emailDestino?: string }) => z.object({ emailDestino: z.string().email().optional() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { data: isAdmin } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
+    if (!isAdmin) throw new Error("Acesso restrito ao administrador.");
+
+    const { enviarEmailNovoPedido } = await import("./order-email");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: cfg } = await supabaseAdmin.from("configuracoes").select("email_contato, whatsapp").eq("id", 1).single();
+
+    const emailDestino = data.emailDestino || cfg?.email_contato || "lideratacado8@gmail.com";
+
+    const res = await enviarEmailNovoPedido({
+      numero: 9999,
+      criadoEm: new Date().toISOString(),
+      formaPagamento: "whatsapp",
+      total: 420.0,
+      totalPecas: 10,
+      faixa: 10,
+      frete: {
+        servico: "SEDEX (Correios)",
+        preco: 25.0,
+        prazo: "2 dias úteis",
+      },
+      cliente: {
+        nome: "Cliente de Teste (Simulação de Pedido)",
+        email: emailDestino,
+        whatsapp: "5511999999999",
+      },
+      entrega: {
+        rua: "Rua de Demonstração",
+        numero: "100",
+        bairro: "Centro",
+        cidade: "São Paulo",
+        estado: "SP",
+        cep: "01001-000",
+      },
+      itens: [
+        {
+          nome: "Camiseta Cotton Pima (Item Simulado)",
+          codigo: "TESTE-01",
+          pecas: 10,
+          preco: 42.0,
+          valor: 420.0,
+          qtd: { p: 2, m: 4, g: 4, gg: 0, g1: 0, g2: 0 },
+          cores: [{ cor: "Preta", qtd: { p: 1, m: 2, g: 2, gg: 0, g1: 0, g2: 0 } }],
+        },
+      ],
+      observacao: "Este é um disparo de teste gerado pelo painel para validar o recebimento de notificações no seu e-mail.",
+      emailLoja: emailDestino,
+    });
+
+    return res;
   });

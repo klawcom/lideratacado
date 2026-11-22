@@ -1,9 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useRef, useState } from "react";
-import { ArrowDown, ArrowUp, ImagePlus, Loader2, RotateCcw, Save, Sparkles, Trash2, Truck } from "lucide-react";
+import { ArrowDown, ArrowUp, ImagePlus, Loader2, Mail, RotateCcw, Save, Sparkles, Trash2, Truck } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { normalizeMenuLinks, type MenuLink } from "@/lib/menu-links";
+import { testarEnvioEmailFn } from "@/lib/orders.functions";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,6 +32,8 @@ const TEXTOS: { k: keyof Cfg; label: string }[] = [
 
 function Config() {
   const qc = useQueryClient();
+  const testarEmail = useServerFn(testarEnvioEmailFn);
+  const [enviandoTesteEmail, setEnviandoTesteEmail] = useState(false);
   const { data, isLoading } = useQuery({
     queryKey: ["admin", "config"],
     queryFn: async () => {
@@ -278,11 +282,50 @@ function Config() {
             </FieldLabel>
             <Input id="cfg-min" inputMode="numeric" value={String(f.pedido_minimo)} onChange={(e) => set("pedido_minimo", Number(e.target.value.replace(/\D/g, "")) || 0)} />
           </div>
-          <div className="sm:col-span-2">
-            <FieldLabel htmlFor="cfg-email" hint="(opcional, aparece no rodapé)">
-              E-mail de contato
+          <div className="sm:col-span-2 space-y-2">
+            <FieldLabel htmlFor="cfg-email" hint="(recebe notificações de novos pedidos e aparece no rodapé)">
+              E-mail de Notificação e Contato
             </FieldLabel>
-            <Input id="cfg-email" type="email" inputMode="email" autoCapitalize="none" value={f.email_contato} onChange={(e) => set("email_contato", e.target.value)} />
+            <div className="flex flex-col sm:flex-row gap-2">
+              <Input
+                id="cfg-email"
+                type="email"
+                inputMode="email"
+                autoCapitalize="none"
+                value={f.email_contato}
+                onChange={(e) => set("email_contato", e.target.value)}
+                placeholder="ex: lideratacado8@gmail.com"
+                className="flex-1"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                disabled={enviandoTesteEmail || !f.email_contato}
+                onClick={async () => {
+                  setEnviandoTesteEmail(true);
+                  try {
+                    const res = await testarEmail({ data: { emailDestino: f.email_contato } });
+                    if (res.success) {
+                      toast.success(`E-mail de teste enviado com sucesso para ${f.email_contato}! Verifique sua caixa de entrada.`);
+                    } else if (res.error === "RESEND_API_KEY_NOT_CONFIGURED") {
+                      toast.error("Para ativar o envio, configure a chave RESEND_API_KEY nos Secrets do projeto.");
+                    } else {
+                      toast.error(`Falha ao enviar e-mail: ${res.error}`);
+                    }
+                  } catch (err) {
+                    toast.error(`Erro ao disparar teste: ${err instanceof Error ? err.message : String(err)}`);
+                  } finally {
+                    setEnviandoTesteEmail(false);
+                  }
+                }}
+              >
+                {enviandoTesteEmail ? <Loader2 className="size-4 animate-spin" /> : <Mail className="size-4" />}
+                <span>Testar Envio de E-mail</span>
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              A cada novo pedido finalizado no site, uma notificação com todos os dados do cliente, itens e endereço será enviada imediatamente para este endereço.
+            </p>
           </div>
         </Panel>
 
