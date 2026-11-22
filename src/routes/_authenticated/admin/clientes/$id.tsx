@@ -1,7 +1,8 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
-import { ChevronLeft, MessageCircle, Save } from "lucide-react";
+import { ChevronLeft, Loader2, MessageCircle, Save, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +11,17 @@ import type { Tables } from "@/integrations/supabase/types";
 import { AdminPage, FieldLabel, Loading, Panel, selectClass } from "@/components/admin/ui";
 import { StatusBadge } from "@/components/admin/status";
 import { UFS, brl, formatDateTime, maskCep, maskPhone, onlyDigits, padNumero, whatsappLinkNumber } from "@/lib/format";
+import { excluirClientesFn } from "@/lib/clientes.functions";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/_authenticated/admin/clientes/$id")({ component: Cliente });
 
@@ -28,7 +40,12 @@ const CAMPOS: { k: keyof C; label: string; span?: string; mode?: "tel" | "numeri
 
 function Cliente() {
   const { id } = Route.useParams();
+  const navigate = useNavigate();
   const qc = useQueryClient();
+  const excluirFn = useServerFn(excluirClientesFn);
+  const [dialogExcluir, setDialogExcluir] = useState(false);
+  const [excluindo, setExcluindo] = useState(false);
+
   const { data, isLoading } = useQuery({
     queryKey: ["admin", "cliente", id],
     queryFn: async () => {
@@ -64,6 +81,22 @@ function Cliente() {
     qc.invalidateQueries({ queryKey: ["admin"] });
   }
 
+  async function confirmarExcluir() {
+    if (!data) return;
+    setExcluindo(true);
+    try {
+      await excluirFn({ data: [id] });
+      toast.success(`Cliente ${data.nome} excluído com sucesso.`);
+      qc.invalidateQueries({ queryKey: ["admin"] });
+      navigate({ to: "/admin/clientes" });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erro ao excluir cliente.");
+    } finally {
+      setExcluindo(false);
+      setDialogExcluir(false);
+    }
+  }
+
   if (isLoading || !data) return <AdminPage title="Cliente"><Loading /></AdminPage>;
   const pedidos = [...data.pedidos].sort((a, b) => b.created_at.localeCompare(a.created_at));
 
@@ -72,13 +105,23 @@ function Cliente() {
       title={data.nome}
       description={`Cliente desde ${formatDateTime(data.created_at).data}${data.user_id ? " · tem conta" : ""}`}
       actions={
-        data.whatsapp && (
-          <Button asChild variant="outline" size="icon" aria-label="Chamar no WhatsApp">
-            <a href={`https://wa.me/${whatsappLinkNumber(data.whatsapp)}`} target="_blank" rel="noopener noreferrer">
-              <MessageCircle />
-            </a>
+        <div className="flex items-center gap-2">
+          {data.whatsapp && (
+            <Button asChild variant="outline" size="icon" aria-label="Chamar no WhatsApp">
+              <a href={`https://wa.me/${whatsappLinkNumber(data.whatsapp)}`} target="_blank" rel="noopener noreferrer">
+                <MessageCircle />
+              </a>
+            </Button>
+          )}
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={() => setDialogExcluir(true)}
+            className="h-10 gap-1.5 font-medium"
+          >
+            <Trash2 className="size-4" /> Excluir cliente
           </Button>
-        )
+        </div>
       }
     >
       <Link to="/admin/clientes" className="-mt-3 mb-3 inline-flex min-h-11 items-center gap-1 text-muted-foreground">
@@ -141,6 +184,28 @@ function Cliente() {
           )}
         </Panel>
       </div>
+
+      <AlertDialog open={dialogExcluir} onOpenChange={setDialogExcluir}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir cliente {data.nome}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação é definitiva e removerá este cliente permanentemente do banco de dados, incluindo seus dados de contato e eventuais pedidos vinculados.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={excluindo}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmarExcluir}
+              disabled={excluindo}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {excluindo ? <Loader2 className="mr-1.5 size-4 animate-spin" /> : null}
+              {excluindo ? "Excluindo..." : "Excluir Cliente"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AdminPage>
   );
 }
