@@ -131,8 +131,19 @@ export const getSiteData = createServerFn({ method: "GET" }).handler(async () =>
   const exibirBanners = typeof homeDisplay.exibir_banners === "boolean" ? homeDisplay.exibir_banners : false;
   const exibirVitrine = typeof homeDisplay.exibir_vitrine === "boolean" ? homeDisplay.exibir_vitrine : true;
 
+  // Sanitiza menu_links para não expor tokens sensíveis (superfrete, resend) para clientes anônimos da loja
+  const safeConfig = config
+    ? {
+        ...config,
+        menu_links: {
+          links: rawMenu?.["links"] ?? [],
+          banners: rawMenu?.["banners"] ?? [],
+        },
+      }
+    : (config as Config);
+
   return {
-    config: config as Config,
+    config: safeConfig as Config,
     categorias: categorias ?? [],
     banners: {
       wide: bannersList[0]?.wide ?? null,

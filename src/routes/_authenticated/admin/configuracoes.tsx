@@ -54,6 +54,7 @@ function Config() {
   const [menu, setMenu] = useState<MenuLink[]>([]);
   const [tokenSuperFrete, setTokenSuperFrete] = useState("");
   const [cepOrigemSuperFrete, setCepOrigemSuperFrete] = useState("78464-222");
+  const [resendApiKey, setResendApiKey] = useState("");
   const [limiteCategoriasHome, setLimiteCategoriasHome] = useState<number>(0);
   const [limiteProdutosHome, setLimiteProdutosHome] = useState<number>(8);
   const [exibirBannersHome, setExibirBannersHome] = useState<boolean>(false);
@@ -160,6 +161,9 @@ function Config() {
         if (superfrete?.token) setTokenSuperFrete(superfrete.token);
         if (superfrete?.cep_origem) setCepOrigemSuperFrete(maskCep(superfrete.cep_origem));
 
+        const resend = sf["resend"] as { api_key?: string } | undefined;
+        if (resend?.api_key) setResendApiKey(resend.api_key);
+
         const homeLimits = sf["home_limits"] as { categorias?: number; produtos_por_categoria?: number } | undefined;
         if (homeLimits) {
           if (typeof homeLimits.categorias === "number") setLimiteCategoriasHome(homeLimits.categorias);
@@ -239,6 +243,9 @@ function Config() {
         token: tokenSuperFrete.trim(),
         cep_origem: onlyDigits(cepOrigemSuperFrete),
       },
+      resend: {
+        api_key: resendApiKey.trim(),
+      },
       banners: bannersMeta,
       home_limits: {
         categorias: Math.max(0, Number(limiteCategoriasHome) || 0),
@@ -286,16 +293,30 @@ function Config() {
             <FieldLabel htmlFor="cfg-email" hint="(recebe notificações de novos pedidos e aparece no rodapé)">
               E-mail de Notificação e Contato
             </FieldLabel>
+            <Input
+              id="cfg-email"
+              type="email"
+              inputMode="email"
+              autoCapitalize="none"
+              value={f.email_contato}
+              onChange={(e) => set("email_contato", e.target.value)}
+              placeholder="ex: lideratacado8@gmail.com"
+            />
+          </div>
+
+          <div className="sm:col-span-2 space-y-2">
+            <FieldLabel htmlFor="cfg-resend-key" hint="(re_...)">
+              Chave de API Resend (Notificações por E-mail)
+            </FieldLabel>
             <div className="flex flex-col sm:flex-row gap-2">
               <Input
-                id="cfg-email"
-                type="email"
-                inputMode="email"
+                id="cfg-resend-key"
+                type="password"
+                value={resendApiKey}
+                onChange={(e) => setResendApiKey(e.target.value)}
+                placeholder="re_xxxxxxxxxxxxxxxxxxxxxxxx"
                 autoCapitalize="none"
-                value={f.email_contato}
-                onChange={(e) => set("email_contato", e.target.value)}
-                placeholder="ex: lideratacado8@gmail.com"
-                className="flex-1"
+                className="flex-1 font-mono text-sm"
               />
               <Button
                 type="button"
@@ -304,11 +325,16 @@ function Config() {
                 onClick={async () => {
                   setEnviandoTesteEmail(true);
                   try {
-                    const res = await testarEmail({ data: { emailDestino: f.email_contato } });
+                    const res = await testarEmail({
+                      data: {
+                        emailDestino: f.email_contato,
+                        apiKey: resendApiKey.trim() || undefined,
+                      },
+                    });
                     if (res.success) {
                       toast.success(`E-mail de teste enviado com sucesso para ${f.email_contato}! Verifique sua caixa de entrada.`);
                     } else if (res.error === "RESEND_API_KEY_NOT_CONFIGURED") {
-                      toast.error("Para ativar o envio, configure a chave RESEND_API_KEY nos Secrets do projeto.");
+                      toast.error("Informe a chave de API do Resend no campo acima ou nos Secrets do projeto.");
                     } else {
                       toast.error(`Falha ao enviar e-mail: ${res.error}`);
                     }
@@ -324,7 +350,7 @@ function Config() {
               </Button>
             </div>
             <p className="text-xs text-muted-foreground">
-              A cada novo pedido finalizado no site, uma notificação com todos os dados do cliente, itens e endereço será enviada imediatamente para este endereço.
+              A cada novo pedido finalizado no site, uma notificação com todos os dados do cliente, itens e endereço será enviada imediatamente para <strong>{f.email_contato || "o e-mail configurado"}</strong>.
             </p>
           </div>
         </Panel>

@@ -464,6 +464,14 @@ export const criarPedido = createServerFn({ method: "POST" })
     // Dispara notificação por e-mail em background (não bloqueia resposta ao cliente)
     void (async () => {
       try {
+        let resendApiKey: string | undefined;
+        if (config?.menu_links && typeof config.menu_links === "object" && !Array.isArray(config.menu_links)) {
+          const resendCfg = (config.menu_links as Record<string, unknown>)["resend"] as
+            | { api_key?: string }
+            | undefined;
+          if (resendCfg?.api_key) resendApiKey = resendCfg.api_key.trim();
+        }
+
         const { enviarEmailNovoPedido } = await import("./order-email");
         await enviarEmailNovoPedido({
           numero: Number(pedido.numero),
@@ -478,6 +486,7 @@ export const criarPedido = createServerFn({ method: "POST" })
           itens: itensMsg,
           observacao: data.observacao,
           emailLoja: config?.email_contato || "lideratacado8@gmail.com",
+          apiKey: resendApiKey,
         });
       } catch (err) {
         console.error("[Email Notificacao] Erro ao disparar e-mail de novo pedido:", err);
@@ -528,16 +537,30 @@ export const excluirPedidosFn = createServerFn({ method: "POST" })
 /** Função de teste de envio de e-mail disparada pelo painel administrativo */
 export const testarEnvioEmailFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d: { emailDestino?: string }) => z.object({ emailDestino: z.string().email().optional() }).parse(d))
+  .validator((d: { emailDestino?: string; apiKey?: string }) =>
+    z.object({ emailDestino: z.string().email().optional(), apiKey: z.string().optional() }).parse(d),
+  )
   .handler(async ({ data, context }) => {
     const { data: isAdmin } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
     if (!isAdmin) throw new Error("Acesso restrito ao administrador.");
 
     const { enviarEmailNovoPedido } = await import("./order-email");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: cfg } = await supabaseAdmin.from("configuracoes").select("email_contato, whatsapp").eq("id", 1).single();
+    const { data: cfg } = await supabaseAdmin
+      .from("configuracoes")
+      .select("email_contato, whatsapp, menu_links")
+      .eq("id", 1)
+      .single();
 
     const emailDestino = data.emailDestino || cfg?.email_contato || "lideratacado8@gmail.com";
+
+    let apiKey = data.apiKey?.trim();
+    if (!apiKey && cfg?.menu_links && typeof cfg.menu_links === "object" && !Array.isArray(cfg.menu_links)) {
+      const resendCfg = (cfg.menu_links as Record<string, unknown>)["resend"] as
+        | { api_key?: string }
+        | undefined;
+      if (resendCfg?.api_key) apiKey = resendCfg.api_key.trim();
+    }
 
     const res = await enviarEmailNovoPedido({
       numero: 9999,
@@ -577,6 +600,7 @@ export const testarEnvioEmailFn = createServerFn({ method: "POST" })
       ],
       observacao: "Este é um disparo de teste gerado pelo painel para validar o recebimento de notificações no seu e-mail.",
       emailLoja: emailDestino,
+      apiKey,
     });
 
     return res;

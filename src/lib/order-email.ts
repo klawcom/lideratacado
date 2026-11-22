@@ -47,6 +47,7 @@ export type DadosEmailPedido = {
   itens: ItemEmailPedido[];
   observacao?: string | undefined;
   emailLoja?: string | undefined;
+  apiKey?: string | undefined;
 };
 
 export function gerarHtmlEmailPedido(p: DadosEmailPedido): string {
@@ -272,7 +273,29 @@ export async function enviarEmailNovoPedido(dados: DadosEmailPedido): Promise<{
   id?: string;
   error?: string;
 }> {
-  const apiKey = (process.env["RESEND_API_KEY"] ?? "").trim();
+  let apiKey = (dados.apiKey || process.env["RESEND_API_KEY"] || "").trim();
+
+  // Fallback: busca chave cadastrada no banco nas configurações caso não esteja em process.env
+  if (!apiKey) {
+    try {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { data: cfg } = await supabaseAdmin
+        .from("configuracoes")
+        .select("menu_links")
+        .eq("id", 1)
+        .maybeSingle();
+
+      if (cfg?.menu_links && typeof cfg.menu_links === "object" && !Array.isArray(cfg.menu_links)) {
+        const resendCfg = (cfg.menu_links as Record<string, unknown>)["resend"] as
+          | { api_key?: string }
+          | undefined;
+        if (resendCfg?.api_key) apiKey = resendCfg.api_key.trim();
+      }
+    } catch {
+      /* fallback */
+    }
+  }
+
   if (!apiKey) {
     console.warn("[Notificação de Pedido] RESEND_API_KEY não configurada. E-mail não enviado.");
     return { success: false, error: "RESEND_API_KEY_NOT_CONFIGURED" };

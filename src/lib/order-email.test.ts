@@ -116,4 +116,28 @@ describe("order-email module", () => {
       }),
     }));
   });
+
+  it("enviarEmailNovoPedido aceita apiKey passada diretamente nos dados", async () => {
+    delete process.env.RESEND_API_KEY;
+
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ id: "email_custom_key_123" }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const res = await enviarEmailNovoPedido({
+      ...mockPedido,
+      apiKey: "re_custom_from_db",
+    });
+
+    expect(res.success).toBe(true);
+    expect(res.id).toBe("email_custom_key_123");
+    expect(fetchMock).toHaveBeenCalledWith("https://api.resend.com/emails", expect.objectContaining({
+      headers: expect.objectContaining({
+        Authorization: "Bearer re_custom_from_db",
+      }),
+    }));
+  });
 });
