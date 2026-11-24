@@ -637,7 +637,11 @@ function Home() {
             </p>
             <div className="flex flex-wrap gap-3 pt-2">
               {primeira && (
-                <Button asChild size="lg" className="bg-primary hover:bg-primary/90 text-white font-bold h-12 px-6 shadow-md">
+                <Button
+                  asChild
+                  size="lg"
+                  className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold h-12 px-6 shadow-md border border-cyan-400/30 transition-all hover:scale-[1.02] active:scale-95"
+                >
                   <Link to="/categoria/$slug" params={{ slug: primeira.slug }}>
                     Ver catálogo de produtos <ArrowRight className="ml-1 size-4" />
                   </Link>
@@ -646,12 +650,13 @@ function Home() {
               <Button
                 asChild
                 size="lg"
-                variant="ink"
-                className="font-bold h-12 px-6 shadow-soft"
+                className="bg-emerald-800 hover:bg-emerald-700 text-white font-bold h-12 px-6 shadow-md border border-emerald-600/40 transition-all hover:scale-[1.02] active:scale-95"
                 onClick={() => analytics.clickWhatsApp("footer")}
               >
                 <a
-                  href={`https://wa.me/${whatsappLinkNumber(whatsappNumber)}`}
+                  href={`https://wa.me/${whatsappLinkNumber(whatsappNumber)}?text=${encodeURIComponent(
+                    "Olá! Vim pelo site da Líder Atacado (banner da página inicial) e gostaria de atendimento para tirar dúvidas sobre os pedidos no atacado."
+                  )}`}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
