@@ -290,118 +290,67 @@ function BannerCarousel({
         className="flex transition-transform duration-500 ease-out"
         style={{ transform: `translateX(-${current * 100}%)` }}
       >
-        {slides.map((slide, idx) => (
-          <div
-            key={slide.id || idx}
-            className="relative w-full shrink-0"
-            role="group"
-            aria-roledescription="slide"
-            aria-label={`Banner ${idx + 1} de ${count}`}
-            aria-hidden={idx !== current}
-          >
-            {slide.link && !slide.titulo ? (
-              <a
-                href={slide.link}
-                tabIndex={idx === current ? 0 : -1}
-                className="block relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-              >
-                <picture>
-                  <source media="(min-width: 768px)" srcSet={slide.wideSrc} />
-                  <img
-                    src={slide.mobileSrc}
-                    alt={
-                      slide.titulo
-                        ? `${slide.titulo} - Líder Atacado`
-                        : "Líder Atacado — Camisetas básicas e polos no atacado direto de fábrica"
-                    }
-                    width={900}
-                    height={691}
-                    fetchPriority={idx === 0 ? "high" : "auto"}
-                    loading={idx === 0 ? "eager" : "lazy"}
-                    className="aspect-[4/3] w-full object-cover md:aspect-[16/7] contrast-[1.02] brightness-[1.01]"
-                  />
-                </picture>
-                <div className="p-4 sm:p-5 bg-card flex items-center justify-between border-t border-border/40">
-                  <span className="font-sans text-sm font-semibold text-foreground">
-                    Líder Atacado · Direto de Fábrica a partir de 10 peças
-                  </span>
-                  <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary">
-                    Montar pedido <ArrowRight className="size-3.5" />
-                  </span>
+        {slides.map((slide, idx) => {
+          const targetLink = slide.link || (primeira ? `/categoria/${primeira.slug}` : "/carrinho");
+          const isExternal = Boolean(targetLink && (targetLink.startsWith("http://") || targetLink.startsWith("https://")));
+
+          const bannerImage = (
+            <picture>
+              <source media="(min-width: 768px)" srcSet={slide.wideSrc} />
+              <img
+                src={slide.mobileSrc}
+                alt={
+                  slide.titulo
+                    ? `${slide.titulo} - Líder Atacado`
+                    : "Líder Atacado — Camisetas básicas e polos no atacado direto de fábrica"
+                }
+                width={1200}
+                height={525}
+                fetchPriority={idx === 0 ? "high" : "auto"}
+                loading={idx === 0 ? "eager" : "lazy"}
+                className="aspect-[4/3] w-full object-cover md:aspect-[16/7] contrast-[1.02] brightness-[1.01]"
+              />
+            </picture>
+          );
+
+          return (
+            <div
+              key={slide.id || idx}
+              className="relative w-full shrink-0"
+              role="group"
+              aria-roledescription="slide"
+              aria-label={`Banner ${idx + 1} de ${count}`}
+              aria-hidden={idx !== current}
+            >
+              {/* Preserva títulos semânticos H1/H2 e subtítulo para SEO e leitores de tela sem sobrepor arte gráfica */}
+              <span className="sr-only">
+                {idx === 0 ? (
+                  <h1>{slide.titulo || "Camisetas básicas e polos no atacado, a partir de 10 peças"}</h1>
+                ) : (
+                  <h2>{slide.titulo || "Camisetas básicas e polos no atacado, a partir de 10 peças"}</h2>
+                )}
+                {slide.subtitulo && <p>{slide.subtitulo}</p>}
+              </span>
+
+              {targetLink ? (
+                <a
+                  href={targetLink}
+                  target={isExternal ? "_blank" : undefined}
+                  rel={isExternal ? "noopener noreferrer" : undefined}
+                  tabIndex={idx === current ? 0 : -1}
+                  className="block relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary cursor-pointer hover:opacity-95 transition-opacity"
+                  aria-label={slide.titulo || "Ver ofertas deste banner"}
+                >
+                  {bannerImage}
+                </a>
+              ) : (
+                <div className="relative">
+                  {bannerImage}
                 </div>
-              </a>
-            ) : (
-              <div className="relative">
-                <picture>
-                  <source media="(min-width: 768px)" srcSet={slide.wideSrc} />
-                  <img
-                    src={slide.mobileSrc}
-                    alt={
-                      slide.titulo
-                        ? `${slide.titulo} - Líder Atacado`
-                        : "Pilhas de camisetas básicas em algodão Pima e camisas polo lisas no atacado"
-                    }
-                    width={900}
-                    height={691}
-                    fetchPriority={idx === 0 ? "high" : "auto"}
-                    loading={idx === 0 ? "eager" : "lazy"}
-                    className="aspect-[4/3] w-full object-cover md:aspect-[16/7] contrast-[1.02] brightness-[1.01]"
-                  />
-                </picture>
-
-                <div className="md:absolute md:inset-y-0 md:left-6 lg:left-14 md:flex md:items-center z-10 pointer-events-none">
-                  <div className="pointer-events-auto space-y-4 p-6 bg-card md:rounded-3xl md:bg-background/90 md:dark:bg-background/95 md:backdrop-blur-md md:p-8 lg:p-10 md:shadow-xl md:border md:border-border/60 max-w-lg">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="eyebrow drop-shadow-xs">Direto de Fábrica</span>
-                      <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-bold text-primary">
-                        Mínimo 10 peças
-                      </span>
-                    </div>
-
-                    {/* H1 semântico na primeira lâmina hero e H2 nas seguintes */}
-                    {idx === 0 ? (
-                      <h1 className="text-[1.85rem] font-extrabold leading-[1.12] text-balance text-foreground md:text-3xl lg:text-4xl">
-                        {slide.titulo || "Camisetas básicas e polos no atacado, a partir de 10 peças"}
-                      </h1>
-                    ) : (
-                      <h2 className="text-[1.85rem] font-extrabold leading-[1.12] text-balance text-foreground md:text-3xl lg:text-4xl">
-                        {slide.titulo || "Camisetas básicas e polos no atacado, a partir de 10 peças"}
-                      </h2>
-                    )}
-
-                    {slide.subtitulo && (
-                      <p className="max-w-md text-[15px] sm:text-base font-medium text-muted-foreground leading-relaxed">
-                        {slide.subtitulo}
-                      </p>
-                    )}
-
-                    <div className="flex flex-wrap gap-2.5 pt-1">
-                      {slide.link ? (
-                        <Button asChild size="lg" className="w-full sm:w-auto shadow-sm font-semibold">
-                          {slide.link.startsWith("http") ? (
-                            <a href={slide.link} target="_blank" rel="noopener noreferrer">
-                              Montar pedido no atacado <ArrowRight className="ml-1 size-4" />
-                            </a>
-                          ) : (
-                            <a href={slide.link}>
-                              Montar pedido no atacado <ArrowRight className="ml-1 size-4" />
-                            </a>
-                          )}
-                        </Button>
-                      ) : primeira ? (
-                        <Button asChild size="lg" className="w-full sm:w-auto shadow-sm font-semibold">
-                          <Link to="/categoria/$slug" params={{ slug: primeira.slug }}>
-                            Montar pedido no atacado <ArrowRight className="ml-1 size-4" />
-                          </Link>
-                        </Button>
-                      ) : null}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        ))}
+              )}
+            </div>
+          );
+        })}
       </div>
 
       {count > 1 && (
@@ -409,7 +358,7 @@ function BannerCarousel({
           <button
             type="button"
             onClick={prev}
-            className="absolute left-2.5 top-1/3 -translate-y-1/2 md:top-1/2 z-20 flex size-11 items-center justify-center rounded-full bg-background/85 text-foreground backdrop-blur-md shadow-md border border-border/40 hover:bg-background hover:scale-105 active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            className="absolute left-2.5 top-1/2 -translate-y-1/2 z-20 flex size-11 items-center justify-center rounded-full bg-background/85 text-foreground backdrop-blur-md shadow-md border border-border/40 hover:bg-background hover:scale-105 active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary cursor-pointer"
             aria-label="Banner anterior"
           >
             <ChevronLeft className="size-6" />
@@ -417,7 +366,7 @@ function BannerCarousel({
           <button
             type="button"
             onClick={next}
-            className="absolute right-2.5 top-1/3 -translate-y-1/2 md:top-1/2 z-20 flex size-11 items-center justify-center rounded-full bg-background/85 text-foreground backdrop-blur-md shadow-md border border-border/40 hover:bg-background hover:scale-105 active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            className="absolute right-2.5 top-1/2 -translate-y-1/2 z-20 flex size-11 items-center justify-center rounded-full bg-background/85 text-foreground backdrop-blur-md shadow-md border border-border/40 hover:bg-background hover:scale-105 active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary cursor-pointer"
             aria-label="Próximo banner"
           >
             <ChevronRight className="size-6" />
@@ -429,7 +378,7 @@ function BannerCarousel({
                 key={dotIdx}
                 type="button"
                 onClick={() => setCurrent(dotIdx)}
-                className={`h-2.5 rounded-full transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+                className={`h-2.5 rounded-full transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary cursor-pointer ${
                   dotIdx === current
                     ? "w-7 bg-primary"
                     : "w-2.5 bg-muted-foreground/40 hover:bg-foreground/70"
@@ -485,11 +434,12 @@ function Home() {
             : item.wide
               ? mediaUrl(item.wide)
               : heroMobile;
+          const defaultLink = primeira ? `/categoria/${primeira.slug}` : "/carrinho";
           return {
             id: item.id,
             wideSrc,
             mobileSrc,
-            link: item.link || (isFirst && primeira ? `/categoria/${primeira.slug}` : null),
+            link: item.link || defaultLink,
             titulo: isFirst ? item.titulo || titulo : item.titulo || null,
             subtitulo: isFirst ? item.subtitulo || sub : item.subtitulo || null,
           };
@@ -499,7 +449,7 @@ function Home() {
             id: 1,
             wideSrc: site.banners?.wide ? mediaUrl(site.banners.wide) : heroWide,
             mobileSrc: site.banners?.mobile ? mediaUrl(site.banners.mobile) : heroMobile,
-            link: primeira ? `/categoria/${primeira.slug}` : null,
+            link: primeira ? `/categoria/${primeira.slug}` : "/carrinho",
             titulo,
             subtitulo: sub,
           },

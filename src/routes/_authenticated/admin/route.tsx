@@ -1,6 +1,6 @@
 import { createFileRoute, Link, Outlet, redirect, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ExternalLink, FolderTree, LayoutDashboard, LogOut, Menu, Package, Receipt, Settings, Tags, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -66,6 +66,13 @@ function AdminLayout() {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const qc = useQueryClient();
+
+  useEffect(() => {
+    // Marca o dispositivo do gestor para que seus acessos na vitrine não sejam contabilizados no tráfego
+    try {
+      localStorage.setItem("lider_ignorar_gestor", "1");
+    } catch {}
+  }, []);
 
   async function sair() {
     await qc.cancelQueries();

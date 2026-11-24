@@ -17,6 +17,7 @@ import {
   MousePointerClick,
   PackageCheck,
   PieChart as PieIcon,
+  ShieldCheck,
   TrendingUp,
   Users,
   XCircle,
@@ -336,9 +337,18 @@ function Dashboard() {
                   <p className="text-xs text-muted-foreground">Contador nativo em tempo real de acessos, visualizações e taxa de conversão</p>
                 </div>
               </div>
-              <div className="flex items-center gap-1.5 rounded-full bg-cyan-500/10 px-2.5 py-1 text-xs font-semibold text-cyan-700 dark:text-cyan-300">
-                <span className="size-2 rounded-full bg-cyan-500 animate-pulse" />
-                <span>Total: {data.visitasResumo.totalGeral} visitantes</span>
+              <div className="flex flex-wrap items-center gap-2">
+                <div
+                  className="flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-semibold text-emerald-700 dark:text-emerald-300 border border-emerald-500/20"
+                  title="Seus acessos na vitrine são ignorados neste dispositivo para manter as estatísticas 100% reais de clientes"
+                >
+                  <ShieldCheck className="size-3.5 text-emerald-600 dark:text-emerald-400" />
+                  <span>Modo Gestor: Seus acessos ignorados</span>
+                </div>
+                <div className="flex items-center gap-1.5 rounded-full bg-cyan-500/10 px-2.5 py-1 text-xs font-semibold text-cyan-700 dark:text-cyan-300">
+                  <span className="size-2 rounded-full bg-cyan-500 animate-pulse" />
+                  <span>Total: {data.visitasResumo.totalGeral} visitantes</span>
+                </div>
               </div>
             </div>
 

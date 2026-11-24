@@ -528,8 +528,8 @@ function Config() {
                   <Textarea id="cfg-hs" rows={2} value={f.home_subtitulo} onChange={(e) => set("home_subtitulo", e.target.value)} />
                 </div>
                 <div className="sm:col-span-2">
-                  <FieldLabel htmlFor="cfg-b1-link" hint="(opcional, ex: /categoria/camisetas-cotton-pima)">
-                    Link do botão do Banner 1
+                  <FieldLabel htmlFor="cfg-b1-link" hint="(link aberto ao clicar diretamente na imagem do banner)">
+                    Link de destino do Banner 1
                   </FieldLabel>
                   <Input
                     id="cfg-b1-link"
@@ -537,6 +537,9 @@ function Config() {
                     value={bannerLinks[1]}
                     onChange={(e) => setBannerLinks((prev) => ({ ...prev, 1: e.target.value }))}
                   />
+                  <p className="text-[11px] text-muted-foreground mt-1">
+                    Os banners na loja são 100% visuais e limpos (sem textos na frente da arte): clicar na imagem redireciona diretamente para este link.
+                  </p>
                 </div>
               </div>
             ) : (
