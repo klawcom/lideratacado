@@ -82,7 +82,11 @@ function CategoriaPage() {
       </header>
 
       {cat.produtos.length ? (
-        <ProductGrid produtos={cat.produtos} exibirSelo={seloBlackFriday} />
+        <ProductGrid
+          produtos={cat.produtos}
+          exibirSelo={seloBlackFriday}
+          seloUrl={site.home_display?.selo_url}
+        />
       ) : (
         <div className="rounded-2xl border bg-muted/40 p-8 text-center text-muted-foreground">
           <p className="font-medium">Nenhum produto cadastrado nesta categoria por enquanto.</p>

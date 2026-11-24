@@ -9,13 +9,17 @@ export function ProductCard({
   p,
   eager = false,
   exibirSelo = false,
+  seloUrl,
 }: {
   p: P;
   eager?: boolean;
   exibirSelo?: boolean;
+  seloUrl?: string | null;
 }) {
   const img = imagemPrincipal(p.produto_midias);
   const min = menorPreco(p.faixas_preco);
+  const seloSrc = seloUrl || seloBlackFridayImg;
+
   return (
     <Link to="/produto/$slug" params={{ slug: p.slug }} className="group flex min-w-0 flex-col">
       <div className="relative aspect-[4/5] overflow-hidden rounded-2xl bg-muted">
@@ -33,8 +37,8 @@ export function ProductCard({
         {exibirSelo && (
           <div className="pointer-events-none absolute right-1.5 top-1.5 z-10 select-none drop-shadow-md transition-transform duration-300 group-hover:scale-105 sm:right-2 sm:top-2">
             <img
-              src={seloBlackFridayImg}
-              alt="Black Friday - Aproveite Já"
+              src={seloSrc}
+              alt="Selo Promocional"
               width={160}
               height={107}
               className="h-8 w-auto sm:h-11 md:h-12 object-contain"
@@ -58,14 +62,16 @@ export function ProductCard({
 export function ProductGrid({
   produtos,
   exibirSelo = false,
+  seloUrl,
 }: {
   produtos: P[];
   exibirSelo?: boolean;
+  seloUrl?: string | null;
 }) {
   return (
     <div className="grid grid-cols-2 gap-x-3 gap-y-7 sm:gap-x-5 md:grid-cols-3 lg:grid-cols-4">
       {produtos.map((p, i) => (
-        <ProductCard key={p.id} p={p} eager={i < 2} exibirSelo={exibirSelo} />
+        <ProductCard key={p.id} p={p} eager={i < 2} exibirSelo={exibirSelo} seloUrl={seloUrl} />
       ))}
     </div>
   );

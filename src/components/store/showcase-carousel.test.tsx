@@ -142,7 +142,7 @@ describe("ShowcaseCarousel & buildVitrineProducts", () => {
     fireEvent.click(nextBtn);
   });
 
-  it("renderiza o selo de Black Friday quando exibirSelo for true", () => {
+  it("renderiza o selo promocional quando exibirSelo for true", () => {
     const mockProdutos: ProdutoCard[] = [
       {
         id: "p1",
@@ -157,9 +157,15 @@ describe("ShowcaseCarousel & buildVitrineProducts", () => {
     ];
 
     const { rerender } = render(<ShowcaseCarousel produtos={mockProdutos} exibirSelo={false} />);
-    expect(screen.queryByAltText("Black Friday - Aproveite Já")).not.toBeInTheDocument();
+    expect(screen.queryByAltText("Selo Promocional")).not.toBeInTheDocument();
 
     rerender(<ShowcaseCarousel produtos={mockProdutos} exibirSelo={true} />);
-    expect(screen.getByAltText("Black Friday - Aproveite Já")).toBeInTheDocument();
+    const img = screen.getByAltText("Selo Promocional") as HTMLImageElement;
+    expect(img).toBeInTheDocument();
+
+    // Com selo personalizado
+    rerender(<ShowcaseCarousel produtos={mockProdutos} exibirSelo={true} seloUrl="/api/public/midia/promocoes/natal.webp" />);
+    const customImg = screen.getByAltText("Selo Promocional") as HTMLImageElement;
+    expect(customImg.src).toContain("promocoes/natal.webp");
   });
 });

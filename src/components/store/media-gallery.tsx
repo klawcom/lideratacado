@@ -151,12 +151,14 @@ export function MediaGallery({
   corAtiva,
   fotoCores,
   exibirSelo = false,
+  seloUrl,
 }: {
   midias: MidiaRow[];
   nome: string;
   corAtiva?: string;
   fotoCores?: Record<string, string>;
   exibirSelo?: boolean;
+  seloUrl?: string | null;
 }) {
   const list = ordenarMidias(midias);
   const [idx, setIdx] = useState(0);
@@ -165,6 +167,7 @@ export function MediaGallery({
   const thumbs = useRef<HTMLDivElement>(null);
   const firstPhoto = list.find((m) => m.tipo === "foto" && m.url);
   const fallbackPoster = firstPhoto ? mediaUrl(firstPhoto.url) : "";
+  const seloSrc = seloUrl || seloBlackFridayImg;
 
   const isDraggingRef = useRef(false);
   const startXRef = useRef(0);
@@ -284,12 +287,12 @@ export function MediaGallery({
           ))}
         </div>
 
-        {/* Selo Black Friday no topo superior direito */}
+        {/* Selo Promocional no topo superior direito */}
         {exibirSelo && !isZoomed && (
           <div className="pointer-events-none absolute right-2.5 top-2.5 z-10 select-none drop-shadow-md sm:right-4 sm:top-4">
             <img
-              src={seloBlackFridayImg}
-              alt="Black Friday - Aproveite Já"
+              src={seloSrc}
+              alt="Selo Promocional"
               width={180}
               height={120}
               className="h-10 w-auto sm:h-14 md:h-16 object-contain"

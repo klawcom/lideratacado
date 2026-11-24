@@ -3,6 +3,7 @@ import { getRequest } from "@tanstack/react-start/server";
 import { queryOptions } from "@tanstack/react-query";
 import { z } from "zod";
 import type { Tables } from "@/integrations/supabase/types";
+import { mediaUrl } from "./media";
 
 export type Config = Tables<"configuracoes">;
 export type MidiaRow = Pick<
@@ -127,7 +128,7 @@ export const getSiteData = createServerFn({ method: "GET" }).handler(async () =>
   }
 
   const rawMenu = config?.menu_links as Record<string, unknown> | null;
-  const homeDisplay = (rawMenu?.["home_display"] as { exibir_banners?: boolean; exibir_vitrine?: boolean; selo_black_friday?: boolean } | undefined) ?? {};
+  const homeDisplay = (rawMenu?.["home_display"] as { exibir_banners?: boolean; exibir_vitrine?: boolean; selo_black_friday?: boolean; selo_url?: string | null } | undefined) ?? {};
   const exibirBanners = typeof homeDisplay.exibir_banners === "boolean" ? homeDisplay.exibir_banners : false;
   const exibirVitrine = typeof homeDisplay.exibir_vitrine === "boolean" ? homeDisplay.exibir_vitrine : true;
   const seloBlackFriday = rawMenu?.["selo_black_friday"] !== undefined
@@ -135,6 +136,9 @@ export const getSiteData = createServerFn({ method: "GET" }).handler(async () =>
     : typeof homeDisplay.selo_black_friday === "boolean"
       ? homeDisplay.selo_black_friday
       : true;
+
+  const rawSeloUrl = (rawMenu?.["selo_promocional_url"] as string | undefined) || (homeDisplay.selo_url as string | undefined) || null;
+  const seloUrl = rawSeloUrl ? mediaUrl(rawSeloUrl) : null;
 
   // Sanitiza menu_links para não expor tokens sensíveis (superfrete, resend) para clientes anônimos da loja
   const safeConfig = config
@@ -144,6 +148,7 @@ export const getSiteData = createServerFn({ method: "GET" }).handler(async () =>
           links: rawMenu?.["links"] ?? [],
           banners: rawMenu?.["banners"] ?? [],
           selo_black_friday: seloBlackFriday,
+          selo_promocional_url: rawSeloUrl,
         },
       }
     : (config as Config);
@@ -160,6 +165,7 @@ export const getSiteData = createServerFn({ method: "GET" }).handler(async () =>
       exibir_banners: exibirBanners,
       exibir_vitrine: exibirVitrine,
       selo_black_friday: seloBlackFriday,
+      selo_url: seloUrl,
     },
     origin: requestOrigin(getRequest()),
   };

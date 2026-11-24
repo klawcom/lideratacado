@@ -62,6 +62,9 @@ function Config() {
   const [exibirBannersHome, setExibirBannersHome] = useState<boolean>(false);
   const [exibirVitrineHome, setExibirVitrineHome] = useState<boolean>(true);
   const [seloBlackFriday, setSeloBlackFriday] = useState<boolean>(true);
+  const [seloPromocionalUrl, setSeloPromocionalUrl] = useState<string | null>(null);
+  const [uploadingSelo, setUploadingSelo] = useState<boolean>(false);
+  const seloInputRef = useRef<HTMLInputElement>(null);
   const logoRef = useRef<HTMLInputElement>(null);
   const wideBannerRef = useRef<HTMLInputElement>(null);
   const mobileBannerRef = useRef<HTMLInputElement>(null);
@@ -188,6 +191,9 @@ function Config() {
             : true;
         setSeloBlackFriday(isSeloActive);
 
+        const customSelo = (sf["selo_promocional_url"] as string | undefined) || null;
+        setSeloPromocionalUrl(customSelo);
+
         if (Array.isArray(sf["banners"])) {
           const links: Record<1 | 2 | 3, string> = { 1: "", 2: "", 3: "" };
           const titulos: Record<1 | 2 | 3, string> = { 1: "", 2: "", 3: "" };
@@ -235,6 +241,38 @@ function Config() {
     }
   }
 
+  async function enviarSelo(file: File) {
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("O selo deve ter no máximo 5MB.");
+      return;
+    }
+    setUploadingSelo(true);
+    try {
+      let uploadPayload: Blob | File = file;
+      let ext = file.name.split(".").pop()?.toLowerCase() || "webp";
+      let contentType = file.type || "image/webp";
+
+      if (file.type !== "image/png" && file.type !== "image/webp" && file.type !== "image/svg+xml") {
+        uploadPayload = await resizeToWebp(file, 800, 0.95);
+        ext = "webp";
+        contentType = "image/webp";
+      }
+
+      const path = `promocoes/selo-${Date.now()}.${ext}`;
+      const { error } = await supabase.storage.from("produtos").upload(path, uploadPayload, {
+        contentType,
+        upsert: true,
+      });
+      if (error) throw error;
+      setSeloPromocionalUrl(path);
+      toast.success("Novo selo enviado! Salve as configurações para aplicar na loja.");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Falha ao enviar novo selo.");
+    } finally {
+      setUploadingSelo(false);
+    }
+  }
+
   async function salvar(e: React.FormEvent) {
     e.preventDefault();
     if (!f) return;
@@ -267,8 +305,10 @@ function Config() {
         exibir_banners: exibirBannersHome,
         exibir_vitrine: exibirVitrineHome,
         selo_black_friday: seloBlackFriday,
+        selo_url: seloPromocionalUrl,
       },
       selo_black_friday: seloBlackFriday,
+      selo_promocional_url: seloPromocionalUrl,
       ...(visitasData ? { visitas: visitasData } : {}),
     };
     const { error } = await supabase
@@ -430,29 +470,86 @@ function Config() {
             </div>
 
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-xl border bg-background/80 p-4">
-              <div className="flex items-center gap-4">
-                <img
-                  src={seloBlackFridayImg}
-                  alt="Selo Black Friday"
-                  className="h-14 w-auto object-contain drop-shadow-md shrink-0"
-                />
-                <div className="space-y-1">
+              <div className="flex items-center gap-4 min-w-0">
+                <div className="relative group/selo size-16 sm:size-20 shrink-0 rounded-xl border border-border/60 bg-muted/30 p-1 flex items-center justify-center overflow-hidden">
+                  <img
+                    src={seloPromocionalUrl ? mediaUrl(seloPromocionalUrl) : seloBlackFridayImg}
+                    alt="Selo Promocional"
+                    className="size-full object-contain drop-shadow-md"
+                  />
+                  {uploadingSelo && (
+                    <div className="absolute inset-0 bg-background/85 flex items-center justify-center">
+                      <Loader2 className="size-5 animate-spin text-primary" />
+                    </div>
+                  )}
+                </div>
+                <div className="space-y-1.5 min-w-0">
                   <div className="flex flex-wrap items-center gap-2 font-semibold text-sm text-foreground">
-                    <span>Selo Oficial Black Friday (Desconto Progressivo)</span>
+                    <span>
+                      {seloPromocionalUrl
+                        ? "Selo Promocional Personalizado"
+                        : "Selo Oficial Black Friday (Padrão)"}
+                    </span>
                     <span className="rounded-md bg-amber-500/10 px-2 py-0.5 text-[11px] font-bold text-amber-600 dark:text-amber-400">
                       Topo superior direito
                     </span>
                   </div>
                   <p className="text-xs text-muted-foreground leading-relaxed max-w-xl">
-                    Exibe o selo dourado 3D de Black Friday com a tag &ldquo;Desconto Progressivo&rdquo; no canto superior direito de cada produto (no catálogo, categorias, destaques e na foto do produto).
+                    Exibido no canto superior direito de cada produto (no catálogo, categorias, destaques e na foto da página do produto). Você pode substituir este selo por qualquer outra imagem promocional (Natal, Saldão, Oferta Especial, etc.).
                   </p>
+                  <div className="flex flex-wrap items-center gap-2 pt-1">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={uploadingSelo}
+                      onClick={() => seloInputRef.current?.click()}
+                      className="h-8 text-xs font-semibold"
+                    >
+                      {uploadingSelo ? (
+                        <>
+                          <Loader2 className="mr-1.5 size-3.5 animate-spin" /> Enviando...
+                        </>
+                      ) : (
+                        <>
+                          <ImagePlus className="mr-1.5 size-3.5" /> Substituir selo
+                        </>
+                      )}
+                    </Button>
+                    {seloPromocionalUrl && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        disabled={uploadingSelo}
+                        onClick={() => {
+                          setSeloPromocionalUrl(null);
+                          toast.success("Selo restaurado para o padrão. Salve as configurações para aplicar.");
+                        }}
+                        className="h-8 text-xs text-muted-foreground hover:text-foreground"
+                      >
+                        <RotateCcw className="mr-1.5 size-3.5" /> Restaurar padrão
+                      </Button>
+                    )}
+                    <input
+                      ref={seloInputRef}
+                      type="file"
+                      accept="image/png,image/webp,image/jpeg,image/svg+xml"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) void enviarSelo(file);
+                        e.target.value = "";
+                      }}
+                    />
+                  </div>
                 </div>
               </div>
               <div className="flex items-center gap-3 shrink-0 self-end sm:self-center">
                 <Switch
                   checked={seloBlackFriday}
                   onCheckedChange={setSeloBlackFriday}
-                  aria-label="Ativar selo de Black Friday nos produtos"
+                  aria-label="Ativar selo promocional nos produtos"
                 />
               </div>
             </div>

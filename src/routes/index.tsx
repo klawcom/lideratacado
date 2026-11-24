@@ -466,6 +466,7 @@ function Home() {
           <ShowcaseCarousel
             produtos={vitrineProdutos}
             exibirSelo={site.home_display?.selo_black_friday}
+            seloUrl={site.home_display?.selo_url}
           />
         )}
 
@@ -541,7 +542,11 @@ function Home() {
               )}
             </div>
           </div>
-          <ProductGrid produtos={c.produtos} exibirSelo={site.home_display?.selo_black_friday} />
+          <ProductGrid
+            produtos={c.produtos}
+            exibirSelo={site.home_display?.selo_black_friday}
+            seloUrl={site.home_display?.selo_url}
+          />
           <div className="mt-8 flex justify-center">
             <Button asChild variant="outline" className="w-full sm:w-auto shadow-2xs font-semibold">
               <Link to="/categoria/$slug" params={{ slug: c.slug }}>

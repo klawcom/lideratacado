@@ -122,9 +122,15 @@ describe("MediaGallery component", () => {
 
   it("renderiza o selo de Black Friday no topo direito quando exibirSelo for true", () => {
     const { rerender } = render(<MediaGallery midias={MOCK_MIDIAS} nome="Camiseta Cotton Pima" exibirSelo={false} />);
-    expect(screen.queryByAltText("Black Friday - Aproveite Já")).not.toBeInTheDocument();
+    expect(screen.queryByAltText("Selo Promocional")).not.toBeInTheDocument();
 
     rerender(<MediaGallery midias={MOCK_MIDIAS} nome="Camiseta Cotton Pima" exibirSelo={true} />);
-    expect(screen.getByAltText("Black Friday - Aproveite Já")).toBeInTheDocument();
+    const img = screen.getByAltText("Selo Promocional") as HTMLImageElement;
+    expect(img).toBeInTheDocument();
+
+    // Com selo personalizado
+    rerender(<MediaGallery midias={MOCK_MIDIAS} nome="Camiseta Cotton Pima" exibirSelo={true} seloUrl="/api/public/midia/promocoes/natal.webp" />);
+    const customImg = screen.getByAltText("Selo Promocional") as HTMLImageElement;
+    expect(customImg.src).toContain("promocoes/natal.webp");
   });
 });

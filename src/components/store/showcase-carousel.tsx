@@ -51,12 +51,15 @@ export function buildVitrineProducts(
 export function ShowcaseCarousel({
   produtos,
   exibirSelo = false,
+  seloUrl,
 }: {
   produtos: ProdutoCard[];
   exibirSelo?: boolean;
+  seloUrl?: string | null;
 }) {
   const trackRef = useRef<HTMLDivElement>(null);
   const [isPaused, setIsPaused] = useState(false);
+  const seloSrc = seloUrl || seloBlackFridayImg;
 
   if (produtos.length === 0) return null;
 
@@ -189,8 +192,8 @@ export function ShowcaseCarousel({
                     {exibirSelo && (
                       <div className="pointer-events-none absolute right-1.5 top-1.5 z-10 select-none drop-shadow-md transition-transform duration-300 group-hover/card:scale-105 sm:right-2.5 sm:top-2.5">
                         <img
-                          src={seloBlackFridayImg}
-                          alt="Black Friday - Aproveite Já"
+                          src={seloSrc}
+                          alt="Selo Promocional"
                           width={160}
                           height={107}
                           className="h-8 w-auto sm:h-11 md:h-12 object-contain"
