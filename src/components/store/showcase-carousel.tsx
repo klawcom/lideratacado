@@ -5,6 +5,7 @@ import type { ProdutoCard } from "@/lib/catalog.functions";
 import { imagemPrincipal } from "@/lib/media";
 import { menorPreco } from "@/lib/pricing";
 import { money } from "@/lib/format";
+import seloBlackFridayImg from "@/assets/selo-black-friday.webp";
 
 /**
  * Seleciona os produtos para o carrossel no topo da página:
@@ -47,7 +48,13 @@ export function buildVitrineProducts(
   return Array.from(map.values());
 }
 
-export function ShowcaseCarousel({ produtos }: { produtos: ProdutoCard[] }) {
+export function ShowcaseCarousel({
+  produtos,
+  exibirSelo = false,
+}: {
+  produtos: ProdutoCard[];
+  exibirSelo?: boolean;
+}) {
   const trackRef = useRef<HTMLDivElement>(null);
   const [isPaused, setIsPaused] = useState(false);
 
@@ -167,7 +174,7 @@ export function ShowcaseCarousel({ produtos }: { produtos: ProdutoCard[] }) {
                   params={{ slug: p.slug }}
                   className="group/card flex min-w-0 flex-col"
                 >
-                  <div className="aspect-[4/5] overflow-hidden rounded-2xl sm:rounded-3xl bg-muted border border-border/50 shadow-2xs">
+                  <div className="relative aspect-[4/5] overflow-hidden rounded-2xl sm:rounded-3xl bg-muted border border-border/50 shadow-2xs">
                     {img && (
                       <img
                         src={img}
@@ -178,6 +185,18 @@ export function ShowcaseCarousel({ produtos }: { produtos: ProdutoCard[] }) {
                         decoding="async"
                         className="h-full w-full object-cover transition-transform duration-500 group-hover/card:scale-[1.03]"
                       />
+                    )}
+                    {exibirSelo && (
+                      <div className="pointer-events-none absolute right-1.5 top-1.5 z-10 select-none drop-shadow-md transition-transform duration-300 group-hover/card:scale-105 sm:right-2.5 sm:top-2.5">
+                        <img
+                          src={seloBlackFridayImg}
+                          alt="Black Friday - Aproveite Já"
+                          width={160}
+                          height={107}
+                          className="h-8 w-auto sm:h-11 md:h-12 object-contain"
+                          loading="lazy"
+                        />
+                      </div>
                     )}
                   </div>
                   <div className="mt-3 min-w-0 space-y-0.5 px-0.5">

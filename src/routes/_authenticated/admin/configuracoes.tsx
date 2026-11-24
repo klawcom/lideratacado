@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useRef, useState } from "react";
-import { ArrowDown, ArrowUp, ImagePlus, Loader2, Mail, RotateCcw, Save, Sparkles, Trash2, Truck } from "lucide-react";
+import { ArrowDown, ArrowUp, ImagePlus, Loader2, Mail, RotateCcw, Save, Sparkles, Tag, Trash2, Truck } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { normalizeMenuLinks, type MenuLink } from "@/lib/menu-links";
 import { testarEnvioEmailFn } from "@/lib/orders.functions";
@@ -18,6 +18,7 @@ import { resizeToWebp } from "@/lib/image-resize";
 import { maskCep, maskPhone, onlyDigits } from "@/lib/format";
 import heroWide from "@/assets/hero-wide.webp";
 import heroMobile from "@/assets/hero-mobile.webp";
+import seloBlackFridayImg from "@/assets/selo-black-friday.webp";
 
 export const Route = createFileRoute("/_authenticated/admin/configuracoes")({ component: Config });
 
@@ -60,6 +61,7 @@ function Config() {
   const [limiteProdutosHome, setLimiteProdutosHome] = useState<number>(8);
   const [exibirBannersHome, setExibirBannersHome] = useState<boolean>(false);
   const [exibirVitrineHome, setExibirVitrineHome] = useState<boolean>(true);
+  const [seloBlackFriday, setSeloBlackFriday] = useState<boolean>(true);
   const logoRef = useRef<HTMLInputElement>(null);
   const wideBannerRef = useRef<HTMLInputElement>(null);
   const mobileBannerRef = useRef<HTMLInputElement>(null);
@@ -173,11 +175,18 @@ function Config() {
           if (typeof homeLimits.produtos_por_categoria === "number") setLimiteProdutosHome(homeLimits.produtos_por_categoria);
         }
 
-        const homeDisplay = sf["home_display"] as { exibir_banners?: boolean; exibir_vitrine?: boolean } | undefined;
+        const homeDisplay = sf["home_display"] as { exibir_banners?: boolean; exibir_vitrine?: boolean; selo_black_friday?: boolean } | undefined;
         if (homeDisplay) {
           if (typeof homeDisplay.exibir_banners === "boolean") setExibirBannersHome(homeDisplay.exibir_banners);
           if (typeof homeDisplay.exibir_vitrine === "boolean") setExibirVitrineHome(homeDisplay.exibir_vitrine);
         }
+
+        const isSeloActive = sf["selo_black_friday"] !== undefined
+          ? Boolean(sf["selo_black_friday"])
+          : homeDisplay && typeof homeDisplay.selo_black_friday === "boolean"
+            ? homeDisplay.selo_black_friday
+            : true;
+        setSeloBlackFriday(isSeloActive);
 
         if (Array.isArray(sf["banners"])) {
           const links: Record<1 | 2 | 3, string> = { 1: "", 2: "", 3: "" };
@@ -257,7 +266,9 @@ function Config() {
       home_display: {
         exibir_banners: exibirBannersHome,
         exibir_vitrine: exibirVitrineHome,
+        selo_black_friday: seloBlackFriday,
       },
+      selo_black_friday: seloBlackFriday,
       ...(visitasData ? { visitas: visitasData } : {}),
     };
     const { error } = await supabase
@@ -391,6 +402,62 @@ function Config() {
         </Panel>
 
         <Panel className="space-y-6">
+          {/* Campanhas & Selos Promocionais nos Produtos */}
+          <div className="rounded-2xl border border-amber-500/30 bg-gradient-to-br from-card to-amber-500/5 p-4 sm:p-5 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div>
+                <div className="flex items-center gap-2">
+                  <Tag className="size-5 text-amber-500" />
+                  <h2 className="font-sans text-lg font-bold tracking-normal text-foreground">
+                    Campanhas & Selos Promocionais
+                  </h2>
+                </div>
+                <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
+                  Ative ou desative selos visuais em destaque sobre as fotos dos produtos da loja conforme suas ofertas e campanhas.
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                {seloBlackFriday ? (
+                  <span className="rounded-full bg-amber-500/20 px-3 py-1 text-xs font-semibold text-amber-600 dark:text-amber-400 border border-amber-500/30 flex items-center gap-1.5">
+                    <span className="size-2 rounded-full bg-amber-500 animate-pulse" /> Ativo na loja
+                  </span>
+                ) : (
+                  <span className="rounded-full bg-muted px-3 py-1 text-xs font-semibold text-muted-foreground">
+                    Desativado
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-xl border bg-background/80 p-4">
+              <div className="flex items-center gap-4">
+                <img
+                  src={seloBlackFridayImg}
+                  alt="Selo Black Friday"
+                  className="h-14 w-auto object-contain drop-shadow-md shrink-0"
+                />
+                <div className="space-y-1">
+                  <div className="flex flex-wrap items-center gap-2 font-semibold text-sm text-foreground">
+                    <span>Selo Oficial Black Friday (Desconto Progressivo)</span>
+                    <span className="rounded-md bg-amber-500/10 px-2 py-0.5 text-[11px] font-bold text-amber-600 dark:text-amber-400">
+                      Topo superior direito
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground leading-relaxed max-w-xl">
+                    Exibe o selo dourado 3D de Black Friday com a tag &ldquo;Desconto Progressivo&rdquo; no canto superior direito de cada produto (no catálogo, categorias, destaques e na foto do produto).
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 shrink-0 self-end sm:self-center">
+                <Switch
+                  checked={seloBlackFriday}
+                  onCheckedChange={setSeloBlackFriday}
+                  aria-label="Ativar selo de Black Friday nos produtos"
+                />
+              </div>
+            </div>
+          </div>
+
           {/* Seletor de Vitrine vs Banners no topo da página inicial */}
           <div className="rounded-2xl border border-border/80 bg-card p-4 sm:p-5 space-y-4">
             <div>

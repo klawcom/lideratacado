@@ -345,6 +345,7 @@ function ProdutoPage() {
             nome={p.nome}
             corAtiva={corAtiva}
             fotoCores={fotoCores}
+            exibirSelo={Boolean(site?.home_display?.selo_black_friday)}
           />
 
           {/* Na versão desktop, a descrição fica na coluna esquerda abaixo da galeria */}

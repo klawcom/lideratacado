@@ -50,8 +50,10 @@ export const Route = createFileRoute("/categoria/$slug")({
 
 function CategoriaPage() {
   const { slug } = Route.useParams();
+  const { data: site } = useSuspenseQuery(siteQuery());
   const { data: cat } = useSuspenseQuery(categoriaQuery(slug));
   if (!cat) return null;
+  const seloBlackFriday = Boolean(site.home_display?.selo_black_friday);
 
   return (
     <div className="container-page py-4 sm:py-6 md:py-10">
@@ -80,7 +82,7 @@ function CategoriaPage() {
       </header>
 
       {cat.produtos.length ? (
-        <ProductGrid produtos={cat.produtos} />
+        <ProductGrid produtos={cat.produtos} exibirSelo={seloBlackFriday} />
       ) : (
         <div className="rounded-2xl border bg-muted/40 p-8 text-center text-muted-foreground">
           <p className="font-medium">Nenhum produto cadastrado nesta categoria por enquanto.</p>

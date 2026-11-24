@@ -4,6 +4,7 @@ import type { MidiaRow } from "@/lib/catalog.functions";
 import { mediaUrl, ordenarMidias, youtubeId, youtubeThumb } from "@/lib/media";
 import { getCorDef } from "@/lib/colors";
 import { cn } from "@/lib/utils";
+import seloBlackFridayImg from "@/assets/selo-black-friday.webp";
 
 function Slide({
   m,
@@ -149,11 +150,13 @@ export function MediaGallery({
   nome,
   corAtiva,
   fotoCores,
+  exibirSelo = false,
 }: {
   midias: MidiaRow[];
   nome: string;
   corAtiva?: string;
   fotoCores?: Record<string, string>;
+  exibirSelo?: boolean;
 }) {
   const list = ordenarMidias(midias);
   const [idx, setIdx] = useState(0);
@@ -280,6 +283,19 @@ export function MediaGallery({
             </div>
           ))}
         </div>
+
+        {/* Selo Black Friday no topo superior direito */}
+        {exibirSelo && !isZoomed && (
+          <div className="pointer-events-none absolute right-2.5 top-2.5 z-10 select-none drop-shadow-md sm:right-4 sm:top-4">
+            <img
+              src={seloBlackFridayImg}
+              alt="Black Friday - Aproveite Já"
+              width={180}
+              height={120}
+              className="h-10 w-auto sm:h-14 md:h-16 object-contain"
+            />
+          </div>
+        )}
 
         {/* Setas discretas para avançar e retroceder */}
         {list.length > 1 && !isZoomed && (

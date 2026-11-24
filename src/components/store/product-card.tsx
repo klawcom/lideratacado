@@ -3,13 +3,22 @@ import type { ProdutoCard as P } from "@/lib/catalog.functions";
 import { imagemPrincipal } from "@/lib/media";
 import { menorPreco } from "@/lib/pricing";
 import { money } from "@/lib/format";
+import seloBlackFridayImg from "@/assets/selo-black-friday.webp";
 
-export function ProductCard({ p, eager = false }: { p: P; eager?: boolean }) {
+export function ProductCard({
+  p,
+  eager = false,
+  exibirSelo = false,
+}: {
+  p: P;
+  eager?: boolean;
+  exibirSelo?: boolean;
+}) {
   const img = imagemPrincipal(p.produto_midias);
   const min = menorPreco(p.faixas_preco);
   return (
     <Link to="/produto/$slug" params={{ slug: p.slug }} className="group flex min-w-0 flex-col">
-      <div className="aspect-[4/5] overflow-hidden rounded-2xl bg-muted">
+      <div className="relative aspect-[4/5] overflow-hidden rounded-2xl bg-muted">
         {img && (
           <img
             src={img}
@@ -20,6 +29,18 @@ export function ProductCard({ p, eager = false }: { p: P; eager?: boolean }) {
             decoding="async"
             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
           />
+        )}
+        {exibirSelo && (
+          <div className="pointer-events-none absolute right-1.5 top-1.5 z-10 select-none drop-shadow-md transition-transform duration-300 group-hover:scale-105 sm:right-2 sm:top-2">
+            <img
+              src={seloBlackFridayImg}
+              alt="Black Friday - Aproveite Já"
+              width={160}
+              height={107}
+              className="h-8 w-auto sm:h-11 md:h-12 object-contain"
+              loading="lazy"
+            />
+          </div>
         )}
       </div>
       <div className="mt-3 min-w-0 space-y-0.5 px-0.5">
@@ -34,11 +55,17 @@ export function ProductCard({ p, eager = false }: { p: P; eager?: boolean }) {
   );
 }
 
-export function ProductGrid({ produtos }: { produtos: P[] }) {
+export function ProductGrid({
+  produtos,
+  exibirSelo = false,
+}: {
+  produtos: P[];
+  exibirSelo?: boolean;
+}) {
   return (
     <div className="grid grid-cols-2 gap-x-3 gap-y-7 sm:gap-x-5 md:grid-cols-3 lg:grid-cols-4">
       {produtos.map((p, i) => (
-        <ProductCard key={p.id} p={p} eager={i < 2} />
+        <ProductCard key={p.id} p={p} eager={i < 2} exibirSelo={exibirSelo} />
       ))}
     </div>
   );

@@ -141,4 +141,25 @@ describe("ShowcaseCarousel & buildVitrineProducts", () => {
     expect(nextBtn).toBeInTheDocument();
     fireEvent.click(nextBtn);
   });
+
+  it("renderiza o selo de Black Friday quando exibirSelo for true", () => {
+    const mockProdutos: ProdutoCard[] = [
+      {
+        id: "p1",
+        nome: "Camiseta Pima Teste",
+        slug: "camiseta-pima-teste",
+        codigo_modelo: "CP01",
+        destaque: true,
+        ordem: 0,
+        produto_midias: [],
+        faixas_preco: [{ quantidade_minima: 10, preco_peca: 42 }],
+      },
+    ];
+
+    const { rerender } = render(<ShowcaseCarousel produtos={mockProdutos} exibirSelo={false} />);
+    expect(screen.queryByAltText("Black Friday - Aproveite Já")).not.toBeInTheDocument();
+
+    rerender(<ShowcaseCarousel produtos={mockProdutos} exibirSelo={true} />);
+    expect(screen.getByAltText("Black Friday - Aproveite Já")).toBeInTheDocument();
+  });
 });

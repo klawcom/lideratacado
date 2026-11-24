@@ -127,9 +127,14 @@ export const getSiteData = createServerFn({ method: "GET" }).handler(async () =>
   }
 
   const rawMenu = config?.menu_links as Record<string, unknown> | null;
-  const homeDisplay = (rawMenu?.["home_display"] as { exibir_banners?: boolean; exibir_vitrine?: boolean } | undefined) ?? {};
+  const homeDisplay = (rawMenu?.["home_display"] as { exibir_banners?: boolean; exibir_vitrine?: boolean; selo_black_friday?: boolean } | undefined) ?? {};
   const exibirBanners = typeof homeDisplay.exibir_banners === "boolean" ? homeDisplay.exibir_banners : false;
   const exibirVitrine = typeof homeDisplay.exibir_vitrine === "boolean" ? homeDisplay.exibir_vitrine : true;
+  const seloBlackFriday = rawMenu?.["selo_black_friday"] !== undefined
+    ? Boolean(rawMenu["selo_black_friday"])
+    : typeof homeDisplay.selo_black_friday === "boolean"
+      ? homeDisplay.selo_black_friday
+      : true;
 
   // Sanitiza menu_links para não expor tokens sensíveis (superfrete, resend) para clientes anônimos da loja
   const safeConfig = config
@@ -138,6 +143,7 @@ export const getSiteData = createServerFn({ method: "GET" }).handler(async () =>
         menu_links: {
           links: rawMenu?.["links"] ?? [],
           banners: rawMenu?.["banners"] ?? [],
+          selo_black_friday: seloBlackFriday,
         },
       }
     : (config as Config);
@@ -153,6 +159,7 @@ export const getSiteData = createServerFn({ method: "GET" }).handler(async () =>
     home_display: {
       exibir_banners: exibirBanners,
       exibir_vitrine: exibirVitrine,
+      selo_black_friday: seloBlackFriday,
     },
     origin: requestOrigin(getRequest()),
   };

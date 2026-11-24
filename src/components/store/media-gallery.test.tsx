@@ -119,4 +119,12 @@ describe("MediaGallery component", () => {
     expect(prevThumbBtn).toBeDisabled();
     expect(nextThumbBtn).not.toBeDisabled();
   });
+
+  it("renderiza o selo de Black Friday no topo direito quando exibirSelo for true", () => {
+    const { rerender } = render(<MediaGallery midias={MOCK_MIDIAS} nome="Camiseta Cotton Pima" exibirSelo={false} />);
+    expect(screen.queryByAltText("Black Friday - Aproveite Já")).not.toBeInTheDocument();
+
+    rerender(<MediaGallery midias={MOCK_MIDIAS} nome="Camiseta Cotton Pima" exibirSelo={true} />);
+    expect(screen.getByAltText("Black Friday - Aproveite Já")).toBeInTheDocument();
+  });
 });
