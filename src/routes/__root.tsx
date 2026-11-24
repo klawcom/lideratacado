@@ -19,6 +19,7 @@ import { AuthProvider } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteHeader } from "@/components/store/site-header";
 import { SiteFooter } from "@/components/store/site-footer";
+import { VisitorTracker } from "@/components/store/visitor-tracker";
 import { Toaster } from "@/components/ui/sonner";
 import { resolveOrigin, schemaOrganization, schemaWebSite } from "@/lib/seo";
 
@@ -233,6 +234,7 @@ function RootComponent() {
       <AuthProvider>
         <AuthSync queryClient={queryClient} />
         <AccentStyle />
+        <VisitorTracker />
         {isAdmin ? (
           <Outlet />
         ) : (

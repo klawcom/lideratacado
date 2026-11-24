@@ -55,6 +55,7 @@ function Config() {
   const [tokenSuperFrete, setTokenSuperFrete] = useState("");
   const [cepOrigemSuperFrete, setCepOrigemSuperFrete] = useState("78464-222");
   const [resendApiKey, setResendApiKey] = useState("");
+  const [visitasData, setVisitasData] = useState<unknown>(null);
   const [limiteCategoriasHome, setLimiteCategoriasHome] = useState<number>(0);
   const [limiteProdutosHome, setLimiteProdutosHome] = useState<number>(8);
   const [exibirBannersHome, setExibirBannersHome] = useState<boolean>(false);
@@ -164,6 +165,8 @@ function Config() {
         const resend = sf["resend"] as { api_key?: string } | undefined;
         if (resend?.api_key) setResendApiKey(resend.api_key);
 
+        if (sf["visitas"]) setVisitasData(sf["visitas"]);
+
         const homeLimits = sf["home_limits"] as { categorias?: number; produtos_por_categoria?: number } | undefined;
         if (homeLimits) {
           if (typeof homeLimits.categorias === "number") setLimiteCategoriasHome(homeLimits.categorias);
@@ -255,6 +258,7 @@ function Config() {
         exibir_banners: exibirBannersHome,
         exibir_vitrine: exibirVitrineHome,
       },
+      ...(visitasData ? { visitas: visitasData } : {}),
     };
     const { error } = await supabase
       .from("configuracoes")

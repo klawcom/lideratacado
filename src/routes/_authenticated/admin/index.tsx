@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import {
+  Activity,
   ArrowRight,
   Award,
   BarChart3,
@@ -9,9 +10,11 @@ import {
   Clock,
   Crown,
   DollarSign,
+  Eye,
   Layers,
   MapPin,
   MessageCircle,
+  MousePointerClick,
   PackageCheck,
   PieChart as PieIcon,
   TrendingUp,
@@ -19,6 +22,8 @@ import {
   XCircle,
 } from "lucide-react";
 import {
+  Area,
+  AreaChart,
   Bar,
   BarChart,
   CartesianGrid,
@@ -42,6 +47,12 @@ import {
   type ClienteRow,
   type PedidoRow,
 } from "@/lib/dashboard-analytics";
+import {
+  calcularResumoVisitas,
+  formatarDataIso,
+  type VisitasData,
+  type ResumoVisitas,
+} from "@/lib/visitas";
 
 export const Route = createFileRoute("/_authenticated/admin/")({
   component: Dashboard,
@@ -111,6 +122,28 @@ function RegiaoTooltip({ active, payload }: any) {
   return null;
 }
 
+function VisitasTooltip({ active, payload, label }: any) {
+  if (active && payload && payload.length) {
+    const item = payload[0].payload;
+    return (
+      <div className="rounded-xl border border-border/80 bg-popover/95 p-3 text-xs text-popover-foreground shadow-lg backdrop-blur-md">
+        <p className="font-semibold text-foreground">Dia {item.dataLabel} ({item.data})</p>
+        <div className="mt-2 space-y-1">
+          <p className="flex items-center gap-2 font-bold text-foreground">
+            <span className="size-2 rounded-full bg-blue-500" />
+            {item.visitas} {item.visitas === 1 ? "visitante único" : "visitantes únicos"}
+          </p>
+          <p className="flex items-center gap-2 text-muted-foreground">
+            <span className="size-2 rounded-full bg-emerald-500" />
+            {item.pageviews} {item.pageviews === 1 ? "visualização" : "visualizações"}
+          </p>
+        </div>
+      </div>
+    );
+  }
+  return null;
+}
+
 function Dashboard() {
   const [mounted, setMounted] = useState(false);
   const [tipoGraficoFinanceiro, setTipoGraficoFinanceiro] = useState<"estagio" | "mensal">("estagio");
@@ -122,7 +155,7 @@ function Dashboard() {
   const { data, isLoading } = useQuery({
     queryKey: ["admin", "dashboard", "analytics"],
     queryFn: async () => {
-      const [pedidosRes, clientesRes, produtosCountRes] = await Promise.all([
+      const [pedidosRes, clientesRes, produtosCountRes, configRes] = await Promise.all([
         supabase
           .from("pedidos")
           .select("id, numero, status, total, total_pecas, cliente_id, cliente_nome, cliente_whatsapp, cidade, estado, created_at")
@@ -135,6 +168,11 @@ function Dashboard() {
           .from("produtos")
           .select("id", { count: "exact", head: true })
           .eq("ativo", true),
+        supabase
+          .from("configuracoes")
+          .select("menu_links")
+          .eq("id", 1)
+          .maybeSingle(),
       ]);
 
       if (pedidosRes.error) throw pedidosRes.error;
@@ -143,6 +181,15 @@ function Dashboard() {
       const pedidos = (pedidosRes.data ?? []) as PedidoRow[];
       const clientes = (clientesRes.data ?? []) as ClienteRow[];
       const produtos = produtosCountRes.count ?? 0;
+
+      const rawMenu = configRes.data?.menu_links as Record<string, unknown> | null;
+      const visitasRaw = (rawMenu?.["visitas"] && typeof rawMenu["visitas"] === "object"
+        ? (rawMenu["visitas"] as VisitasData)
+        : null);
+
+      const hojeIso = formatarDataIso(new Date());
+      const pedidosHoje = pedidos.filter((p) => p.created_at.startsWith(hojeIso)).length;
+      const visitasResumo = calcularResumoVisitas(visitasRaw, pedidos.length, pedidosHoje);
 
       const statusStats = calculateStatusStats(pedidos);
       const financeiroStats = calculateFinanceiroStats(pedidos);
@@ -153,6 +200,7 @@ function Dashboard() {
         pedidos,
         clientes,
         produtos,
+        visitasResumo,
         statusStats,
         financeiroStats,
         regioesStats,
@@ -169,7 +217,7 @@ function Dashboard() {
       ) : (
         <div className="space-y-6 pb-20">
           {/* 1. KPIs & Balanço Geral */}
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 lg:grid-cols-5">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
             {/* Faturamento Confirmado */}
             <div className="rounded-2xl border bg-card p-4 shadow-2xs">
               <div className="flex items-center justify-between">
@@ -239,10 +287,27 @@ function Dashboard() {
               </p>
             </Link>
 
+            {/* Visitantes Hoje */}
+            <div className="rounded-2xl border bg-card p-4 shadow-2xs">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Visitantes Hoje</span>
+                <span className="grid size-8 place-items-center rounded-xl bg-cyan-500/10 text-cyan-600 dark:text-cyan-400">
+                  <Eye className="size-4" />
+                </span>
+              </div>
+              <p className="mt-2 font-display text-2xl font-bold tabular-nums text-foreground sm:text-3xl">
+                {data.visitasResumo.hoje.visitas}
+              </p>
+              <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
+                <Activity className="size-3 text-cyan-500" />
+                {data.visitasResumo.hoje.pageviews} {data.visitasResumo.hoje.pageviews === 1 ? "visualização" : "visualizações"}
+              </p>
+            </div>
+
             {/* Produtos Ativos */}
             <Link
               to="/admin/produtos"
-              className="col-span-2 sm:col-span-2 lg:col-span-1 rounded-2xl border bg-card p-4 shadow-2xs transition hover:border-primary"
+              className="rounded-2xl border bg-card p-4 shadow-2xs transition hover:border-primary"
             >
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Catálogo Ativo</span>
@@ -258,6 +323,113 @@ function Dashboard() {
               </p>
             </Link>
           </div>
+
+          {/* 2. Seção Detalhada: Tráfego & Visitantes da Loja */}
+          <Panel>
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/50 pb-3">
+              <div className="flex items-center gap-2">
+                <span className="grid size-8 place-items-center rounded-xl bg-cyan-500/10 text-cyan-600 dark:text-cyan-400">
+                  <Eye className="size-4" />
+                </span>
+                <div>
+                  <h2 className="font-sans text-base font-bold text-foreground">Tráfego & Visitantes da Loja</h2>
+                  <p className="text-xs text-muted-foreground">Contador nativo em tempo real de acessos, visualizações e taxa de conversão</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-1.5 rounded-full bg-cyan-500/10 px-2.5 py-1 text-xs font-semibold text-cyan-700 dark:text-cyan-300">
+                <span className="size-2 rounded-full bg-cyan-500 animate-pulse" />
+                <span>Total: {data.visitasResumo.totalGeral} visitantes</span>
+              </div>
+            </div>
+
+            {/* 4 Cards de Métricas de Tráfego */}
+            <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+              <div className="rounded-xl border bg-background/50 p-3">
+                <p className="text-xs font-medium text-muted-foreground">Visitantes Hoje</p>
+                <p className="mt-1 font-display text-xl font-bold text-foreground tabular-nums">
+                  {data.visitasResumo.hoje.visitas}
+                </p>
+                <p className="text-[11px] text-muted-foreground mt-0.5">
+                  Ontem: {data.visitasResumo.ontem.visitas} únicos
+                </p>
+              </div>
+
+              <div className="rounded-xl border bg-background/50 p-3">
+                <p className="text-xs font-medium text-muted-foreground">Últimos 30 Dias</p>
+                <p className="mt-1 font-display text-xl font-bold text-foreground tabular-nums">
+                  {data.visitasResumo.ultimos30Dias.visitas}
+                </p>
+                <p className="text-[11px] text-muted-foreground mt-0.5">
+                  {data.visitasResumo.ultimos30Dias.pageviews} visualizações
+                </p>
+              </div>
+
+              <div className="rounded-xl border bg-background/50 p-3">
+                <p className="text-xs font-medium text-muted-foreground">Total Acumulado</p>
+                <p className="mt-1 font-display text-xl font-bold text-foreground tabular-nums">
+                  {data.visitasResumo.totalGeral}
+                </p>
+                <p className="text-[11px] text-muted-foreground mt-0.5">
+                  {data.visitasResumo.totalPageviews} visualizações totais
+                </p>
+              </div>
+
+              <div className="rounded-xl border bg-background/50 p-3">
+                <p className="text-xs font-medium text-muted-foreground">Taxa de Conversão</p>
+                <p className="mt-1 font-display text-xl font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">
+                  {data.visitasResumo.taxaConversao30Dias}
+                </p>
+                <p className="text-[11px] text-muted-foreground mt-0.5">
+                  {data.pedidos.length} pedidos gerados
+                </p>
+              </div>
+            </div>
+
+            {/* Gráfico do Histórico dos Últimos 14 Dias */}
+            <div className="mt-5">
+              <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                <p className="text-xs font-semibold text-foreground">
+                  Fluxo Diário de Visitantes (Últimos 14 dias)
+                </p>
+                <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
+                  <span className="flex items-center gap-1.5">
+                    <span className="size-2.5 rounded-full bg-cyan-500" /> Visitantes Únicos
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="size-2.5 rounded-full bg-emerald-500" /> Visualizações
+                  </span>
+                </div>
+              </div>
+
+              <div className="h-56 w-full pt-2">
+                {mounted && (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart
+                      data={data.visitasResumo.historicoDiario}
+                      margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" opacity={0.15} vertical={false} />
+                      <XAxis
+                        dataKey="dataLabel"
+                        tick={{ fontSize: 11 }}
+                        tickLine={false}
+                        axisLine={false}
+                      />
+                      <YAxis
+                        allowDecimals={false}
+                        tick={{ fontSize: 11 }}
+                        tickLine={false}
+                        axisLine={false}
+                      />
+                      <Tooltip content={<VisitasTooltip />} />
+                      <Bar dataKey="visitas" fill="#06b6d4" radius={[4, 4, 0, 0]} name="Visitantes" />
+                      <Bar dataKey="pageviews" fill="#10b981" radius={[4, 4, 0, 0]} name="Visualizações" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                )}
+              </div>
+            </div>
+          </Panel>
 
           {/* 2. Gráficos Principais: Pizza de Status & Barras Financeiras */}
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
@@ -351,22 +523,20 @@ function Dashboard() {
                     <button
                       type="button"
                       onClick={() => setTipoGraficoFinanceiro("estagio")}
-                      className={`rounded-lg px-2.5 py-1 transition-all ${
-                        tipoGraficoFinanceiro === "estagio"
+                      className={`rounded-lg px-2.5 py-1 transition-all ${tipoGraficoFinanceiro === "estagio"
                           ? "bg-card text-foreground shadow-2xs"
                           : "text-muted-foreground hover:text-foreground"
-                      }`}
+                        }`}
                     >
                       Por Estágio
                     </button>
                     <button
                       type="button"
                       onClick={() => setTipoGraficoFinanceiro("mensal")}
-                      className={`rounded-lg px-2.5 py-1 transition-all ${
-                        tipoGraficoFinanceiro === "mensal"
+                      className={`rounded-lg px-2.5 py-1 transition-all ${tipoGraficoFinanceiro === "mensal"
                           ? "bg-card text-foreground shadow-2xs"
                           : "text-muted-foreground hover:text-foreground"
-                      }`}
+                        }`}
                     >
                       Evolução Mensal
                     </button>
