@@ -168,7 +168,13 @@ export function InstitucionalPage({ titulo, campo }: { titulo: string; campo: Ca
         <div className="flex flex-wrap gap-3 pt-2">
           {wa && (
             <Button asChild size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold gap-1.5 h-10 px-4">
-              <a href={`https://wa.me/${whatsappLinkNumber(wa)}`} target="_blank" rel="noopener noreferrer">
+              <a
+                href={`https://wa.me/${whatsappLinkNumber(wa)}?text=${encodeURIComponent(
+                  "Olá! Vim pelo site da Líder Atacado e gostaria de mais informações."
+                )}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 <MessageCircle className="size-4" /> Atendimento via WhatsApp
               </a>
             </Button>

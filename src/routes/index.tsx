@@ -655,7 +655,7 @@ function Home() {
               >
                 <a
                   href={`https://wa.me/${whatsappLinkNumber(whatsappNumber)}?text=${encodeURIComponent(
-                    "Olá! Vim pelo site da Líder Atacado (banner da página inicial) e gostaria de atendimento para tirar dúvidas sobre os pedidos no atacado."
+                    "Olá! Vim pelo site da Líder Atacado e gostaria de mais informações."
                   )}`}
                   target="_blank"
                   rel="noopener noreferrer"

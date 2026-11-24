@@ -95,7 +95,9 @@ export function SiteFooter() {
                 onClick={() => analytics.clickWhatsApp("footer")}
               >
                 <a
-                  href={`https://wa.me/${whatsappLinkNumber(wa)}`}
+                  href={`https://wa.me/${whatsappLinkNumber(wa)}?text=${encodeURIComponent(
+                    "Olá! Vim pelo site da Líder Atacado e gostaria de mais informações."
+                  )}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="Falar com o Fornecedor Via WhatsApp"
