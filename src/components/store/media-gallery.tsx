@@ -20,7 +20,7 @@ function Slide({
   fallbackPoster: string;
   eager: boolean;
   isZoomed: boolean;
-  corDaFoto?: string;
+  corDaFoto?: string | undefined;
   onToggleZoom: () => void;
 }) {
   const [play, setPlay] = useState(false);
@@ -53,6 +53,7 @@ function Slide({
         onTouchMove={(e) => {
           if (!isZoomed || e.touches.length === 0) return;
           const touch = e.touches[0];
+          if (!touch) return;
           const rect = e.currentTarget.getBoundingClientRect();
           const x = Math.max(0, Math.min(100, ((touch.clientX - rect.left) / rect.width) * 100));
           const y = Math.max(0, Math.min(100, ((touch.clientY - rect.top) / rect.height) * 100));
@@ -158,7 +159,7 @@ export function MediaGallery({
   corAtiva?: string;
   fotoCores?: Record<string, string>;
   exibirSelo?: boolean;
-  seloUrl?: string | null;
+  seloUrl?: string | null | undefined;
 }) {
   const list = ordenarMidias(midias);
   const [idx, setIdx] = useState(0);

@@ -14,7 +14,7 @@ export function ProductCard({
   p: P;
   eager?: boolean;
   exibirSelo?: boolean;
-  seloUrl?: string | null;
+  seloUrl?: string | null | undefined;
 }) {
   const img = imagemPrincipal(p.produto_midias);
   const min = menorPreco(p.faixas_preco);
@@ -66,7 +66,7 @@ export function ProductGrid({
 }: {
   produtos: P[];
   exibirSelo?: boolean;
-  seloUrl?: string | null;
+  seloUrl?: string | null | undefined;
 }) {
   return (
     <div className="grid grid-cols-2 gap-x-3 gap-y-7 sm:gap-x-5 md:grid-cols-3 lg:grid-cols-4">

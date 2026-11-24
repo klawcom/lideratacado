@@ -5,8 +5,7 @@ import type { MidiaRow } from "@/lib/catalog.functions";
 
 const MOCK_MIDIAS: MidiaRow[] = [
   {
-    id: 1,
-    produto_id: 10,
+    id: "1",
     tipo: "foto",
     url: "produtos/10/foto-1.webp",
     capa_url: null,
@@ -15,8 +14,7 @@ const MOCK_MIDIAS: MidiaRow[] = [
     principal: true,
   },
   {
-    id: 2,
-    produto_id: 10,
+    id: "2",
     tipo: "foto",
     url: "produtos/10/foto-2.webp",
     capa_url: null,
@@ -48,7 +46,7 @@ describe("MediaGallery component", () => {
     expect(zoomButton).toBeInTheDocument();
 
     // Clica para ativar o zoom suave
-    fireEvent.click(zoomButton);
+    fireEvent.click(zoomButton!);
 
     // O botão deve alternar para reduzir zoom sem abrir modais externos
     expect(screen.getByLabelText("Reduzir zoom da imagem")).toBeInTheDocument();
@@ -60,7 +58,7 @@ describe("MediaGallery component", () => {
   });
 
   it("não exibe setas quando há apenas uma mídia", () => {
-    render(<MediaGallery midias={[MOCK_MIDIAS[0]]} nome="Camiseta Única" />);
+    render(<MediaGallery midias={[MOCK_MIDIAS[0]!]} nome="Camiseta Única" />);
 
     expect(screen.queryByLabelText("Imagem anterior")).not.toBeInTheDocument();
     expect(screen.queryByLabelText("Próxima imagem")).not.toBeInTheDocument();

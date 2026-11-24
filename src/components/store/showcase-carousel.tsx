@@ -55,7 +55,7 @@ export function ShowcaseCarousel({
 }: {
   produtos: ProdutoCard[];
   exibirSelo?: boolean;
-  seloUrl?: string | null;
+  seloUrl?: string | null | undefined;
 }) {
   const trackRef = useRef<HTMLDivElement>(null);
   const [isPaused, setIsPaused] = useState(false);

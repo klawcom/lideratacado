@@ -200,7 +200,7 @@ export function encodeCoresProduto(
     if (keys.length > 0) {
       const cleanMap: Record<string, string> = {};
       for (const k of keys) {
-        cleanMap[k] = normalizarNomeCor(fotoCores[k]);
+        cleanMap[k] = normalizarNomeCor(fotoCores[k] ?? "");
       }
       base = `${base}<!--foto_cores:${JSON.stringify(cleanMap)}-->`;
     }

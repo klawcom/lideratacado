@@ -56,7 +56,7 @@ function Config() {
   const [tokenSuperFrete, setTokenSuperFrete] = useState("");
   const [cepOrigemSuperFrete, setCepOrigemSuperFrete] = useState("78464-222");
   const [resendApiKey, setResendApiKey] = useState("");
-  const [visitasData, setVisitasData] = useState<unknown>(null);
+  const [visitasData, setVisitasData] = useState<Record<string, number> | null>(null);
   const [limiteCategoriasHome, setLimiteCategoriasHome] = useState<number>(0);
   const [limiteProdutosHome, setLimiteProdutosHome] = useState<number>(8);
   const [exibirBannersHome, setExibirBannersHome] = useState<boolean>(false);
@@ -170,7 +170,7 @@ function Config() {
         const resend = sf["resend"] as { api_key?: string } | undefined;
         if (resend?.api_key) setResendApiKey(resend.api_key);
 
-        if (sf["visitas"]) setVisitasData(sf["visitas"]);
+        if (sf["visitas"]) setVisitasData(sf["visitas"] as Record<string, number>);
 
         const homeLimits = sf["home_limits"] as { categorias?: number; produtos_por_categoria?: number } | undefined;
         if (homeLimits) {

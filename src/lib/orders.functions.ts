@@ -230,7 +230,7 @@ export const criarPedido = createServerFn({ method: "POST" })
       }
     }
 
-    const { data: config } = await db.from("configuracoes").select("whatsapp, pedido_minimo").eq("id", 1).single();
+    const { data: config } = await db.from("configuracoes").select("whatsapp, pedido_minimo, menu_links, email_contato").eq("id", 1).single();
     const pedidoMinimo = config?.pedido_minimo ?? 10;
 
     const { data: pedidoExistente } = await db.from("pedidos").select("*, pedido_itens(*)")
@@ -537,7 +537,7 @@ export const excluirPedidosFn = createServerFn({ method: "POST" })
 /** Função de teste de envio de e-mail disparada pelo painel administrativo */
 export const testarEnvioEmailFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d: { emailDestino?: string; apiKey?: string }) =>
+  .validator((d: { emailDestino?: string | undefined; apiKey?: string | undefined }) =>
     z.object({ emailDestino: z.string().email().optional(), apiKey: z.string().optional() }).parse(d),
   )
   .handler(async ({ data, context }) => {

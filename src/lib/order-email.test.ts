@@ -6,6 +6,12 @@ import {
   type DadosEmailPedido,
 } from "./order-email";
 
+vi.mock("@/integrations/supabase/client.server", () => ({
+  supabaseAdmin: {
+    from: () => ({ select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: null }) }) }) }),
+  },
+}));
+
 const mockPedido: DadosEmailPedido = {
   numero: 1042,
   criadoEm: "2026-11-22T14:30:00Z",
@@ -88,14 +94,14 @@ describe("order-email module", () => {
   });
 
   it("enviarEmailNovoPedido retorna falha sem erro fatal se RESEND_API_KEY não estiver configurada", async () => {
-    delete process.env.RESEND_API_KEY;
+    delete process.env["RESEND_API_KEY"];
     const res = await enviarEmailNovoPedido(mockPedido);
     expect(res.success).toBe(false);
     expect(res.error).toBe("RESEND_API_KEY_NOT_CONFIGURED");
   });
 
   it("enviarEmailNovoPedido faz chamada POST para Resend quando configurada", async () => {
-    process.env.RESEND_API_KEY = "re_test_123456";
+    process.env["RESEND_API_KEY"] = "re_test_123456";
 
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
@@ -118,7 +124,7 @@ describe("order-email module", () => {
   });
 
   it("enviarEmailNovoPedido aceita apiKey passada diretamente nos dados", async () => {
-    delete process.env.RESEND_API_KEY;
+    delete process.env["RESEND_API_KEY"];
 
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,

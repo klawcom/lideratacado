@@ -270,7 +270,7 @@ ${p.observacao ? `\nObservação: ${p.observacao}` : ""}
  */
 export async function enviarEmailNovoPedido(dados: DadosEmailPedido): Promise<{
   success: boolean;
-  id?: string;
+  id?: string | undefined;
   error?: string;
 }> {
   let apiKey = (dados.apiKey || process.env["RESEND_API_KEY"] || "").trim();

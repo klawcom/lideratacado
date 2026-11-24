@@ -151,7 +151,7 @@ export const getSiteData = createServerFn({ method: "GET" }).handler(async () =>
           selo_promocional_url: rawSeloUrl,
         },
       }
-    : (config as Config);
+    : (config as unknown as Config);
 
   return {
     config: safeConfig as Config,
