@@ -10,6 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 import { FieldLabel, Panel, invalidateStore, selectClass } from "./ui";
+import { AiDescriberModal } from "./ai-describer-modal";
 import { FAIXAS } from "@/lib/pricing";
 import { money, slugify } from "@/lib/format";
 import { CORES_PADRAO, decodeCoresProduto, encodeCoresProduto, getCorContrasteClasses } from "@/lib/colors";
@@ -162,9 +163,17 @@ export function ProductForm({ produto }: { produto?: ProdutoEdit }) {
             <Input id="p-ordem" inputMode="numeric" value={f.ordem} onChange={(e) => set("ordem", e.target.value.replace(/[^\d-]/g, ""))} />
           </div>
         </div>
-        <div className="sm:col-span-2">
-          <FieldLabel htmlFor="p-desc">Descrição</FieldLabel>
-          <Textarea id="p-desc" rows={4} value={f.descricao} onChange={(e) => set("descricao", e.target.value)} />
+        <div className="sm:col-span-2 space-y-1.5">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <FieldLabel htmlFor="p-desc">Descrição</FieldLabel>
+            <AiDescriberModal
+              nomeProduto={f.nome}
+              codigoModelo={f.codigo_modelo}
+              descricaoAtual={f.descricao}
+              onAplicar={(novaDesc) => set("descricao", novaDesc)}
+            />
+          </div>
+          <Textarea id="p-desc" rows={6} value={f.descricao} onChange={(e) => set("descricao", e.target.value)} />
         </div>
         <div className="sm:col-span-2">
           <FieldLabel htmlFor="p-comp">Composição</FieldLabel>

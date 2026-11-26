@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
-import { CheckSquare, Eye, EyeOff, FileText, FolderInput, FolderUp, Loader2, Package, Palette, Plus, Save, Search, Square, Trash2, X } from "lucide-react";
+import { CheckSquare, Eye, EyeOff, FileText, FolderInput, FolderUp, Loader2, Package, Palette, Plus, Save, Search, Sparkles, Square, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,7 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { AdminPage, Empty, Loading, invalidateStore, selectClass } from "@/components/admin/ui";
 import { useCategoriasAdmin } from "@/components/admin/product-form";
 import { excluirProdutos } from "@/lib/admin-products";
-import { syncCoresProdutosBanco, syncDescricaoCottonPima, syncDescricaoPolos } from "@/lib/catalog.functions";
+import { syncCoresProdutosBanco, syncDescricaoCottonPima, syncDescricaoPolos, syncTodasDescricoesPadraoCEO } from "@/lib/catalog.functions";
 import { decodeCoresProduto, encodeCoresProduto } from "@/lib/colors";
 import { imagemPrincipal } from "@/lib/media";
 import { menorPreco } from "@/lib/pricing";
@@ -26,6 +26,7 @@ function Produtos() {
   const syncPima = useServerFn(syncDescricaoCottonPima);
   const syncPolos = useServerFn(syncDescricaoPolos);
   const syncCores = useServerFn(syncCoresProdutosBanco);
+  const syncTodasDescricoes = useServerFn(syncTodasDescricoesPadraoCEO);
   const [busca, setBusca] = useState("");
   const [cat, setCat] = useState("");
   const [status, setStatus] = useState<"" | "ativo" | "inativo">("");
@@ -97,6 +98,37 @@ function Produtos() {
       title="Produtos"
       actions={
         <>
+          <Button
+            type="button"
+            variant="default"
+            onClick={async () => {
+              if (
+                !confirm(
+                  "Aplicar a descrição profissional com autoridade de CEO (gerada por IA) para TODOS os produtos da loja? Cada produto receberá um texto persuasivo e técnico sobre a qualidade da malha, gola, durabilidade e margens de revenda."
+                )
+              )
+                return;
+              setBusy(true);
+              try {
+                const res = await syncTodasDescricoes();
+                toast.success(
+                  `${res.atualizados} produtos atualizados no banco com descrição profissional de alta conversão (Padrão CEO)!`
+                );
+                qc.invalidateQueries({ queryKey: ["admin"] });
+                invalidateStore(qc);
+              } catch (e) {
+                toast.error(e instanceof Error ? e.message : "Erro ao atualizar descrições.");
+              } finally {
+                setBusy(false);
+              }
+            }}
+            disabled={busy}
+            className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold gap-1.5 shadow-xs"
+            title="Atualizar descrição de todos os produtos com IA e autoridade de CEO"
+          >
+            {busy ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4 text-amber-300" />}
+            <span>Descrições IA (Padrão CEO)</span>
+          </Button>
           <Button
             type="button"
             variant="outline"

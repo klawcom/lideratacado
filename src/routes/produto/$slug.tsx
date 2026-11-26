@@ -17,6 +17,8 @@ import { CORES_PADRAO, decodeCoresProduto, formatarCorTamanhos, getCorContrasteC
 import {
   COMPOSICAO_COTTON_PIMA,
   DESCRICAO_COTTON_PIMA,
+  DESCRICAO_BASE_POLO,
+  DESCRICAO_BASE_PLUS_SIZE,
   MEDIDAS_COTTON_PIMA,
   MEDIDAS_PLUS_SIZE,
   MEDIDAS_POLO,
@@ -198,19 +200,25 @@ function ProdutoPage() {
   const coresDisponiveis = CORES_PADRAO.filter((c) => coresHabilitadas.includes(c.nome));
   const listaCores = coresDisponiveis.length > 0 ? coresDisponiveis : CORES_PADRAO;
 
-  // Se for Cotton Pima, garante a descrição oficial caso o banco ainda tenha o texto genérico antigo
+  // Garante a descrição oficial com autoridade de CEO para cada categoria caso o banco tenha texto genérico antigo
   const isGenericDesc =
     !p.descricao ||
     p.descricao.startsWith("Camiseta Pima Modelo") ||
+    p.descricao.startsWith("Camisa Polo Modelo") ||
+    p.descricao.startsWith("Camiseta Plus Size Modelo") ||
     p.descricao.includes("Cores sortidas, conforme disponibilidade do estoque.");
 
-  const descFinal = isPima
-    ? isGenericDesc
-      ? DESCRICAO_COTTON_PIMA
-      : (p.descricao.split(/Medidas aproximadas/i)[0] ?? "").trim()
-    : isPolo || isPlusSize
-      ? (p.descricao ? (p.descricao.split(/Medidas aproximadas/i)[0] ?? "").trim() : "")
-      : p.descricao;
+  const fallbackDesc = isPima
+    ? DESCRICAO_COTTON_PIMA
+    : isPolo
+      ? DESCRICAO_BASE_POLO
+      : isPlusSize
+        ? DESCRICAO_BASE_PLUS_SIZE
+        : DESCRICAO_COTTON_PIMA;
+
+  const descFinal = isGenericDesc
+    ? fallbackDesc
+    : (p.descricao.split(/Medidas aproximadas/i)[0] ?? "").trim() || fallbackDesc;
 
   const compFinal = isPima ? (composicaoLimpa || COMPOSICAO_COTTON_PIMA) : composicaoLimpa;
 

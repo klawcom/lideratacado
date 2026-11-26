@@ -1,12 +1,14 @@
+import {
+  DESCRICAO_CEO_COTTON_PIMA,
+  DESCRICAO_CEO_POLO_PIQUET,
+  DESCRICAO_CEO_PLUS_SIZE,
+} from "./product-ai-describer";
+
 /**
  * Padrões de descrição, composição e medidas para anúncios da categoria Cotton Pima.
  */
 
-export const DESCRICAO_COTTON_PIMA = `A camiseta que o cliente pega, sente o tecido e já quer levar:
-✅ Malha peruana Cotton Pima, macia e resistente;
-✅ Com elastano: veste bem e não perde a forma;
-✅ Cores variadas (sortidas);
-✅ Tamanhos P ao GG.`;
+export const DESCRICAO_COTTON_PIMA = DESCRICAO_CEO_COTTON_PIMA;
 
 export const COMPOSICAO_COTTON_PIMA = "100% Algodão Pima";
 
@@ -63,7 +65,7 @@ M. 52cm largura x 66cm altura
 G. 55cm largura x 69cm altura
 GG. 58cm largura x 70cm altura`;
 
-export const DESCRICAO_BASE_POLO = `Camisa polo de caimento clássico e toque confortável. Cores sortidas, conforme disponibilidade do estoque.`;
+export const DESCRICAO_BASE_POLO = DESCRICAO_CEO_POLO_PIQUET;
 
 export const DESCRICAO_COMPLETA_POLO = `${DESCRICAO_BASE_POLO}
 
@@ -99,7 +101,7 @@ CAMISAS PLUS SIZE
 G1. 62cm largura x 73cm altura
 G2. 66cm largura x 76cm altura`;
 
-export const DESCRICAO_BASE_PLUS_SIZE = `Camiseta Plus Size confeccionada em malha especial de excelente caimento e conforto. Cores variadas (sortidas). Tamanhos G1 e G2.`;
+export const DESCRICAO_BASE_PLUS_SIZE = DESCRICAO_CEO_PLUS_SIZE;
 
 export const DESCRICAO_COMPLETA_PLUS_SIZE = `${DESCRICAO_BASE_PLUS_SIZE}
 
