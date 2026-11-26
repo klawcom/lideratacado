@@ -1,9 +1,3 @@
-import {
-  TEXTO_MEDIDAS_COTTON_PIMA,
-  TEXTO_MEDIDAS_POLO,
-  TEXTO_MEDIDAS_PLUS_SIZE,
-} from "./pima-defaults";
-
 export type TipoTecidoIA = "cotton_pima" | "piquet_duplo" | "plus_size" | "basica_premium";
 export type TomVozIA = "ceo_autoridade" | "luxo_boutique" | "comercial_giro";
 
@@ -15,7 +9,6 @@ export interface GerarDescricaoOpcoes {
   destacarMargemLucro?: boolean;
   destacarToqueSensorial?: boolean;
   destacarPreEncolhimento?: boolean;
-  incluirMedidas?: boolean;
 }
 
 export function detectarTipoTecido(nome: string, codigo?: string): TipoTecidoIA {
@@ -23,124 +16,137 @@ export function detectarTipoTecido(nome: string, codigo?: string): TipoTecidoIA 
   if (/plus\s*size|tamanho\s*especial|g1|g2/i.test(texto)) return "plus_size";
   if (/polo|piquet/i.test(texto)) return "piquet_duplo";
   if (/pima|cotton\s*pima|peruano/i.test(texto)) return "cotton_pima";
-  return "cotton_pima"; // Padrão da loja
+  return "cotton_pima"; // Padrão principal da loja
 }
 
 /**
- * Textos Mestres Oficiais com Autoridade de CEO para cada linha de produto.
+ * Textos Mestres Oficiais com Autoridade de CEO (Máximo 750 caracteres).
+ * Sem medidas repetidas (as medidas já possuem widget próprio na página).
+ * Palavras-chave destacadas em negrito (**palavra**).
  */
-export const DESCRICAO_CEO_COTTON_PIMA = `A camiseta que o cliente pega, sente o tecido e já quer levar. Peça estratégica desenhada para posicionar sua loja no mais alto padrão de qualidade do mercado masculino. Desenvolvida em autêntico Algodão Cotton Pima Peruano de fibras nobres e extralongas, esta camiseta entrega uma experiência sensorial imediata: o cliente toca no tecido e a venda acontece no mesmo instante.
+export const DESCRICAO_CEO_COTTON_PIMA = `A camiseta que o cliente **pega, sente a malha e compra na hora**. Peça indispensável para quem busca **alto giro e lucro superior a 100%**.
 
-Diferenciais da Malha & Acabamento:
-• Malha peruana Cotton Pima: Fio nobre colhido manualmente, macia e resistente com toque de seda aveludado e frescor térmico incomparável.
-• Com elastano: veste bem e não perde a forma. Zero torção e estabilidade dimensional após a lavagem.
-• Costura reforçada ombro a ombro: Pesponto duplo de alta tenacidade e gola estruturada que não esgarça.
-• Tingimento nobre de alta fixação: Cores variadas (sortidas) com brilho duradouro que não desbota.
-• Tamanhos P ao GG com caimento moderno alinhado.
+• **Malha peruana Cotton Pima:** colhida à mão, fibras nobres com **toque de seda** e frescor térmico.
+• **Com elastano: veste bem e não perde a forma:** costura ombro a ombro que **não deforma e não encolhe**.
+• **Cores variadas (sortidas):** tingimento nobre que **não desbota** com as lavagens.
+• **Tamanhos P ao GG:** modelagem moderna de **alto giro no varejo** e recompra garantida.
 
-Por que ter este modelo na sua loja?
-• Venda por impacto sensorial: Qualidade percebida de padrão shopping center internacional.
-• Alto giro de estoque: Clientes que experimentam a primeira peça voltam com frequência para recomprar outras cores.
-• Margem de lucro superior a 100%: Preço direto de fábrica no atacado garantindo máxima rentabilidade na sua revenda.`;
+Compre direto de fábrica no atacado e garanta a peça mais lucrativa da sua arara!`;
 
-export const DESCRICAO_CEO_POLO_PIQUET = `A polo definitiva para lojistas e revendedores que exigem sofisticação, estrutura e acabamento de alfaiataria esportiva. Produzida em malha nobre Piquet Duplo com padrão peruano de alta gramatura, une elegância impecável e durabilidade para clientes exigentes.
+export const DESCRICAO_CEO_POLO_PIQUET = `A polo definitiva para quem exige **sofisticação, elegância e alta margem de lucro**. Visual nobre com acabamento impecável de alfaiataria.
 
-Diferenciais da Malha & Acabamento:
-• Malha Piquet Duplo Peruano: Gramatura encorpada com textura refinada, caimento alinhado e respirabilidade natural.
-• Gola e punhos com entretela especial: Permanecem firmes e alinhados, sem enrolar ou deformar após o uso e lavagens.
-• Peitilho tradicional com botões personalizados: Acabamento de alto padrão de costura interna e externa.
-• Pré-lavada e estabilizada: Zero torção lateral e estabilidade dimensional absoluta.
+• **Malha Piquet Duplo Peruano:** gramatura encorpada, toque macio e **caimento alinhado**.
+• **Gola e Punhos Estruturados:** entretela nobre que **não enrola e não deforma** após as lavagens.
+• **Alta Lucratividade:** valor percebido de shopping, vendida fácil por **mais que o dobro do preço de atacado**.
+• **Recompra Certa:** peça clássica indispensável que **fideliza clientes exigentes** o ano todo.
 
-Por que ter este modelo na sua loja?
-• Lucro acima da média: Peça com apelo premium vendida facilmente no varejo por mais que o dobro do custo de atacado.
-• Versatilidade comercial: Atende desde o ambiente de trabalho e eventos sociais até o dia a dia refinado.
-• Fidelização comprovada: Peça indispensável que gera recompra e consolida a reputação da sua marca no vestuário masculino.`;
+Abasteça sua loja direto da fábrica com a polo mais elogiada e vendida do mercado!`;
 
-export const DESCRICAO_CEO_PLUS_SIZE = `Desenvolvida com autoridade técnica para liderar uma das categorias mais rentáveis e com maior demanda reprimida do mercado. Esta camiseta Plus Size combina o conforto nobre do Algodão Pima com uma modelagem ergonômica inteligente nos tamanhos G1 e G2, valorizando o corpo com total elegância e conforto.
+export const DESCRICAO_CEO_PLUS_SIZE = `Criada para liderar a categoria mais rentável e com **maior procura reprimida** do mercado. Elegância, conforto absoluto e caimento ergonômico.
 
-Diferenciais da Malha & Acabamento:
-• Malha Cotton Pima com toque sedoso: Tecido nobre, maleável e fresco, que não esquenta e não pinica a pele.
-• Modelagem ergonômica proporcional: Ombros alinhados, caimento reto perfeito e comprimento ideal, sem sobras desajeitadas.
-• Gola e costuras reforçadas: Suporte estrutural desenvolvido para manter a firmeza no uso prolongado.
-• Tingimento uniforme e resistente: Não perde o brilho das cores mesmo sob lavagens frequentes.
+• **Malha Cotton Pima Nobre:** tecido maleável, toque sedoso e **máximo frescor**, sem esquentar ou pinicar.
+• **Modelagem Inteligente (G1 e G2):** caimento proporcional que **valoriza o corpo sem sobras**, com ombros no lugar.
+• **Costuras e Gola Reforçadas:** alta durabilidade e firmeza estrutural para o dia a dia.
+• **Margem de Lucro Excepcional:** baixa concorrência no padrão premium e **fidelização vitalícia**.
 
-Por que ter este modelo na sua loja?
-• Categoria com altíssima fidelização: O cliente Plus Size que encontra caimento impecável torna-se cliente fiel e vitalício da sua loja.
-• Baixa concorrência e alta margem: Peças de alto padrão em tamanhos especiais possuem margem líquida ainda mais atraente.
-• Giro acelerado: Produto indispensável na grade para atender com respeito e excelência a todos os públicos.`;
+A peça indispensável para atender o público Plus Size com máxima excelência!`;
 
-export const DESCRICAO_CEO_BASICA_PREMIUM = `Uma peça essencial com qualidade superior, desenvolvida para ser o carro-chefe de vendas recorrentes da sua loja. Confeccionada em algodão penteado de fibra longa, oferece toque suave, caimento moderno e acabamento limpo para o uso diário.
+export const DESCRICAO_CEO_BASICA_PREMIUM = `O carro-chefe de vendas diárias da sua loja. Confeccionada em **algodão selecionado de fibra longa**, combinando conforto, versatilidade e preço de fábrica.
 
-Diferenciais da Malha & Acabamento:
-• Algodão Penteado Premium: Fios selecionados que eliminam impurezas, oferecendo toque macio e superfície uniforme.
-• Gola em ribana canelada com pesponto de reforço: Não deforma e acompanha o contorno do pescoço com perfeição.
-• Tingimento reativo de primeira linha: Resistente ao desbotamento e com cores modernas e comerciais.
-• Costura de precisão: Durabilidade garantida nas junções de manga e barra.
+• **Toque Macio e Superfície Limpa:** malha penteada premium que não pinica e oferece **respirabilidade natural**.
+• **Gola Canelada com Reforço:** pesponto duplo que não alarga e mantém a forma original.
+• **Tingimento Reativo Duradouro:** cores vivas e nobres que **não desbotam**.
+• **Giro Contínuo e Venda Casada:** a peça básica perfeita para faturar alto com **margem superior a 100%**.
 
-Por que ter este modelo na sua loja?
-• O maior volume de vendas do atacado: Peça básica de alta rotatividade que nunca fica parada na arara.
-• Excelente lucratividade: Margem expressiva com preço unitário de entrada muito competitivo.
-• Venda casada simples: O cliente compra uma polo ou camisa especial e leva 2 ou 3 camisetas básicas juntas.`;
+O produto essencial para manter o caixa da sua loja girando todos os dias!`;
 
 /**
- * Motor gerador de descrição inteligente com autoridade de CEO.
+ * Retorna a descrição padrão oficial de acordo com a categoria da peça.
+ */
+export function obterDescricaoPadraoCategoria(p: {
+  nome?: string | null;
+  codigo_modelo?: string | null;
+  categoria_id?: string | null;
+  categorias?: { slug?: string; nome?: string } | null;
+}): string {
+  const tipo = detectarTipoTecido(p.nome ?? "", p.codigo_modelo ?? "");
+  switch (tipo) {
+    case "piquet_duplo":
+      return DESCRICAO_CEO_POLO_PIQUET;
+    case "plus_size":
+      return DESCRICAO_CEO_PLUS_SIZE;
+    case "basica_premium":
+      return DESCRICAO_CEO_BASICA_PREMIUM;
+    case "cotton_pima":
+    default:
+      return DESCRICAO_CEO_COTTON_PIMA;
+  }
+}
+
+/**
+ * Identifica se a descrição atual é genérica, antiga ou se precisa ser substituída pela oficial.
+ */
+export function isDescricaoGenericaOuAntiga(descricao?: string | null): boolean {
+  if (!descricao || !descricao.trim()) return true;
+  const t = descricao.trim();
+  if (/^Camiseta Pima Modelo/i.test(t)) return true;
+  if (/^Camisa Polo Modelo/i.test(t)) return true;
+  if (/^Camisetas Masculinas Plus Size Modelo/i.test(t)) return true;
+  if (/Cores sortidas, conforme disponibilidade/i.test(t)) return true;
+  if (/Camisa polo de caimento clássico e toque confortável/i.test(t)) return true;
+  if (/Camiseta Plus Size confeccionada em malha especial/i.test(t)) return true;
+  if (/Peça estratégica desenhada para posicionar sua loja no mais alto padrão/i.test(t)) return true;
+  if (/A polo definitiva para lojistas e revendedores que exigem sofisticação/i.test(t)) return true;
+  if (/Desenvolvida com autoridade técnica para liderar uma das categorias/i.test(t)) return true;
+  if (/^A camiseta que o cliente pega, sente o tecido e já quer levar:$/m.test(t)) return true;
+  return false;
+}
+
+/**
+ * Obtém a descrição final para exibição e edição do produto,
+ * garantindo que nenhum produto fique sem o texto profissional de alta conversão.
+ */
+export function obterDescricaoOficialProduto(p: {
+  nome?: string | null;
+  codigo_modelo?: string | null;
+  descricao?: string | null;
+  categoria_id?: string | null;
+  categorias?: { slug?: string; nome?: string } | null;
+}): string {
+  if (!p.descricao || isDescricaoGenericaOuAntiga(p.descricao)) {
+    return obterDescricaoPadraoCategoria(p);
+  }
+  // Remove eventuais blocos de medidas repetidos no banco para manter o limite de 750 caracteres
+  const limpa = p.descricao.split(/Medidas aproximadas/i)[0]?.trim();
+  return limpa && !isDescricaoGenericaOuAntiga(limpa) ? limpa : obterDescricaoPadraoCategoria(p);
+}
+
+/**
+ * Motor gerador de descrição inteligente com autoridade de CEO (≤ 750 caracteres).
  */
 export function gerarDescricaoIA(opcoes: GerarDescricaoOpcoes): string {
   const tipo = opcoes.tipoTecido || detectarTipoTecido(opcoes.nomeProduto, opcoes.codigoModelo);
-  const tom = opcoes.tomVoz || "ceo_autoridade";
-  const incluirMedidas = opcoes.incluirMedidas !== false;
 
   let textoBase = "";
-  let textoMedidas = "";
-
   switch (tipo) {
     case "cotton_pima":
       textoBase = DESCRICAO_CEO_COTTON_PIMA;
-      textoMedidas = TEXTO_MEDIDAS_COTTON_PIMA;
       break;
     case "piquet_duplo":
       textoBase = DESCRICAO_CEO_POLO_PIQUET;
-      textoMedidas = TEXTO_MEDIDAS_POLO;
       break;
     case "plus_size":
       textoBase = DESCRICAO_CEO_PLUS_SIZE;
-      textoMedidas = TEXTO_MEDIDAS_PLUS_SIZE;
       break;
     case "basica_premium":
       textoBase = DESCRICAO_CEO_BASICA_PREMIUM;
-      textoMedidas = TEXTO_MEDIDAS_COTTON_PIMA;
       break;
   }
 
-  // Personalização conforme o tom de voz escolhido
-  let introducaoPersonalizada = "";
-  if (tom === "luxo_boutique") {
-    introducaoPersonalizada = `Exclusividade, nobreza têxtil e acabamento refinado para clientes que não abrem mão do mais alto padrão. ${opcoes.nomeProduto} foi criada para elevar a percepção de valor da sua boutique com elegância atemporal.\n\n`;
-  } else if (tom === "comercial_giro") {
-    introducaoPersonalizada = `Peça campeã de vendas e giro ultra rápido no atacado! ${opcoes.nomeProduto} reúne o melhor preço de fábrica, qualidade indiscutível de tecido e margem de lucro garantida para o seu negócio decolar.\n\n`;
+  // Se o texto gerado ultrapassar 750 caracteres por algum motivo, garante o limite estrito
+  if (textoBase.length > 750) {
+    return textoBase.slice(0, 747) + "...";
   }
 
-  // Personalização conforme destaques específicos solicitados
-  const destaquesAdicionais: string[] = [];
-  if (opcoes.destacarMargemLucro) {
-    destaquesAdicionais.push("• Margem de Lucro Estratégica: Permite precificação competitiva com retorno líquido superior a 100% no varejo.");
-  }
-  if (opcoes.destacarToqueSensorial) {
-    destaquesAdicionais.push("• Toque Macio e Sedoso: Sensação de frescor imediato na pele que encanta o cliente no primeiro contato.");
-  }
-  if (opcoes.destacarPreEncolhimento) {
-    destaquesAdicionais.push("• Malha Pré-encolhida e Estabilizada: Garantia de satisfação sem encolhimento ou torção pós-lavagem.");
-  }
-
-  let resultado = introducaoPersonalizada ? `${introducaoPersonalizada}${textoBase}` : textoBase;
-
-  if (destaquesAdicionais.length > 0) {
-    resultado += `\n\nDestaques Exclusivos Líder Atacado:\n${destaquesAdicionais.join("\n")}`;
-  }
-
-  if (incluirMedidas && textoMedidas) {
-    resultado += `\n\n${textoMedidas}`;
-  }
-
-  return resultado.trim();
+  return textoBase.trim();
 }

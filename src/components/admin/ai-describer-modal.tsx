@@ -42,7 +42,6 @@ export function AiDescriberModal({
   const [destacarMargemLucro, setDestacarMargemLucro] = useState(true);
   const [destacarToqueSensorial, setDestacarToqueSensorial] = useState(true);
   const [destacarPreEncolhimento, setDestacarPreEncolhimento] = useState(true);
-  const [incluirMedidas, setIncluirMedidas] = useState(true);
   const [textoGerado, setTextoGerado] = useState("");
   const [gerando, setGerando] = useState(false);
 
@@ -65,7 +64,6 @@ export function AiDescriberModal({
         destacarMargemLucro,
         destacarToqueSensorial,
         destacarPreEncolhimento,
-        incluirMedidas,
       });
       setTextoGerado(resultado);
       setGerando(false);
@@ -186,16 +184,6 @@ export function AiDescriberModal({
                 />
                 <span>Zero encolhimento e torção</span>
               </label>
-
-              <label className="flex items-center gap-1.5 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={incluirMedidas}
-                  onChange={(e) => setIncluirMedidas(e.target.checked)}
-                  className="rounded border-input text-primary focus:ring-primary"
-                />
-                <span>Incluir tabela de medidas</span>
-              </label>
             </div>
 
             <div className="sm:col-span-2 pt-1">
@@ -216,9 +204,20 @@ export function AiDescriberModal({
           {/* Área de Visualização e Edição */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <Label className="text-xs font-semibold text-foreground">
-                Prévia da Descrição Gerada (você pode editar livremente):
-              </Label>
+              <div className="flex items-center gap-2">
+                <Label className="text-xs font-semibold text-foreground">
+                  Prévia da Descrição Gerada:
+                </Label>
+                <span
+                  className={`text-[11px] font-mono px-2 py-0.5 rounded-full ${
+                    textoGerado.length > 750
+                      ? "bg-destructive/15 text-destructive font-bold"
+                      : "bg-muted text-muted-foreground"
+                  }`}
+                >
+                  {textoGerado.length} / 750 caracteres
+                </span>
+              </div>
               <button
                 type="button"
                 onClick={handleCopiar}

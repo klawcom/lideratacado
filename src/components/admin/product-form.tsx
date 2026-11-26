@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 import { FieldLabel, Panel, invalidateStore, selectClass } from "./ui";
 import { AiDescriberModal } from "./ai-describer-modal";
+import { obterDescricaoOficialProduto } from "@/lib/product-ai-describer";
 import { FAIXAS } from "@/lib/pricing";
 import { money, slugify } from "@/lib/format";
 import { CORES_PADRAO, decodeCoresProduto, encodeCoresProduto, getCorContrasteClasses } from "@/lib/colors";
@@ -47,7 +48,7 @@ export function ProductForm({ produto }: { produto?: ProdutoEdit }) {
     codigo_modelo: produto?.codigo_modelo ?? "",
     slug: produto?.slug ?? "",
     categoria_id: produto?.categoria_id ?? "",
-    descricao: produto?.descricao ?? "",
+    descricao: produto ? obterDescricaoOficialProduto(produto) : "",
     estoque: String(produto?.estoque ?? 1000),
     ordem: String(produto?.ordem ?? 0),
     ativo: produto?.ativo ?? true,
@@ -165,7 +166,18 @@ export function ProductForm({ produto }: { produto?: ProdutoEdit }) {
         </div>
         <div className="sm:col-span-2 space-y-1.5">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <FieldLabel htmlFor="p-desc">Descrição</FieldLabel>
+            <div className="flex items-center gap-2">
+              <FieldLabel htmlFor="p-desc">Descrição</FieldLabel>
+              <span
+                className={`text-[11px] font-mono px-2 py-0.5 rounded-full ${
+                  f.descricao.length > 750
+                    ? "bg-destructive/15 text-destructive font-bold"
+                    : "bg-muted text-muted-foreground"
+                }`}
+              >
+                {f.descricao.length}/750 carac.
+              </span>
+            </div>
             <AiDescriberModal
               nomeProduto={f.nome}
               codigoModelo={f.codigo_modelo}

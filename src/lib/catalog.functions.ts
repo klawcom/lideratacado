@@ -360,10 +360,10 @@ export const syncCoresProdutosBanco = createServerFn({ method: "POST" }).handler
   return { atualizados, total: todos.length };
 });
 
-/** Atualiza no banco a descrição de todos os produtos cadastrados com o padrão de alta conversão e autoridade de CEO gerado por IA */
+/** Atualiza no banco a descrição de todos os produtos cadastrados com o padrão de alta conversão e autoridade de CEO (máx 750 caracteres, sem medidas repetidas, com negrito) */
 export const syncTodasDescricoesPadraoCEO = createServerFn({ method: "POST" }).handler(async () => {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const { gerarDescricaoIA, detectarTipoTecido } = await import("./product-ai-describer");
+  const { obterDescricaoPadraoCategoria } = await import("./product-ai-describer");
 
   const { data: todos, error: errBusca } = await supabaseAdmin
     .from("produtos")
@@ -373,14 +373,7 @@ export const syncTodasDescricoesPadraoCEO = createServerFn({ method: "POST" }).h
   if (!todos || todos.length === 0) return { atualizados: 0, total: 0 };
 
   const updates = todos.map((p) => {
-    const tipo = detectarTipoTecido(p.nome, p.codigo_modelo);
-    const novaDescricao = gerarDescricaoIA({
-      nomeProduto: p.nome,
-      codigoModelo: p.codigo_modelo,
-      tipoTecido: tipo,
-      tomVoz: "ceo_autoridade",
-      incluirMedidas: true,
-    });
+    const novaDescricao = obterDescricaoPadraoCategoria(p);
 
     return supabaseAdmin
       .from("produtos")
