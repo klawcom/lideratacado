@@ -169,7 +169,7 @@ export function TestimonialDialog({
               </div>
               <DialogTitle className="text-xl font-bold">Compartilhe sua experiência</DialogTitle>
               <DialogDescription className="text-xs sm:text-sm text-muted-foreground">
-                Conte para outros lojistas e revendedores como foi receber suas roupas da Líder Atacado (embalagem, qualidade, caimento e giro das peças).
+                Conte para outros lojistas e revendedores como foi seu atendimento com o Claudinei, a entrega segura no seu endereço, a qualidade das peças e o giro de vendas.
               </DialogDescription>
             </DialogHeader>
 
@@ -283,7 +283,7 @@ export function TestimonialDialog({
                   id={textoId}
                   value={texto}
                   onChange={(e) => setTexto(e.target.value)}
-                  placeholder="Conte como as peças chegaram, a qualidade do tecido, variedade de cores e a saída de vendas com seus clientes..."
+                  placeholder="Conte sua história: o atendimento do Claudinei pelo WhatsApp, a chegada da encomenda lacrada no seu endereço, a qualidade das peças e suas vendas..."
                   rows={4}
                   required
                 />

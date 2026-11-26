@@ -172,23 +172,28 @@ function RetornoPagamento() {
         </div>
 
         {pago && (
-          <div className="mt-8 pt-6 border-t text-center">
-            <p className="text-sm text-muted-foreground mb-3">
-              Gostaria de compartilhar sua avaliação sobre a sua experiência na Líder Atacado?
+          <div className="mt-8 rounded-2xl border-2 border-primary/30 bg-gradient-to-r from-primary/15 via-background to-amber-500/10 p-5 sm:p-6 text-center shadow-md">
+            <h3 className="font-display font-extrabold text-lg sm:text-xl text-foreground">
+              Como foi sua experiência com o Claudinei e a Líder Atacado?
+            </h3>
+            <p className="mt-1 text-xs sm:text-sm text-muted-foreground max-w-lg mx-auto">
+              Seu pedido já foi pago e está confirmado! Conte sua história para inspirar milhares de novos lojistas e revendedores em todo o Brasil.
             </p>
-            <TestimonialDialog
-              trigger={
-                <Button variant="outline" className="gap-2 font-semibold">
-                  <HeartHandshake className="size-4 text-primary" /> Deixar meu depoimento
-                </Button>
-              }
-              pedidoInfo={{
-                numero: numero ?? undefined,
-                clienteNome: pedido?.cliente?.nome,
-                cidade: pedido?.entrega?.cidade,
-                estado: pedido?.entrega?.estado,
-              }}
-            />
+            <div className="mt-4 flex justify-center">
+              <TestimonialDialog
+                trigger={
+                  <Button size="lg" className="font-extrabold gap-2 bg-amber-500 hover:bg-amber-600 text-stone-950 shadow-md hover:scale-105 active:scale-95 transition-all h-12 px-6 rounded-xl cursor-pointer">
+                    <HeartHandshake className="size-5" /> Deixar meu depoimento
+                  </Button>
+                }
+                pedidoInfo={{
+                  numero: numero ?? undefined,
+                  clienteNome: pedido?.cliente?.nome,
+                  cidade: pedido?.entrega?.cidade,
+                  estado: pedido?.entrega?.estado,
+                }}
+              />
+            </div>
           </div>
         )}
       </div>

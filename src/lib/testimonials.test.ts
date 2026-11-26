@@ -14,8 +14,8 @@ describe("testimonials module", () => {
     localStorage.clear();
   });
 
-  it("possui pelo menos 10 depoimentos cobrindo todas as 5 regiões do Brasil", () => {
-    expect(DEPOIMENTOS_INICIAIS.length).toBeGreaterThanOrEqual(10);
+  it("possui pelo menos 30 depoimentos cobrindo todas as 5 regiões do Brasil com histórias reais", () => {
+    expect(DEPOIMENTOS_INICIAIS.length).toBeGreaterThanOrEqual(30);
     const regioes = new Set(DEPOIMENTOS_INICIAIS.map((d) => d.regiao));
     expect(regioes.has("Sul")).toBe(true);
     expect(regioes.has("Sudeste")).toBe(true);
@@ -26,6 +26,15 @@ describe("testimonials module", () => {
     const generos = new Set(DEPOIMENTOS_INICIAIS.map((d) => d.genero));
     expect(generos.has("m")).toBe(true);
     expect(generos.has("f")).toBe(true);
+
+    // Valida que há depoimentos destacando o atendimento do Claudinei e a confiança de entrega
+    const citamClaudinei = DEPOIMENTOS_INICIAIS.filter((d) => d.texto.includes("Claudinei"));
+    expect(citamClaudinei.length).toBeGreaterThanOrEqual(10);
+
+    const destacamSemMedo = DEPOIMENTOS_INICIAIS.filter(
+      (d) => d.texto.includes("sem medo") || d.destaque?.includes("sem medo") || d.texto.includes("seguran")
+    );
+    expect(destacamSemMedo.length).toBeGreaterThan(0);
   });
 
   it("infere corretamente a região pelo estado/UF", () => {

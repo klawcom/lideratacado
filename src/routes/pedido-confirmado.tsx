@@ -114,25 +114,25 @@ function Confirmado() {
         </div>
       </div>
 
-      {/* Convite para o cliente prestar seu depoimento */}
-      <section className="mt-8 rounded-2xl border bg-gradient-to-r from-primary/10 via-background to-muted/40 p-5 text-center sm:text-left sm:flex sm:items-center sm:justify-between sm:gap-6 shadow-xs">
-        <div className="space-y-1">
-          <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary">
-            <Sparkles className="size-3.5" />
+      {/* Convite em destaque para o cliente prestar seu depoimento */}
+      <section className="mt-8 rounded-2xl border-2 border-primary/30 bg-gradient-to-r from-primary/15 via-background to-amber-500/10 p-5 sm:p-6 text-center sm:text-left sm:flex sm:items-center sm:justify-between sm:gap-6 shadow-md">
+        <div className="space-y-1.5">
+          <div className="inline-flex items-center gap-1.5 rounded-full bg-primary/20 px-2.5 py-0.5 text-xs font-bold text-primary">
+            <Sparkles className="size-3.5 text-amber-500" />
             <span>Sua Opinião Vale Muito</span>
           </div>
-          <h3 className="font-bold text-base sm:text-lg text-foreground">
-            Como foi sua experiência com a Líder Atacado?
+          <h3 className="font-display font-extrabold text-lg sm:text-xl text-foreground">
+            Como foi seu atendimento com o Claudinei e a Líder Atacado?
           </h3>
           <p className="text-xs sm:text-sm text-muted-foreground max-w-xl">
-            Deixe sua avaliação sobre a compra, facilidade do pedido ou conte como foi receber suas roupas no atacado. Seu depoimento ajuda outros lojistas e revendedores de todo o país!
+            Deixe sua avaliação sincera sobre a facilidade do pedido e o atendimento. Quando suas roupas chegarem, conte como foi a entrega. Seu depoimento inspira lojistas e revendedores do Brasil inteiro!
           </p>
         </div>
         <div className="mt-4 sm:mt-0 shrink-0">
           <TestimonialDialog
             trigger={
-              <Button size="default" className="w-full sm:w-auto font-bold gap-2">
-                <HeartHandshake className="size-4" /> Deixar meu depoimento
+              <Button size="lg" className="w-full sm:w-auto font-extrabold gap-2 bg-amber-500 hover:bg-amber-600 text-stone-950 shadow-md hover:shadow-lg transition-all hover:scale-105 active:scale-95 h-12 px-6 rounded-xl cursor-pointer">
+                <HeartHandshake className="size-5" /> Deixar meu depoimento
               </Button>
             }
             pedidoInfo={{

@@ -11,6 +11,8 @@ import {
   ShieldCheck,
   PackageCheck,
   TrendingUp,
+  HeartHandshake,
+  MessageSquareHeart,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -134,12 +136,11 @@ export function TestimonialsSection({ whatsappLoja }: TestimonialsSectionProps) 
           </div>
 
           <Button
-            variant="outline"
-            size="sm"
+            size="default"
             onClick={() => setModalAberto(true)}
-            className="w-full sm:w-auto gap-1.5 font-semibold border-dashed hover:border-primary shrink-0"
+            className="w-full sm:w-auto gap-2 font-bold bg-amber-500 hover:bg-amber-600 text-stone-950 dark:text-stone-950 shadow-md hover:shadow-lg transition-all hover:scale-[1.02] active:scale-95 shrink-0 h-10 px-5 rounded-full"
           >
-            <PlusCircle className="size-4 text-primary" />
+            <Sparkles className="size-4 fill-stone-950 text-stone-950" />
             <span>Deixar meu depoimento</span>
           </Button>
         </div>
@@ -266,6 +267,44 @@ export function TestimonialsSection({ whatsappLoja }: TestimonialsSectionProps) 
             </Button>
           </div>
         )}
+
+        {/* Bloco de Destaque Chamativo para Convidar Clientes a Deixar Depoimento */}
+        <div className="mt-10 rounded-2xl border-2 border-primary/30 bg-gradient-to-r from-primary/15 via-background to-amber-500/10 p-5 sm:p-7 shadow-sm">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-5 text-center md:text-left">
+            <div className="space-y-2 max-w-xl">
+              <div className="inline-flex items-center gap-1.5 rounded-full bg-primary/20 px-3 py-0.5 text-xs font-bold text-primary">
+                <HeartHandshake className="size-3.5" />
+                <span>Sua história inspira outros brasileiros</span>
+              </div>
+              <h3 className="font-display text-xl sm:text-2xl font-extrabold text-foreground tracking-tight">
+                Já comprou com a Líder Atacado e o Claudinei?
+              </h3>
+              <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+                Conte como foi o atendimento do Claudinei, a chegada das peças no seu endereço e como estão sendo suas vendas. Seu relato ajuda milhares de novos empreendedores em todo o país!
+              </p>
+              <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 text-[11px] text-muted-foreground pt-1">
+                <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-medium">
+                  <CheckCircle2 className="size-3.5" /> 100% Gratuito e Rápido
+                </span>
+                <span>•</span>
+                <span>Leva menos de 1 minuto</span>
+                <span>•</span>
+                <span>Opção de enviar no WhatsApp</span>
+              </div>
+            </div>
+
+            <div className="shrink-0 w-full md:w-auto">
+              <Button
+                size="lg"
+                onClick={() => setModalAberto(true)}
+                className="w-full md:w-auto gap-2.5 text-sm sm:text-base font-extrabold bg-primary hover:bg-primary/90 text-primary-foreground h-12 sm:h-14 px-6 sm:px-8 rounded-xl shadow-lg hover:shadow-xl hover:scale-[1.03] active:scale-95 transition-all cursor-pointer"
+              >
+                <Sparkles className="size-5 text-amber-300" />
+                <span>Quero deixar meu depoimento</span>
+              </Button>
+            </div>
+          </div>
+        </div>
 
         {/* Faixa inferior de segurança */}
         <div className="mt-8 pt-6 border-t flex flex-wrap items-center justify-between gap-4 text-xs text-muted-foreground">
