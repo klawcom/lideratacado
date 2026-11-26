@@ -3,6 +3,7 @@ import type { ProdutoCard as P } from "@/lib/catalog.functions";
 import { imagemPrincipal } from "@/lib/media";
 import { menorPreco } from "@/lib/pricing";
 import { money } from "@/lib/format";
+import { obterReacaoDestaque } from "@/lib/product-reactions";
 import seloBlackFridayImg from "@/assets/selo-black-friday.webp";
 
 export function ProductCard({
@@ -19,6 +20,7 @@ export function ProductCard({
   const img = imagemPrincipal(p.produto_midias);
   const min = menorPreco(p.faixas_preco);
   const seloSrc = seloUrl || seloBlackFridayImg;
+  const destaque = obterReacaoDestaque(p.id);
 
   return (
     <Link to="/produto/$slug" params={{ slug: p.slug }} className="group flex min-w-0 flex-col">
@@ -34,6 +36,11 @@ export function ProductCard({
             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
           />
         )}
+        {/* Badge da reação mais popular */}
+        <div className="pointer-events-none absolute left-1.5 bottom-1.5 z-10 flex items-center gap-1 rounded-full bg-background/85 px-2 py-0.5 text-[11px] font-semibold backdrop-blur-xs text-foreground shadow-2xs sm:left-2 sm:bottom-2">
+          <span>{destaque.emoji}</span>
+          <span className="tabular-nums font-bold text-[10px] sm:text-[11px]">{destaque.count}</span>
+        </div>
         {exibirSelo && (
           <div className="pointer-events-none absolute right-1.5 top-1.5 z-10 select-none drop-shadow-md transition-transform duration-300 group-hover:scale-105 sm:right-2 sm:top-2">
             <img

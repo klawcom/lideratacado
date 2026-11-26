@@ -1,7 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { CheckCircle2, FileDown, MessageCircle } from "lucide-react";
+import { CheckCircle2, FileDown, MessageCircle, HeartHandshake, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { TestimonialDialog } from "@/components/store/testimonial-dialog";
 import { lerUltimoPedido } from "@/lib/checkout-storage";
 import type { PedidoCriado } from "@/lib/orders.functions";
 import { padNumero } from "@/lib/format";
@@ -112,6 +113,38 @@ function Confirmado() {
           </Button>
         </div>
       </div>
+
+      {/* Convite para o cliente prestar seu depoimento */}
+      <section className="mt-8 rounded-2xl border bg-gradient-to-r from-primary/10 via-background to-muted/40 p-5 text-center sm:text-left sm:flex sm:items-center sm:justify-between sm:gap-6 shadow-xs">
+        <div className="space-y-1">
+          <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary">
+            <Sparkles className="size-3.5" />
+            <span>Sua Opinião Vale Muito</span>
+          </div>
+          <h3 className="font-bold text-base sm:text-lg text-foreground">
+            Como foi sua experiência com a Líder Atacado?
+          </h3>
+          <p className="text-xs sm:text-sm text-muted-foreground max-w-xl">
+            Deixe sua avaliação sobre a compra, facilidade do pedido ou conte como foi receber suas roupas no atacado. Seu depoimento ajuda outros lojistas e revendedores de todo o país!
+          </p>
+        </div>
+        <div className="mt-4 sm:mt-0 shrink-0">
+          <TestimonialDialog
+            trigger={
+              <Button size="default" className="w-full sm:w-auto font-bold gap-2">
+                <HeartHandshake className="size-4" /> Deixar meu depoimento
+              </Button>
+            }
+            pedidoInfo={{
+              numero: p.numero,
+              clienteNome: p.cliente?.nome,
+              cidade: p.entrega?.cidade,
+              estado: p.entrega?.estado,
+            }}
+          />
+        </div>
+      </section>
+
       <section className="mt-10 rounded-2xl border bg-card p-5">
         <h2 className="font-sans text-lg font-bold tracking-normal">Resumo enviado</h2>
         <div className="mt-3 space-y-0.5 break-words text-[15px] leading-relaxed">

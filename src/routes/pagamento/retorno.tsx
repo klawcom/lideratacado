@@ -1,9 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { AlertCircle, CheckCircle2, Clock3, Loader2, MessageCircle, RefreshCw } from "lucide-react";
+import { AlertCircle, CheckCircle2, Clock3, Loader2, MessageCircle, RefreshCw, HeartHandshake } from "lucide-react";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
+import { TestimonialDialog } from "@/components/store/testimonial-dialog";
 import { analytics } from "@/lib/analytics";
 import { cart } from "@/lib/cart";
 import { lerUltimoPedido } from "@/lib/checkout-storage";
@@ -169,6 +170,27 @@ function RetornoPagamento() {
             <Link to="/">Voltar à loja</Link>
           </Button>
         </div>
+
+        {pago && (
+          <div className="mt-8 pt-6 border-t text-center">
+            <p className="text-sm text-muted-foreground mb-3">
+              Gostaria de compartilhar sua avaliação sobre a sua experiência na Líder Atacado?
+            </p>
+            <TestimonialDialog
+              trigger={
+                <Button variant="outline" className="gap-2 font-semibold">
+                  <HeartHandshake className="size-4 text-primary" /> Deixar meu depoimento
+                </Button>
+              }
+              pedidoInfo={{
+                numero: numero ?? undefined,
+                clienteNome: pedido?.cliente?.nome,
+                cidade: pedido?.entrega?.cidade,
+                estado: pedido?.entrega?.estado,
+              }}
+            />
+          </div>
+        )}
       </div>
     </div>
   );

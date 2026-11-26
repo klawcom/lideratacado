@@ -19,6 +19,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { ProductGrid } from "@/components/store/product-card";
 import { ShowcaseCarousel, buildVitrineProducts } from "@/components/store/showcase-carousel";
+import { TestimonialsSection } from "@/components/store/testimonials-section";
 import {
   Accordion,
   AccordionContent,
@@ -620,6 +621,9 @@ function Home() {
           </div>
         </div>
       </section>
+
+      {/* Depoimentos de Clientes de Todo o Brasil */}
+      <TestimonialsSection whatsappLoja={whatsappNumber} />
 
       {/* Chamada Comercial Pré-Rodapé (Pre-footer CRO Banner) */}
       <section className="container-page mt-16 md:mt-24 mb-6">

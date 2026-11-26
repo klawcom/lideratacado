@@ -5,6 +5,7 @@ import { AlertCircle, ChevronLeft, ChevronRight, MessageCircle, ShoppingBag, X }
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { MediaGallery } from "@/components/store/media-gallery";
+import { ProductReactions } from "@/components/store/product-reactions";
 import { QtyStepper } from "@/components/store/qty-stepper";
 import { ShippingCalculator } from "@/components/store/shipping-calculator";
 import { produtoQuery, siteQuery } from "@/lib/catalog.functions";
@@ -432,6 +433,9 @@ function ProdutoPage() {
               </div>
             </div>
           </div>
+
+          {/* Reações com Emojis (👍 ❤️ 🤑 😲 🔥) */}
+          <ProductReactions produtoId={p.id} produtoNome={p.nome} />
 
           {/* Seleção de cores e tamanhos */}
           <section aria-labelledby="secao-cores" className="space-y-3.5">
