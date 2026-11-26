@@ -52,10 +52,12 @@ export function ShowcaseCarousel({
   produtos,
   exibirSelo = false,
   seloUrl,
+  seloProdutosIds,
 }: {
   produtos: ProdutoCard[];
   exibirSelo?: boolean;
   seloUrl?: string | null | undefined;
+  seloProdutosIds?: string[] | null | undefined;
 }) {
   const trackRef = useRef<HTMLDivElement>(null);
   const [isPaused, setIsPaused] = useState(false);
@@ -189,7 +191,7 @@ export function ShowcaseCarousel({
                         className="h-full w-full object-cover transition-transform duration-500 group-hover/card:scale-[1.03]"
                       />
                     )}
-                    {exibirSelo && (
+                    {exibirSelo && (!seloProdutosIds || seloProdutosIds.length === 0 || seloProdutosIds.includes(p.id)) && (
                       <div className="pointer-events-none absolute right-1.5 top-1.5 z-10 select-none drop-shadow-md transition-transform duration-300 group-hover/card:scale-105 sm:right-2.5 sm:top-2.5">
                         <img
                           src={seloSrc}

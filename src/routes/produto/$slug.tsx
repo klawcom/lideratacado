@@ -132,18 +132,16 @@ function renderTextoFormatado(text: string) {
 
 function DetalhesProduto({
   descFinal,
-  compFinal,
   isPima,
   isPolo,
   isPlusSize,
 }: {
   descFinal?: string | null;
-  compFinal?: string | null;
   isPima: boolean;
   isPolo: boolean;
   isPlusSize: boolean;
 }) {
-  if (!descFinal && !compFinal && !isPima && !isPolo && !isPlusSize) return null;
+  if (!descFinal && !isPima && !isPolo && !isPlusSize) return null;
   return (
     <section aria-labelledby="secao-descricao" className="rounded-2xl border bg-card/60 p-4 sm:p-5 space-y-3.5 max-w-full">
       {descFinal && (
@@ -165,15 +163,8 @@ function DetalhesProduto({
         </div>
       )}
 
-      {compFinal && (
-        <div className={descFinal ? "pt-3 border-t border-border/60" : ""}>
-          <h2 className="font-sans text-sm font-semibold tracking-normal text-foreground">Composição</h2>
-          <p className="mt-1 text-sm text-muted-foreground break-words">{compFinal}</p>
-        </div>
-      )}
-
       {(isPima || isPolo || isPlusSize) && (
-        <div className={descFinal || compFinal ? "pt-3 border-t border-border/60 space-y-2" : "space-y-2"}>
+        <div className={descFinal ? "pt-3 border-t border-border/60 space-y-2" : "space-y-2"}>
           <div className="flex flex-wrap items-center justify-between gap-1">
             <h2 className="font-sans text-sm font-semibold tracking-normal text-foreground">
               Medidas aproximadas
@@ -341,7 +332,6 @@ function ProdutoPage() {
 
       {/* Cabeçalho mobile: com a única tag H1 da página */}
       <div className="mb-3 block md:hidden min-w-0">
-        <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Modelo {p.codigo_modelo}</p>
         <h1 className="mt-0.5 text-xl font-bold tracking-tight text-foreground">{p.nome}</h1>
         {min !== null && (
           <p className="mt-0.5 text-xs text-muted-foreground">
@@ -357,7 +347,7 @@ function ProdutoPage() {
             nome={p.nome}
             corAtiva={corAtiva}
             fotoCores={fotoCores}
-            exibirSelo={Boolean(site?.home_display?.selo_black_friday)}
+            exibirSelo={Boolean(site?.home_display?.selo_black_friday) && (!site?.home_display?.selo_produtos_ids || site.home_display.selo_produtos_ids.length === 0 || site.home_display.selo_produtos_ids.includes(p.id))}
             seloUrl={site?.home_display?.selo_url}
           />
 
@@ -365,7 +355,6 @@ function ProdutoPage() {
           <div className="hidden md:block">
             <DetalhesProduto
               descFinal={descFinal}
-              compFinal={compFinal}
               isPima={isPima}
               isPolo={isPolo}
               isPlusSize={isPlusSize}
@@ -376,7 +365,6 @@ function ProdutoPage() {
         <div className="min-w-0 space-y-5">
           {/* Cabeçalho desktop (título visualmente idêntico, evitando duplicidade semântica de H1) */}
           <div className="hidden md:block">
-            <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Modelo {p.codigo_modelo}</p>
             <div className="mt-1 font-display text-xl sm:text-2xl font-bold tracking-tight text-foreground">
               {p.nome}
             </div>
@@ -592,7 +580,6 @@ function ProdutoPage() {
             <div className="block md:hidden pt-2">
               <DetalhesProduto
                 descFinal={descFinal}
-                compFinal={compFinal}
                 isPima={isPima}
                 isPolo={isPolo}
                 isPlusSize={isPlusSize}

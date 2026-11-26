@@ -468,6 +468,7 @@ function Home() {
             produtos={vitrineProdutos}
             exibirSelo={site.home_display?.selo_black_friday}
             seloUrl={site.home_display?.selo_url}
+            seloProdutosIds={site.home_display?.selo_produtos_ids}
           />
         )}
 
@@ -547,6 +548,7 @@ function Home() {
             produtos={c.produtos}
             exibirSelo={site.home_display?.selo_black_friday}
             seloUrl={site.home_display?.selo_url}
+            seloProdutosIds={site.home_display?.selo_produtos_ids}
           />
           <div className="mt-8 flex justify-center">
             <Button asChild variant="outline" className="w-full sm:w-auto shadow-2xs font-semibold">

@@ -86,6 +86,7 @@ function CategoriaPage() {
           produtos={cat.produtos}
           exibirSelo={seloBlackFriday}
           seloUrl={site.home_display?.selo_url}
+          seloProdutosIds={site.home_display?.selo_produtos_ids}
         />
       ) : (
         <div className="rounded-2xl border bg-muted/40 p-8 text-center text-muted-foreground">

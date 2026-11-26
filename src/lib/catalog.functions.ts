@@ -139,6 +139,9 @@ export const getSiteData = createServerFn({ method: "GET" }).handler(async () =>
 
   const rawSeloUrl = (rawMenu?.["selo_promocional_url"] as string | undefined) || (homeDisplay.selo_url as string | undefined) || null;
   const seloUrl = rawSeloUrl ? mediaUrl(rawSeloUrl) : null;
+  const seloProdutosIds = Array.isArray(rawMenu?.["selo_produtos_ids"])
+    ? (rawMenu["selo_produtos_ids"] as string[])
+    : null;
 
   // Sanitiza menu_links para não expor tokens sensíveis (superfrete, resend) para clientes anônimos da loja
   const safeConfig = config
@@ -149,6 +152,7 @@ export const getSiteData = createServerFn({ method: "GET" }).handler(async () =>
           banners: rawMenu?.["banners"] ?? [],
           selo_black_friday: seloBlackFriday,
           selo_promocional_url: rawSeloUrl,
+          selo_produtos_ids: seloProdutosIds,
         },
       }
     : (config as unknown as Config);
@@ -166,6 +170,7 @@ export const getSiteData = createServerFn({ method: "GET" }).handler(async () =>
       exibir_vitrine: exibirVitrine,
       selo_black_friday: seloBlackFriday,
       selo_url: seloUrl,
+      selo_produtos_ids: seloProdutosIds,
     },
     origin: requestOrigin(getRequest()),
   };

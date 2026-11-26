@@ -187,10 +187,6 @@ export function ProductForm({ produto }: { produto?: ProdutoEdit }) {
           </div>
           <Textarea id="p-desc" rows={6} value={f.descricao} onChange={(e) => set("descricao", e.target.value)} />
         </div>
-        <div className="sm:col-span-2">
-          <FieldLabel htmlFor="p-comp">Composição</FieldLabel>
-          <Input id="p-comp" value={composicaoTexto} onChange={(e) => setComposicaoTexto(e.target.value)} placeholder="Ex.: 100% algodão" />
-        </div>
         <div className="flex flex-wrap gap-6 sm:col-span-2">
           <label className="flex min-h-11 items-center gap-3">
             <Switch checked={f.ativo} onCheckedChange={(v) => set("ativo", v)} /> Ativo na loja
